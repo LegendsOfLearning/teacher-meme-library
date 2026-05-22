@@ -17,7 +17,8 @@ export function absoluteUrl(pathOrUrl) {
 
 /** Resolve page URL, direct image URL, title, and share text. */
 export function resolveShareContext({ share, item, imageUrl: imageUrlProp }) {
-  const sharePath = share?.path ?? (item ? `/gallery/${item.id}` : "/");
+  const sharePath =
+    share?.path ?? item?.pagePath ?? (item ? `/gallery/${item.id}` : "/");
   const shareTitle =
     share?.title ??
     (item ? `${item.formatName} · Teacher meme` : "Teacher meme");

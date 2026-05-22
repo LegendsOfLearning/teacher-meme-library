@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import SharePanel from "./SharePanel";
+import MemeQuickActions from "./MemeQuickActions";
 import LolSignupStrip from "./LolSignupStrip";
 
 /** Full Imgflip-style share UI in a modal (gallery cards, quick share). */
@@ -47,6 +48,13 @@ export default function ShareModal({ open, onClose, item, share, imageUrl, onToa
         >
           ×
         </button>
+        <MemeQuickActions
+          item={item}
+          share={share}
+          imageUrl={imageUrl}
+          onToast={onToast}
+          compact
+        />
         <SharePanel
           item={item}
           share={share}

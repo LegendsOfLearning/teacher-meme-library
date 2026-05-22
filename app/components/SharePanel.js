@@ -5,6 +5,7 @@ import {
   buildSocialShareLinks,
   resolveShareContext,
 } from "../lib/share-links";
+import { LOL_SHARE_PANEL_INTRO } from "../lib/lol-copy";
 
 function SocialIcon({ id }) {
   const common = { width: 20, height: 20, "aria-hidden": true };
@@ -137,8 +138,9 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
   return (
     <section className="share-panel" aria-label="Share this meme">
       <h3 className="share-panel-title" id="share-modal-title">
-        Share this meme
+        Share on social or copy a link
       </h3>
+      <p className="share-panel-intro">{LOL_SHARE_PANEL_INTRO}</p>
 
       <div className="share-social-row">
         {social.map((s) => (

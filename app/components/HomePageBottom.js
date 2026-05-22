@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { LOL_ABOUT_URL, LOL_SIGNUP_URL } from "../lib/share-links";
-import { LOL_PITCH_BANNER_BODY } from "../lib/lol-copy";
+import {
+  LOL_FOOTER_LINE,
+  LOL_HOME_BOTTOM_BODY,
+  LOL_HOME_BOTTOM_KICKER,
+} from "../lib/lol-copy";
 
 /** Integrated CTA + safety + footer for the home gallery page. */
 export default function HomePageBottom() {
@@ -9,9 +13,9 @@ export default function HomePageBottom() {
       <div className="home-bottom-inner">
         <div className="home-bottom-cta">
           <p className="home-bottom-kicker" id="home-bottom-heading">
-            Love game-based learning?
+            {LOL_HOME_BOTTOM_KICKER}
           </p>
-          <p className="home-bottom-body">{LOL_PITCH_BANNER_BODY}</p>
+          <p className="home-bottom-body">{LOL_HOME_BOTTOM_BODY}</p>
           <div className="home-bottom-actions">
             <Link
               href={LOL_SIGNUP_URL}
@@ -19,7 +23,7 @@ export default function HomePageBottom() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Sign up free for teachers
+              Explore free games for teachers
             </Link>
             <Link
               href={LOL_ABOUT_URL}
@@ -27,7 +31,7 @@ export default function HomePageBottom() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Learn more
+              About Legends of Learning
             </Link>
           </div>
         </div>
@@ -43,8 +47,7 @@ export default function HomePageBottom() {
         </p>
 
         <footer className="home-bottom-footer">
-          <span>A fun project by </span>
-          <span className="home-bottom-footer-brand">Legends of Learning</span>
+          <span>{LOL_FOOTER_LINE}</span>
         </footer>
       </div>
     </section>

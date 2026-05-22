@@ -3,8 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { getMeme } from "../../lib/storage";
 import ShareActions from "./ShareActions";
+import MemeViewTracker from "../../components/MemeViewTracker";
 import LolSignupCta from "../../components/LolSignupCta";
-import { LOL_SIGNUP_URL } from "../../lib/share-links";
+import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../../lib/lol-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,7 @@ export default async function MemePage({ params }) {
 
   return (
     <>
+      <MemeViewTracker memeId={meme.id} />
       <nav className="nav">
         <Link
           href="/"
@@ -84,15 +86,7 @@ export default async function MemePage({ params }) {
             height={40}
             priority
           />
-          <span className="nav-title">Teacher Meme Library</span>
-        </Link>
-        <Link
-          href={LOL_SIGNUP_URL}
-          className="nav-cta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sign up free
+          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
         </Link>
       </nav>
 
@@ -131,16 +125,7 @@ export default async function MemePage({ params }) {
         </div>
       </main>
 
-      <footer className="footer">
-        A fun project by{" "}
-        <a
-          href="https://www.legendsoflearning.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Legends of Learning
-        </a>
-      </footer>
+      <footer className="footer">{LOL_FOOTER_LINE}</footer>
     </>
   );
 }

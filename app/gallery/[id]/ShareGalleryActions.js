@@ -1,37 +1,29 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import SharePanel from "../../components/SharePanel";
+import MemeQuickActions from "../../components/MemeQuickActions";
 import LolSignupStrip from "../../components/LolSignupStrip";
-import { fetchAndDownloadSquare } from "../../lib/download-square";
 
 export default function ShareGalleryActions({ item }) {
   const [toast, setToast] = useState("");
+  const [showSocial, setShowSocial] = useState(false);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 2200);
   }, []);
 
-  const download = async () => {
-    try {
-      const name =
-        item.file.split("?")[0].split("/").pop() || "teacher-meme.png";
-      await fetchAndDownloadSquare(item.file, name);
-      showToast("Square meme downloaded");
-    } catch {
-      showToast("Download failed — try again");
-    }
-  };
-
   return (
     <>
-      <div className="share-page-actions">
-        <button className="action-btn" onClick={download}>
-          Download PNG
-        </button>
-      </div>
-      <SharePanel item={item} onToast={showToast} />
+      <MemeQuickActions
+        item={item}
+        onToast={showToast}
+        onShareMore={() => setShowSocial(true)}
+      />
+      {showSocial ? (
+        <SharePanel item={item} onToast={showToast} />
+      ) : null}
       <LolSignupStrip />
       <div className={`toast ${toast ? "visible" : ""}`}>{toast}</div>
     </>

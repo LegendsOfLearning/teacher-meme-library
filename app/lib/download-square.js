@@ -29,10 +29,14 @@ export async function blobToSquarePng(blob, background = "#000000") {
   });
 }
 
-export async function fetchAndDownloadSquare(imageUrl, filename) {
+export async function fetchSquarePngBlob(imageUrl) {
   const res = await fetch(imageUrl);
   if (!res.ok) throw new Error("Could not fetch image");
-  const square = await blobToSquarePng(await res.blob());
+  return blobToSquarePng(await res.blob());
+}
+
+export async function fetchAndDownloadSquare(imageUrl, filename) {
+  const square = await fetchSquarePngBlob(imageUrl);
   const url = URL.createObjectURL(square);
   const a = document.createElement("a");
   a.href = url;
@@ -41,4 +45,15 @@ export async function fetchAndDownloadSquare(imageUrl, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/** Copy a square PNG to the clipboard (paste into Slack, email, etc.). */
+export async function copyImageToClipboard(imageUrl) {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.write) {
+    throw new Error("Clipboard not supported");
+  }
+  const square = await fetchSquarePngBlob(imageUrl);
+  await navigator.clipboard.write([
+    new ClipboardItem({ "image/png": square }),
+  ]);
 }

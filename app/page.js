@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import path from "node:path";
 import { statSync } from "node:fs";
@@ -6,16 +5,19 @@ import {
   galleryItems,
   gallerySituationFilters,
 } from "./lib/gallery.js";
+import { getHotMemes, getMemeOfTheDay } from "./lib/gallery-featured";
 import GalleryGrid from "./gallery/GalleryGrid";
+import HomeFeaturedStrip from "./components/HomeFeaturedStrip";
 import HomePageBottom from "./components/HomePageBottom";
-import { LOL_SIGNUP_URL } from "./lib/share-links";
+import {
+  LOL_HERO_BODY,
+  LOL_HERO_TAGLINE,
+  LOL_HERO_TITLE,
+  LOL_LIBRARY_HEADING,
+  LOL_LIBRARY_LEAD,
+  LOL_NAV_TAGLINE,
+} from "./lib/lol-copy";
 
-// Append a cache-busting ?v=<mtime> to each gallery PNG URL so the
-// browser fetches the latest rerender after we regenerate the gallery.
-// Without this, sharp/our render pipeline can write a fresh PNG to
-// disk but every <img> on the page keeps the previous response from
-// the browser's HTTP cache — the user sees stale art with no way to
-// force a refresh besides a hard reload.
 function withCacheBust(items) {
   const galleryDir = path.join(process.cwd(), "public", "gallery");
   return items.map((item) => {
@@ -30,22 +32,10 @@ function withCacheBust(items) {
   });
 }
 
-// ─── Homepage / Gallery ─────────────────────────────────────────────
-//
-// Browse curated memes, share, or click "Customize this template" to
-// rewrite captions for a single template — every action lands in a
-// K-8 safety pipeline before anything hits a teacher's group chat.
-//
-// Sibling routes:
-//   /gallery/<id>   permanent share page for a single curated meme
-//   /customize?id=  edit-only page for one template (deep link from
-//                   gallery cards)
-//   /meme/<id>      permanent share page for a user-customized meme
-
 export const metadata = {
   title: "Teacher Meme Library | Legends of Learning",
   description:
-    "Hand-picked, classroom-safe teacher memes. Share as-is or rewrite the captions in two clicks.",
+    "A free teacher meme library from Legends of Learning. Share or customize classroom-safe memes — then explore free game-based learning when you're ready.",
   openGraph: {
     title: "Teacher Meme Library",
     description:
@@ -54,7 +44,14 @@ export const metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const items = withCacheBust(galleryItems);
+  const memeOfTheDay = getMemeOfTheDay(items);
+  const excludeIds = memeOfTheDay ? [memeOfTheDay.id] : [];
+  const trendingMemes = getHotMemes(items, 5).filter(
+    (i) => !excludeIds.includes(i.id)
+  );
+
   return (
     <>
       <nav className="nav">
@@ -66,44 +63,32 @@ export default function Home() {
             height={40}
             priority
           />
-          <span className="nav-title">Teacher Meme Library</span>
+          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
         </div>
-        <Link
-          href={LOL_SIGNUP_URL}
-          className="nav-cta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sign up free
-        </Link>
       </nav>
 
-      <section className="hero" aria-labelledby="hero-headline">
+      <section className="hero hero-compact" aria-labelledby="hero-headline">
         <div className="hero-inner">
-          <p className="hero-eyebrow">
-            A free tool by <strong>Legends of Learning</strong>
-          </p>
-          <h1 className="hero-headline" id="hero-headline">
-            <span className="hero-headline-teacher">Teacher</span>{" "}
-            <span className="hero-headline-meme">Meme</span>{" "}
-            <span className="hero-headline-library">Library</span>
-        </h1>
-          <p className="hero-subhead">
-            Because sometimes a meme explains teaching better than a lesson
-            plan.
-          </p>
-          <p className="hero-support">
-            Explore funny, classroom-safe memes made for real teacher moments.
-          </p>
+          <h1 className="hero-title" id="hero-headline">
+            {LOL_HERO_TITLE}
+          </h1>
+          <p className="hero-tagline">{LOL_HERO_TAGLINE}</p>
+          <p className="hero-body">{LOL_HERO_BODY}</p>
         </div>
       </section>
 
       <main className="container gallery-container">
-        <GalleryGrid
-          items={withCacheBust(galleryItems)}
-          filters={gallerySituationFilters}
+        <HomeFeaturedStrip
+          memeOfTheDay={memeOfTheDay}
+          trendingMemes={trendingMemes}
         />
 
+        <header className="library-header">
+          <h2 className="library-header-title">{LOL_LIBRARY_HEADING}</h2>
+          <p className="library-header-lead">{LOL_LIBRARY_LEAD}</p>
+        </header>
+
+        <GalleryGrid items={items} filters={gallerySituationFilters} />
       </main>
 
       <HomePageBottom />

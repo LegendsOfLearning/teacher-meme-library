@@ -2,11 +2,12 @@
 
 import { useCallback, useState } from "react";
 import SharePanel from "../../components/SharePanel";
+import MemeQuickActions from "../../components/MemeQuickActions";
 import LolSignupStrip from "../../components/LolSignupStrip";
-import { fetchAndDownloadSquare } from "../../lib/download-square";
 
 export default function ShareActions({ meme }) {
   const [toast, setToast] = useState("");
+  const [showSocial, setShowSocial] = useState(false);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -18,26 +19,10 @@ export default function ShareActions({ meme }) {
       .filter((v) => typeof v === "string" && v.trim())
       .join(" / ") || meme.formatName;
 
-  const download = async () => {
-    try {
-      await fetchAndDownloadSquare(
-        meme.pngUrl,
-        `teacher-meme-${meme.id}.png`
-      );
-      showToast("Square meme downloaded");
-    } catch {
-      showToast("Download failed — try again");
-    }
-  };
-
   return (
     <>
-      <div className="share-page-actions">
-        <button className="action-btn" onClick={download}>
-          Download PNG
-        </button>
-      </div>
-      <SharePanel
+      <MemeQuickActions
+        meme={meme}
         share={{
           path: meme.sharePath,
           title: `${meme.formatName} · Teacher meme`,
@@ -45,7 +30,19 @@ export default function ShareActions({ meme }) {
           imageUrl: meme.pngUrl,
         }}
         onToast={showToast}
+        onShareMore={() => setShowSocial(true)}
       />
+      {showSocial ? (
+        <SharePanel
+          share={{
+            path: meme.sharePath,
+            title: `${meme.formatName} · Teacher meme`,
+            text: `Found my new favorite teacher meme — "${captionText}"`,
+            imageUrl: meme.pngUrl,
+          }}
+          onToast={showToast}
+        />
+      ) : null}
       <LolSignupStrip />
       <div className={`toast ${toast ? "visible" : ""}`}>{toast}</div>
     </>

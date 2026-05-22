@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getGalleryItemById } from "../../lib/gallery";
 import ShareGalleryActions from "./ShareGalleryActions";
 import LolSignupCta from "../../components/LolSignupCta";
-import { LOL_SIGNUP_URL } from "../../lib/share-links";
+import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../../lib/lol-copy";
 
 // Permanent, shareable, social-preview-ready URL for a single
 // gallery item. Mirrors /meme/[id] but reads from the curated
@@ -77,15 +77,7 @@ export default async function GalleryItemPage({ params }) {
             height={40}
             priority
           />
-          <span className="nav-title">Teacher Meme Library</span>
-        </Link>
-        <Link
-          href={LOL_SIGNUP_URL}
-          className="nav-cta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sign up free
+          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
         </Link>
         <Link href="/" className="nav-link">
           ← All memes
@@ -125,8 +117,8 @@ export default async function GalleryItemPage({ params }) {
           <div className="share-cta-card">
             <h2>Make your own</h2>
             <p>
-              25 viral meme formats. Captions actually written for teachers.
-              Two clicks to a meme you&apos;ll send to your group chat.
+              Browse the library, pick a template, and share a laugh with
+              your team — free from Legends of Learning.
             </p>
             <Link href="/" className="cta-button">
               Create your own teacher meme
@@ -135,16 +127,7 @@ export default async function GalleryItemPage({ params }) {
         )}
       </main>
 
-      <footer className="footer">
-        A fun project by{" "}
-        <a
-          href="https://www.legendsoflearning.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Legends of Learning
-        </a>
-      </footer>
+      <footer className="footer">{LOL_FOOTER_LINE}</footer>
     </>
   );
 }

@@ -13,7 +13,7 @@ const montserrat = Montserrat({
 export const metadata = {
   title: "Teacher Meme Library | Legends of Learning",
   description:
-    "Hand-picked, school-safe teacher memes. Share as-is or customize captions in two clicks. By Legends of Learning.",
+    "A free teacher meme library from Legends of Learning. Share or customize classroom-safe memes — free game-based learning when you're ready.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3001")

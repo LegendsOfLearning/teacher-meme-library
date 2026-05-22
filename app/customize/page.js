@@ -8,9 +8,9 @@ import { getFormatById, maxCharsForZone } from "../lib/meme-formats";
 import { fetchAndDownloadSquare } from "../lib/download-square";
 import { getGalleryItemById } from "../lib/gallery";
 import SharePanel from "../components/SharePanel";
+import MemeQuickActions from "../components/MemeQuickActions";
 import LolSignupCta from "../components/LolSignupCta";
-import LolSignupStrip from "../components/LolSignupStrip";
-import { LOL_SIGNUP_URL } from "../lib/share-links";
+import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../lib/lol-copy";
 
 // ─── Inline icon set ─────────────────────────────────────────────────────
 function Icon({ name }) {
@@ -75,6 +75,7 @@ export default function CustomizePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [showSocialShare, setShowSocialShare] = useState(false);
 
   const memeAnchorRef = useRef(null);
 
@@ -235,7 +236,7 @@ export default function CustomizePage() {
               height={40}
               priority
             />
-            <span className="nav-title">Teacher Meme Generator</span>
+            <span className="nav-title">{LOL_NAV_TAGLINE}</span>
           </Link>
         </nav>
         <div className="loading-wrapper">
@@ -261,15 +262,7 @@ export default function CustomizePage() {
             height={40}
             priority
           />
-          <span className="nav-title">Teacher Meme Library</span>
-        </Link>
-        <Link
-          href={LOL_SIGNUP_URL}
-          className="nav-cta"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Sign up free
+          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
         </Link>
         <Link href="/" className="nav-link">
           ← All memes
@@ -284,7 +277,6 @@ export default function CustomizePage() {
           Edit the captions — same image, your words. Every save runs
           through a K-8 safety check before download.
         </p>
-        <LolSignupStrip className="hero-signup" />
       </section>
 
       <main className="container">
@@ -314,17 +306,8 @@ export default function CustomizePage() {
 
             {!editing ? (
               <>
-                <div className="meme-actions">
-                  <button className="action-btn" onClick={downloadPng}>
-                    <Icon name="download" />
-                    Download
-                  </button>
-                  <button className="action-btn" onClick={startEditAgain}>
-                    <Icon name="edit" />
-                    Edit again
-                  </button>
-                </div>
-                <SharePanel
+                <MemeQuickActions
+                  meme={meme}
                   share={{
                     path: meme.sharePath,
                     title: `${meme.formatName} · Teacher meme`,
@@ -332,7 +315,25 @@ export default function CustomizePage() {
                     imageUrl: meme.pngUrl,
                   }}
                   onToast={showToast}
+                  onShareMore={() => setShowSocialShare(true)}
                 />
+                <div className="meme-actions">
+                  <button className="action-btn" onClick={startEditAgain}>
+                    <Icon name="edit" />
+                    Edit again
+                  </button>
+                </div>
+                {showSocialShare ? (
+                  <SharePanel
+                    share={{
+                      path: meme.sharePath,
+                      title: `${meme.formatName} · Teacher meme`,
+                      text: `Found my new favorite teacher meme — "${shareTextLine}"`,
+                      imageUrl: meme.pngUrl,
+                    }}
+                    onToast={showToast}
+                  />
+                ) : null}
                 <LolSignupCta />
               </>
             ) : (
@@ -349,16 +350,7 @@ export default function CustomizePage() {
         )}
       </main>
 
-      <footer className="footer">
-        A fun project by{" "}
-        <a
-          href="https://www.legendsoflearning.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Legends of Learning
-        </a>
-      </footer>
+      <footer className="footer">{LOL_FOOTER_LINE}</footer>
 
       <div className={`toast ${toast ? "visible" : ""}`}>{toast}</div>
     </>

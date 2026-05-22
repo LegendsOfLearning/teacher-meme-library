@@ -55,6 +55,7 @@ export async function saveMeme({ id, pngBuffer, format, captions, meta = {} }) {
     pngUrl: `/memes/${id}.png`,
     sharePath: `/meme/${id}`,
     createdAt: new Date().toISOString(),
+    views: 0,
     ...meta,
   };
 
@@ -89,6 +90,26 @@ export async function listMemes(limit = 24) {
       // Skip unreadable records — this is a best-effort listing.
     }
   }
-  records.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  records.sort((a, b) => {
+    const viewDiff = (b.views || 0) - (a.views || 0);
+    if (viewDiff !== 0) return viewDiff;
+    return (b.createdAt || "").localeCompare(a.createdAt || "");
+  });
   return records.slice(0, limit);
+}
+
+/** Bump view count when a share page is opened (engagement sort). */
+export async function incrementMemeViews(id) {
+  if (!id || !/^[a-z0-9_-]{4,40}$/i.test(id)) return null;
+  const jsonPath = path.join(DATA_MEMES_DIR, `${id}.json`);
+  try {
+    const raw = await fs.readFile(jsonPath, "utf8");
+    const record = JSON.parse(raw);
+    record.views = (record.views || 0) + 1;
+    await fs.writeFile(jsonPath, JSON.stringify(record, null, 2));
+    return record.views;
+  } catch (e) {
+    if (e.code === "ENOENT") return null;
+    throw e;
+  }
 }
