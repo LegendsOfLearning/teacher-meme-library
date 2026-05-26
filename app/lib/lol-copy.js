@@ -7,14 +7,14 @@ export const LOL_NAV_TAGLINE = `${LOL_NAV_LEAD} Legends of Learning`;
 export const LOL_HERO_TITLE = "Teacher Meme Library";
 
 export const LOL_HERO_TAGLINE =
-  "Bringing joy to classrooms — one teacher meme at a time.";
+  "Bringing joy to classrooms, one teacher meme at a time!";
 
 export const LOL_HERO_BODY = "Funny, shareable memes made for teachers.";
 
 export const LOL_LIBRARY_HEADING = "Full library";
 
 export const LOL_LIBRARY_LEAD =
-  "Browse every meme — download, copy, share, or customize in a click.";
+  "Browse every meme: download, copy, share, or customize in a click.";
 
 export const LOL_SHARE_PANEL_INTRO =
   "Paste the image into a group chat, email, or post — or share a link to this page.";

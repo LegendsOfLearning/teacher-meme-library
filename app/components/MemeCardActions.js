@@ -45,10 +45,11 @@ export function MemeActionIcon({ name, size = 16 }) {
           <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
         </svg>
       );
-    case "sparkle":
+    case "edit":
       return (
         <svg {...common}>
-          <path d="M12 3v3M12 18v3M5 12H2M22 12h-3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+          <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
         </svg>
       );
     default:
@@ -62,7 +63,7 @@ export function canCustomizeItem(item) {
   );
 }
 
-/** Icon CTAs for download / copy / share; Customize keeps label. */
+/** Icon CTAs: download, copy, share, and edit (customize). */
 export default function MemeCardActions({
   item,
   onShare,
@@ -71,6 +72,7 @@ export default function MemeCardActions({
 }) {
   const customizable = canCustomizeItem(item);
   const iconSize = compact ? 14 : 16;
+  const actionCount = customizable ? 4 : 3;
 
   const download = useCallback(async () => {
     try {
@@ -94,9 +96,8 @@ export default function MemeCardActions({
 
   return (
     <div
-      className={`meme-card-actions${compact ? " meme-card-actions--compact" : ""}${
-        customizable ? "" : " meme-card-actions--icons-only"
-      }`}
+      className={`meme-card-actions${compact ? " meme-card-actions--compact" : ""}`}
+      data-action-count={actionCount}
     >
       <button
         type="button"
@@ -128,10 +129,11 @@ export default function MemeCardActions({
       {customizable ? (
         <Link
           href={`/customize?id=${encodeURIComponent(item.id)}`}
-          className="meme-text-btn"
+          className="meme-icon-btn meme-icon-btn--edit"
+          aria-label="Customize"
+          title="Customize"
         >
-          <MemeActionIcon name="sparkle" size={iconSize} />
-          <span>Customize</span>
+          <MemeActionIcon name="edit" size={iconSize} />
         </Link>
       ) : null}
     </div>

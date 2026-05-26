@@ -1,6 +1,6 @@
 // ─── Curated meme gallery ───────────────────────────────────────────
 //
-// 40 hand-curated teacher memes. Each was image-generated in the
+// 80 hand-curated teacher memes (AI art + template-rendered text variants). Each was image-generated in the
 // Disaster-Girl block-letter style, manually brand-safety reviewed
 // for K-8 audience (no profanity, no political content, no
 // sexual / drug / violence / self-harm content, no identifiable real
@@ -202,6 +202,66 @@ export const galleryItems = [
     situations: ["lesson-planning"],
   },
 
+  // ── Distracted Boyfriend (grading) ───────────────────────────────
+  {
+    id: "g13",
+    file: "/gallery/distracted-boyfriend-grading.png",
+    formatName: "Distracted Boyfriend",
+    captionPreview:
+      "LITERALLY ANY OTHER TASK / ME / GRADING THE STACK",
+    remixFormatId: "distracted-boyfriend",
+    captions: {
+      newGirl: "Literally any other task",
+      boyfriend: "Me",
+      girlfriend: "Grading the stack",
+    },
+    situations: ["grading-pile", "lesson-planning"],
+  },
+
+  // ── Hide the Pain Harold (committee) ─────────────────────────────
+  {
+    id: "g14",
+    file: "/gallery/harold-committee.png",
+    formatName: "Hide the Pain Harold",
+    captionPreview:
+      "ABSOLUTELY, I'D LOVE TO JOIN ANOTHER COMMITTEE / *INTERNAL SCREAMING*",
+    remixFormatId: "hide-the-pain-harold",
+    captions: {
+      top: "Absolutely, I'd love to join another committee",
+      bottom: "*internal screaming*",
+    },
+    situations: ["admin-observation", "monday-chaos"],
+  },
+
+  // ── Mocking SpongeBob (work-life) ────────────────────────────────
+  {
+    id: "g15",
+    file: "/gallery/spongebob-work-life.png",
+    formatName: "Mocking SpongeBob",
+    captionPreview:
+      "ME IN AUGUST: / THIS YEAR I WILL HAVE WORK LIFE BALANCE",
+    remixFormatId: "mocking-spongebob",
+    captions: {
+      top: "Me in August:",
+      bottom: "This year I will have work life balance",
+    },
+    situations: ["monday-chaos", "last-period-energy"],
+  },
+
+  // ── This Is Fine (urgent emails) ─────────────────────────────────
+  {
+    id: "g16",
+    file: "/gallery/this-is-fine-urgent.png",
+    formatName: "This Is Fine",
+    captionPreview: "13 EMAILS MARKED 'URGENT' / THIS IS FINE.",
+    remixFormatId: "this-is-fine",
+    captions: {
+      top: "13 emails marked 'urgent'",
+      bottom: "This is fine.",
+    },
+    situations: ["monday-chaos", "admin-observation"],
+  },
+
   // ── Woman Yelling at Cat ─────────────────────────────────────────
   {
     id: "g17",
@@ -381,7 +441,6 @@ export const galleryItems = [
       top: "Omg you must love your summers off!!",
       bottom: "I work 3 jobs",
     },
-    customizable: false,
     situations: ["last-period-energy"],
   },
 
@@ -562,6 +621,548 @@ export const galleryItems = [
       bottom: "Parent-teacher conferences",
     },
     situations: ["admin-observation", "last-period-energy"],
+  },
+
+  // ── Surprised Pikachu ────────────────────────────────────────────
+  {
+    id: "g41",
+    file: "/gallery/surprised-pikachu-open-note.png",
+    formatName: "Surprised Pikachu",
+    captionPreview:
+      "DOESN'T WRITE ANYTHING DOWN ALL UNIT / BOMBS THE OPEN-NOTE TEST",
+    remixFormatId: "surprised-pikachu",
+    captions: {
+      top: "Doesn't write anything down all unit",
+      bottom: "Bombs the open-note test",
+    },
+    situations: ["students-not-reading", "grading-pile"],
+  },
+
+  // ── Leo DiCaprio Cheers ──────────────────────────────────────────
+  {
+    id: "g42",
+    file: "/gallery/leo-cheers-laminator.png",
+    formatName: "Leo DiCaprio Cheers",
+    captionPreview:
+      "TO THE TEACHER WHO SHARED THEIR LAMINATOR. WE DON'T DESERVE YOU.",
+    remixFormatId: "leo-cheers",
+    captions: {
+      top: "To the teacher who shared their laminator. We don't deserve you.",
+    },
+    situations: ["monday-chaos", "group-work"],
+  },
+
+  // ── Ancient Aliens Guy ───────────────────────────────────────────
+  {
+    id: "g43",
+    file: "/gallery/ancient-aliens-pencils.png",
+    formatName: "Ancient Aliens Guy",
+    captionPreview:
+      "WHY DID EVERY KID FORGET THEIR PENCIL TODAY? / ALIENS.",
+    remixFormatId: "ancient-aliens",
+    captions: {
+      top: "Why did every kid forget their pencil today?",
+      bottom: "Aliens.",
+    },
+    situations: ["classroom-management", "monday-chaos"],
+  },
+
+  // ── Sad Pablo Waiting ────────────────────────────────────────────
+  {
+    id: "g44",
+    file: "/gallery/sad-pablo-turn-in-work.png",
+    formatName: "Sad Pablo Waiting",
+    captionPreview: "WAITING FOR THAT ONE KID TO TURN IN ANY WORK",
+    remixFormatId: "sad-pablo",
+    captions: { top: "Waiting for that one kid to turn in any work" },
+    situations: ["grading-pile", "students-not-reading"],
+  },
+
+  // ── Spider-Man Pointing ──────────────────────────────────────────
+  {
+    id: "g45",
+    file: "/gallery/spider-sub-plans.png",
+    formatName: "Spider-Man Pointing",
+    captionPreview: "THE SUB PLANS / WHAT ACTUALLY HAPPENED",
+    remixFormatId: "spider-pointing",
+    captions: { left: "The sub plans", right: "What actually happened" },
+    situations: ["lesson-planning", "classroom-management"],
+  },
+
+  // ── Never Gonna Give You Up ──────────────────────────────────────
+  {
+    id: "g46",
+    file: "/gallery/rickroll-answer-key.png",
+    formatName: "Never Gonna Give You Up",
+    captionPreview: "CLICK FOR THE ANSWER KEY / NEVER GONNA LET YOU DOWN",
+    remixFormatId: "rickroll",
+    captions: {
+      top: "Click for the answer key",
+      bottom: "Never gonna let you down",
+    },
+    situations: ["students-not-reading", "lesson-planning"],
+  },
+
+  // ── Drake Yes / No (rubric) ──────────────────────────────────────
+  {
+    id: "g47",
+    file: "/gallery/drake-rubric.png",
+    formatName: "Drake Yes / No",
+    captionPreview:
+      "READING THE RUBRIC I HANDED OUT / ASKING HOW TO GET AN A",
+    remixFormatId: "drake",
+    captions: {
+      no: "Reading the rubric I handed out",
+      yes: "Asking how to get an A",
+    },
+    situations: ["students-not-reading", "grading-pile"],
+  },
+
+  // ── Success Kid (Friday) ─────────────────────────────────────────
+  {
+    id: "g48",
+    file: "/gallery/success-kid-friday.png",
+    formatName: "Success Kid",
+    captionPreview: "MADE IT TO FRIDAY / WITHOUT CRYING IN THE SUPPLY CLOSET",
+    remixFormatId: "success-kid",
+    captions: {
+      top: "Made it to Friday",
+      bottom: "Without crying in the supply closet",
+    },
+    situations: ["monday-chaos", "last-period-energy"],
+  },
+
+  // ── Side-Eye Chloe (sub) ─────────────────────────────────────────
+  {
+    id: "g49",
+    file: "/gallery/side-eye-sub-angels.png",
+    formatName: "Side-Eye Chloe",
+    captionPreview:
+      "SUB: 'THEY WERE PERFECT ANGELS' / ME LOOKING AT MY CLASSROOM:",
+    remixFormatId: "side-eye-chloe",
+    captions: {
+      top: "Sub: 'They were perfect angels'",
+      bottom: "Me looking at my classroom:",
+    },
+    situations: ["classroom-management"],
+  },
+
+  // ── Crying Cat (copier) ────────────────────────────────────────────
+  {
+    id: "g50",
+    file: "/gallery/crying-cat-copier.png",
+    formatName: "Crying Cat",
+    captionPreview: "I'M FINE, THE COPIER ALWAYS EATS MY ORIGINALS",
+    remixFormatId: "crying-cat",
+    captions: { top: "I'm fine, the copier always eats my originals" },
+    situations: ["monday-chaos", "admin-observation"],
+  },
+
+  // ── Two Buttons (Sunday) ───────────────────────────────────────────
+  {
+    id: "g51",
+    file: "/gallery/two-buttons-sunday.png",
+    formatName: "Two Buttons",
+    captionPreview:
+      "GRADE THE PAPERS TONIGHT / SLEEP MORE THAN 5 HOURS / ME ON SUNDAY",
+    remixFormatId: "two-buttons",
+    captions: {
+      button1: "Grade the papers tonight",
+      button2: "Sleep more than 5 hours",
+      person: "Me on Sunday",
+    },
+    situations: ["grading-pile", "lesson-planning"],
+  },
+
+  // ── Grumpy Cat (engaging) ──────────────────────────────────────────
+  {
+    id: "g52",
+    file: "/gallery/grumpy-cat-engaging.png",
+    formatName: "Grumpy Cat",
+    captionPreview: "I MADE IT ENGAGING / THEY MADE IT 11 MINUTES LONG",
+    remixFormatId: "grumpy-cat",
+    captions: {
+      top: "I made it engaging",
+      bottom: "They made it 11 minutes long",
+    },
+    situations: ["lesson-planning", "classroom-management"],
+  },
+
+  // ── Woman Yelling at Cat (syllabus) ────────────────────────────────
+  {
+    id: "g53",
+    file: "/gallery/woman-yelling-syllabus.png",
+    formatName: "Woman Yelling at Cat",
+    captionPreview: "SYLLABUS FROM AUGUST? / NEVER SAW IT",
+    remixFormatId: "woman-yelling-at-cat",
+    captions: {
+      woman: "Syllabus from August?",
+      cat: "Never saw it",
+    },
+    situations: ["students-not-reading"],
+  },
+
+  // ── Change My Mind (field trip) ────────────────────────────────────
+  {
+    id: "g54",
+    file: "/gallery/change-my-mind-field-trip.png",
+    formatName: "Change My Mind",
+    captionPreview: "FIELD TRIPS = 6-HOUR WALKS",
+    remixFormatId: "change-my-mind",
+    captions: { sign: "Field trips = 6-hour walks" },
+    situations: ["lesson-planning", "last-period-energy"],
+  },
+
+  // ── Sad Pepe (strict one) ──────────────────────────────────────────
+  {
+    id: "g55",
+    file: "/gallery/pepe-strict-one.png",
+    formatName: "Sad Pepe",
+    captionPreview: "THE STRICT ONE / FEELS OLD MAN",
+    remixFormatId: "pepe",
+    captions: {
+      top: "The strict one",
+      bottom: "feels old man",
+    },
+    situations: ["classroom-management"],
+  },
+
+  // ── Doge (Monday IEP) ──────────────────────────────────────────────
+  {
+    id: "g56",
+    file: "/gallery/doge-monday-iep.png",
+    formatName: "Doge",
+    captionPreview: "SUCH MONDAY / VERY IEP / MUCH PAPERWORK / WOW",
+    remixFormatId: "doge",
+    captions: {
+      doge1: "such monday",
+      doge2: "very iep",
+      doge3: "much paperwork",
+      doge4: "wow",
+    },
+    situations: ["monday-chaos", "admin-observation"],
+  },
+
+  // ── Math Lady (bathroom) ───────────────────────────────────────────
+  {
+    id: "g57",
+    file: "/gallery/math-lady-bathroom.png",
+    formatName: "Math Lady",
+    captionPreview: "COUNTING KIDS BACK FROM THE BATHROOM",
+    remixFormatId: "math-lady",
+    captions: { top: "Counting kids back from the bathroom" },
+    situations: ["classroom-management"],
+  },
+
+  // ── Waiting Skeleton (planning) ────────────────────────────────────
+  {
+    id: "g58",
+    file: "/gallery/waiting-skeleton-planning.png",
+    formatName: "Waiting Skeleton",
+    captionPreview: "ME WAITING / FOR A QUIET PLANNING PERIOD",
+    remixFormatId: "waiting-skeleton",
+    captions: { top: "Me waiting", bottom: "For a quiet planning period" },
+    situations: ["lesson-planning", "last-period-energy"],
+  },
+
+  // ── They're the Same Picture (bell) ────────────────────────────────
+  {
+    id: "g59",
+    file: "/gallery/same-picture-bell.png",
+    formatName: "They're the Same Picture",
+    captionPreview: "LESSON PLAN / AFTER THE BELL RINGS",
+    remixFormatId: "same-picture",
+    captions: {
+      left: "Lesson plan",
+      right: "After the bell rings",
+    },
+    situations: ["lesson-planning", "classroom-management"],
+  },
+
+  // ── Expanding Brain (reuse) ──────────────────────────────────────────
+  {
+    id: "g60",
+    file: "/gallery/expanding-brain-reuse.png",
+    formatName: "Expanding Brain",
+    captionPreview:
+      "PLAN A LESSON / REUSE LAST YEAR / CALL IT BRAND NEW / THEY TEACH, I 'FACILITATE'",
+    remixFormatId: "expanding-brain",
+    captions: {
+      level1: "Plan a lesson",
+      level2: "Reuse last year's lesson",
+      level3: "Reuse it, call it brand new",
+      level4: "They teach; I 'facilitate'",
+    },
+    situations: ["lesson-planning"],
+  },
+
+  // ── Text variants (g61–g80): same formats, new captions ─────────────
+
+  {
+    id: "g61",
+    file: "/gallery/distracted-off-topic-question.png",
+    formatName: "Distracted Boyfriend",
+    captionPreview:
+      "ONE OFF-TOPIC QUESTION / ME / LESSON PLAN",
+    remixFormatId: "distracted-boyfriend",
+    captions: {
+      newGirl: "One student asking a completely unrelated question",
+      boyfriend: "Me",
+      girlfriend: "Lesson plan",
+    },
+    searchKeywords: ["distraction", "lesson plan", "off topic"],
+    situations: ["lesson-planning", "classroom-management"],
+  },
+  {
+    id: "g62",
+    file: "/gallery/distracted-pinterest-sunday.png",
+    formatName: "Distracted Boyfriend",
+    captionPreview: "PINTEREST ANCHOR CHARTS / ME ON SUNDAY / ACTUAL PLANNING",
+    remixFormatId: "distracted-boyfriend",
+    captions: {
+      newGirl: "Anchor charts on Pinterest",
+      boyfriend: "Me on Sunday night",
+      girlfriend: "Actual lesson planning",
+    },
+    searchKeywords: ["pinterest", "sunday", "planning"],
+    situations: ["lesson-planning"],
+  },
+  {
+    id: "g63",
+    file: "/gallery/drake-reading-directions.png",
+    formatName: "Drake Yes / No",
+    captionPreview:
+      "STUDENTS READING DIRECTIONS / STUDENTS ASKING WHAT ARE WE DOING",
+    remixFormatId: "drake",
+    captions: {
+      no: "Students reading directions",
+      yes: "Students asking 'what are we doing?'",
+    },
+    searchKeywords: ["directions", "students"],
+    situations: ["students-not-reading"],
+  },
+  {
+    id: "g64",
+    file: "/gallery/drake-pencils-down.png",
+    formatName: "Drake Yes / No",
+    captionPreview: "TIME FOR QUESTIONS / ASKING WHEN I SAY PENCILS DOWN",
+    remixFormatId: "drake",
+    captions: {
+      no: "Using the 5 minutes I gave for questions",
+      yes: "Asking the second I say 'pencils down'",
+    },
+    searchKeywords: ["pencils down", "questions"],
+    situations: ["students-not-reading", "classroom-management"],
+  },
+  {
+    id: "g65",
+    file: "/gallery/success-kid-45-minutes.png",
+    formatName: "Success Kid",
+    captionPreview: "PLANNED 45 MINUTES / IT LASTED 45 MINUTES",
+    remixFormatId: "success-kid",
+    captions: {
+      top: "Planned a 45-minute lesson",
+      bottom: "It actually lasted 45 minutes",
+    },
+    searchKeywords: ["lesson timing", "win"],
+    situations: ["lesson-planning"],
+  },
+  {
+    id: "g66",
+    file: "/gallery/success-kid-real-questions.png",
+    formatName: "Success Kid",
+    captionPreview: "ASKED WHO HAS QUESTIONS / GOT REAL QUESTIONS",
+    remixFormatId: "success-kid",
+    captions: {
+      top: "Asked who has questions",
+      bottom: "Got real questions, not 'can I go to the bathroom'",
+    },
+    searchKeywords: ["questions", "bathroom"],
+    situations: ["classroom-management"],
+  },
+  {
+    id: "g67",
+    file: "/gallery/grumpy-planning-days.png",
+    formatName: "Grumpy Cat",
+    captionPreview: "THREE DAYS OFF / TWO ARE PLANNING DAYS",
+    remixFormatId: "grumpy-cat",
+    captions: {
+      top: "Three days off in a row",
+      bottom: "Two of them are 'planning days'",
+    },
+    searchKeywords: ["break", "planning days"],
+    situations: ["lesson-planning", "monday-chaos"],
+  },
+  {
+    id: "g68",
+    file: "/gallery/grumpy-sub-left-lunch.png",
+    formatName: "Grumpy Cat",
+    captionPreview: "SUB PLANS TOOK 2 HOURS / SUB LEFT AT LUNCH",
+    remixFormatId: "grumpy-cat",
+    captions: {
+      top: "Sub plans took 2 hours",
+      bottom: "Sub left at lunch",
+    },
+    searchKeywords: ["substitute", "sub plans"],
+    situations: ["lesson-planning", "classroom-management"],
+  },
+  {
+    id: "g69",
+    file: "/gallery/disaster-girl-feral.png",
+    formatName: "Disaster Girl",
+    captionPreview: "WHEN ADMIN WALKS IN / CLASS GOES FERAL",
+    remixFormatId: "disaster-girl",
+    captions: {
+      top: "When admin walks in",
+      bottom: "Right as the class goes feral",
+    },
+    searchKeywords: ["admin", "observation"],
+    situations: ["admin-observation", "classroom-management"],
+  },
+  {
+    id: "g70",
+    file: "/gallery/disaster-girl-30-seconds.png",
+    formatName: "Disaster Girl",
+    captionPreview: "LEFT FOR 30 SECONDS / CAME BACK TO A SMALL SOCIETY",
+    remixFormatId: "disaster-girl",
+    captions: {
+      top: "When I left my own classroom for 30 seconds",
+      bottom: "And came back to a small society",
+    },
+    searchKeywords: ["hallway", "chaos"],
+    situations: ["classroom-management"],
+  },
+  {
+    id: "g71",
+    file: "/gallery/woman-yelling-turn-in.png",
+    formatName: "Woman Yelling at Cat",
+    captionPreview: "WHY DIDN'T YOU TURN IT IN? / ABSENT 5 MINUTES",
+    remixFormatId: "woman-yelling-at-cat",
+    captions: {
+      woman: "Why didn't you turn it in?",
+      cat: "I was absent... for 5 minutes",
+    },
+    searchKeywords: ["turn in", "homework", "absent"],
+    situations: ["students-not-reading", "grading-pile"],
+  },
+  {
+    id: "g72",
+    file: "/gallery/woman-yelling-syllabus-august.png",
+    formatName: "Woman Yelling at Cat",
+    captionPreview: "SYLLABUS SINCE AUGUST? / NEVER SAW THIS DOCUMENT",
+    remixFormatId: "woman-yelling-at-cat",
+    captions: {
+      woman: "Where is the syllabus you've had since August?",
+      cat: "I've literally never seen this document",
+    },
+    searchKeywords: ["syllabus", "august"],
+    situations: ["students-not-reading"],
+  },
+  {
+    id: "g73",
+    file: "/gallery/this-is-fine-ungraded.png",
+    formatName: "This Is Fine",
+    captionPreview: "STACK OF UNGRADED PAPERS / THIS IS FINE.",
+    remixFormatId: "this-is-fine",
+    captions: {
+      top: "Stack of ungraded papers",
+      bottom: "This is fine.",
+    },
+    searchKeywords: ["grading", "papers"],
+    situations: ["grading-pile"],
+  },
+  {
+    id: "g74",
+    file: "/gallery/this-is-fine-lesson-plans.png",
+    formatName: "This Is Fine",
+    captionPreview: "LESSON PLANS DUE TOMORROW / THIS IS FINE.",
+    remixFormatId: "this-is-fine",
+    captions: {
+      top: "Lesson plans due tomorrow, I have not started",
+      bottom: "This is fine.",
+    },
+    searchKeywords: ["lesson plans", "tomorrow"],
+    situations: ["lesson-planning", "monday-chaos"],
+  },
+  {
+    id: "g75",
+    file: "/gallery/pikachu-test-tomorrow.png",
+    formatName: "Surprised Pikachu",
+    captionPreview: "TEST IS TOMORROW / STUDENTS DIDN'T STUDY",
+    remixFormatId: "surprised-pikachu",
+    captions: {
+      top: "Teacher: 'The test is tomorrow'",
+      bottom: "Students didn't study",
+    },
+    searchKeywords: ["test", "study"],
+    situations: ["students-not-reading", "grading-pile"],
+  },
+  {
+    id: "g76",
+    file: "/gallery/pikachu-homework-clueless.png",
+    formatName: "Surprised Pikachu",
+    captionPreview: "TALKED ALL PERIOD / NO IDEA WHAT THE HOMEWORK IS",
+    remixFormatId: "surprised-pikachu",
+    captions: {
+      top: "Talks the whole class period",
+      bottom: "Has no idea what the homework is",
+    },
+    searchKeywords: ["homework", "clueless"],
+    situations: ["students-not-reading"],
+  },
+  {
+    id: "g77",
+    file: "/gallery/spongebob-real-life-meme.png",
+    formatName: "Mocking SpongeBob",
+    captionPreview: "STUDENTS / WHEN ARE WE GONNA USE THIS IN REAL LIFE",
+    remixFormatId: "mocking-spongebob",
+    captions: {
+      top: "Students:",
+      bottom: "When are we ever gonna use this in real life",
+    },
+    searchKeywords: ["real life", "spongebob"],
+    situations: ["students-not-reading"],
+  },
+  {
+    id: "g78",
+    file: "/gallery/harold-love-my-job.png",
+    formatName: "Hide the Pain Harold",
+    captionPreview: "I LOVE MY JOB / EXPLAINING IT FOR THE 3RD TIME",
+    remixFormatId: "hide-the-pain-harold",
+    captions: {
+      top: "I love my job",
+      bottom: "*3rd time explaining the same thing*",
+    },
+    searchKeywords: ["explaining", "repeat"],
+    situations: ["students-not-reading", "classroom-management"],
+  },
+  {
+    id: "g79",
+    file: "/gallery/harold-another-committee.png",
+    formatName: "Hide the Pain Harold",
+    captionPreview: "HAPPY TO JOIN ANOTHER COMMITTEE / FIVE SECONDS FROM BREAKDOWN",
+    remixFormatId: "hide-the-pain-harold",
+    captions: {
+      top: "Of course, I'd be happy to take on another committee",
+      bottom: "I am five seconds from a breakdown",
+    },
+    searchKeywords: ["committee", "admin"],
+    situations: ["admin-observation", "monday-chaos"],
+  },
+  {
+    id: "g80",
+    file: "/gallery/two-buttons-review-day.png",
+    formatName: "Two Buttons",
+    captionPreview:
+      "STUDY FOR THE TEST / SKIP REVIEW DAY / ME",
+    remixFormatId: "two-buttons",
+    captions: {
+      button1: "Study for the test",
+      button2: "Skip review day",
+      person: "Me",
+    },
+    searchKeywords: ["test", "review"],
+    situations: ["lesson-planning", "students-not-reading"],
   },
 ];
 

@@ -464,7 +464,19 @@ function fitCaptionAwayFromReserve({
       if (overflow > 0) curTx += overflow;
     }
 
-    curFs = Math.max(12, Math.floor(curFs * 0.88));
+    const shrinkFloor = zone.minFontSize ?? 40;
+    if (curFs <= shrinkFloor) {
+      return {
+        tx: curTx,
+        fs: curFs,
+        lines: curLines,
+        lineHeight: curLh,
+        strokeWidth: curStroke,
+        blockTop,
+        firstBaseline: blockTop + curFs * 0.92,
+      };
+    }
+    curFs = Math.max(shrinkFloor, Math.floor(curFs * 0.92));
     curLh = curFs;
     const refit = fitText(text, w, h, zone.maxLines || 3, family, curFs);
     curLines = refit.lines;
@@ -566,7 +578,8 @@ function enforceCaptionClearOfReserve(ctx) {
         blockTop = Math.max(y, blockTop);
       }
     }
-    fs = Math.max(10, fs - 2);
+    const floorFs = zone.minFontSize ?? (zone.style === "caption" ? 40 : 32);
+    fs = Math.max(floorFs, fs - 2);
     lineHeight = fs;
     const refit = fitText(text, w, h, zone.maxLines || 3, family, fs);
     lines = refit.lines;
@@ -768,7 +781,7 @@ function balancedSplit(words, k) {
 // around 40–50% of the band with breathing room. Without this cap,
 // short custom text ("TESTTT") balloons to ~95% of zone height and
 // the heavy stroke reads as a solid black slab covering the photo.
-const MAX_LINE_FS_RATIO = 0.46;
+const MAX_LINE_FS_RATIO = 0.92;
 
 // Choose font size + line layout. Tries every `k` in [1..maxLines],
 // picks the smallest `k` whose font size is within 75% of the best,
@@ -800,31 +813,25 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize) {
     // Very short strings shouldn't scale to the width limit alone —
     // keep them closer to a "label" size so they don't dominate the
     // frame (Hide the Pain Harold customize was the main offender).
-    if (charCount <= 14 && k === 1) {
+    if (charCount <= 6 && k === 1) {
       fs = Math.floor(Math.min(fs, lineSlot * 0.38, widthFs * 0.55));
     }
-    if (fs < 12) continue;
+    if (fs < 36) continue;
     candidates.push({ fs, lines: split.lines, k });
   }
 
   if (candidates.length === 0) {
-    // Last resort: greedy wrap at min size; better than crashing.
+    const floorFs = Math.max(40, Math.floor(Math.min(maxWidth, maxHeight) * 0.28));
     return {
-      fs: 12,
-      lines: wrapText(text, maxWidth, 12, family),
-      lineHeight: 12,
+      fs: floorFs,
+      lines: wrapText(text, maxWidth, floorFs, family),
+      lineHeight: floorFs,
     };
   }
 
-  // Fewer-lines preference: among (k, fs) pairs, accept any whose
-  // fs is at least 75% of the best fs, then take the smallest k.
-  // This produces the "STUDENTS / READING / DIRECTIONS" feel rather
-  // than fragmented "FINISHING / THE FULL / LESSON / PLAN".
-  const maxFs = Math.max(...candidates.map((c) => c.fs));
-  const threshold = maxFs * 0.75;
-  const acceptable = candidates.filter((c) => c.fs >= threshold);
-  acceptable.sort((a, b) => a.k - b.k);
-  const chosen = acceptable[0];
+  // Prefer the largest readable font; tie-break toward fewer lines.
+  candidates.sort((a, b) => b.fs - a.fs || a.k - b.k);
+  const chosen = candidates[0];
 
   return { fs: chosen.fs, lines: chosen.lines, lineHeight: chosen.fs };
 }
@@ -856,11 +863,16 @@ function resolveZoneStyle(zone) {
         strokeRatio: 0.06,
       };
     case "dark-on-light":
+      return {
+        family: IMPACT_FAMILY,
+        transform: (s) => s.toUpperCase(),
+        fill: "#000000",
+        stroke: "none",
+        strokeRatio: 0,
+      };
     case "caption":
     default:
-      // Unified caption look: Impact white-fill + heavy black stroke
-      // ALL CAPS. Same on photographic backgrounds AND on Drake-style
-      // blank panels — that's what real internet memes look like.
+      // Impact white-fill + heavy black stroke on photo / black bands.
       //
       // Stroke ratio 0.28 with paint-order=stroke fill gives a visible
       // outline of ~14% of font size. That's higher than the canonical
@@ -886,7 +898,7 @@ function resolveZoneStyle(zone) {
 // pixels. We always upscale to at least OUTPUT_MIN_WIDTH so every
 // finished meme has the same chunky, heavy-stroke look you see in
 // viral teacher memes regardless of source template size.
-const OUTPUT_MIN_WIDTH = 1080;
+const OUTPUT_MIN_WIDTH = 1200;
 
 export function getRenderSize(format) {
   if (format.width >= OUTPUT_MIN_WIDTH) {
@@ -920,19 +932,48 @@ function renderZone(zone, rawText, imgW, imgH, watermark) {
     ));
   }
 
-  const naturalStart = Math.min(h * 0.55, w * 0.22);
-  let zoneMaxFs =
-    zone.maxFontSize ?? Math.floor((h / (zone.maxLines || 2)) * 0.48);
-  let startSize = Math.min(naturalStart, zoneMaxFs);
+  const naturalStart = Math.min(h * 0.95, w * 0.42);
+  let zoneMaxFs = zone.maxFontSize ?? Math.floor(h * 0.78);
+  const zoneMinFs =
+    zone.minFontSize ??
+    (zone.style === "doge"
+      ? 44
+      : zone.style === "sign"
+        ? 50
+        : zone.style === "caption"
+          ? 52
+          : 0);
+  let startSize = Math.max(zoneMinFs || 0, Math.min(naturalStart, zoneMaxFs));
 
   let { fs, lines, lineHeight } = fitText(
     text,
     w,
     h,
-    zone.maxLines || 3,
+    zone.maxLines ?? 2,
     style.family,
     startSize
   );
+
+  if (zoneMinFs > 0 && fs < zoneMinFs) {
+    const retry = fitText(
+      text,
+      w,
+      h,
+      zone.maxLines ?? 2,
+      style.family,
+      Math.max(zoneMinFs, zoneMaxFs, startSize)
+    );
+    if (retry.fs >= zoneMinFs) {
+      ({ fs, lines, lineHeight } = retry);
+    } else {
+      fs = zoneMinFs;
+      lines = wrapText(text, w, zoneMinFs, style.family).slice(
+        0,
+        zone.maxLines ?? 3
+      );
+      lineHeight = zoneMinFs;
+    }
+  }
 
   const align = zone.align || "center";
   let anchor = "middle";

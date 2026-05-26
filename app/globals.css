@@ -889,6 +889,12 @@ a {
   font-size: 0.95rem;
 }
 
+.share-cta-card .cta-button--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .share-cta-card .cta-button:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -922,9 +928,132 @@ a {
 .gallery-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin: 0 0 10px;
   padding-bottom: 4px;
+}
+
+.gallery-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 180px;
+  min-width: min(100%, 200px);
+  max-width: 280px;
+  padding: 0 12px;
+  height: 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.gallery-search:focus-within {
+  border-color: var(--purple-400);
+  box-shadow: 0 0 0 3px rgba(124, 92, 191, 0.15);
+}
+
+.gallery-search-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.gallery-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--text-body);
+  outline: none;
+}
+
+.gallery-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.gallery-search-suggestions {
+  margin: -4px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-soft);
+}
+
+.gallery-search-suggestions-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.gallery-search-suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gallery-search-suggestion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.gallery-search-suggestion:hover {
+  border-color: var(--purple-300);
+  background: var(--purple-100);
+}
+
+.gallery-search-suggestion-title {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.gallery-search-suggestion-detail {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.gallery-empty {
+  margin: 8px 0 24px;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-soft);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .gallery-meta {
@@ -1188,7 +1317,7 @@ a {
   line-height: 1.2;
 }
 
-/* ── Shared meme card actions (icon + Customize label) ───────────── */
+/* ── Shared meme card actions (icon row) ─────────────────────────── */
 
 .meme-card-actions {
   display: flex;
@@ -1201,8 +1330,10 @@ a {
   gap: 3px;
 }
 
-.meme-card-actions--icons-only .meme-icon-btn {
+.meme-card-actions .meme-icon-btn,
+.meme-card-actions .meme-icon-btn--edit {
   flex: 1;
+  min-width: 0;
 }
 
 .meme-icon-btn {
@@ -1221,10 +1352,9 @@ a {
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 
-.meme-card-actions--compact .meme-icon-btn {
-  flex: 1;
+.meme-card-actions--compact .meme-icon-btn,
+.meme-card-actions--compact .meme-icon-btn--edit {
   width: auto;
-  min-width: 0;
   height: 28px;
   border-radius: 6px;
 }
@@ -1245,34 +1375,11 @@ a {
   border-color: var(--purple-700);
 }
 
-.meme-text-btn {
-  flex: 1;
-  min-width: 0;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-soft);
-  font-family: var(--font-display);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-heading);
+.meme-icon-btn--edit {
   text-decoration: none;
-  white-space: nowrap;
-  transition: background 0.12s ease, border-color 0.12s ease;
 }
 
-.meme-card-actions--compact .meme-text-btn {
-  height: 28px;
-  font-size: 0.6rem;
-  padding: 0 6px;
-}
-
-.meme-text-btn:hover {
+.meme-icon-btn--edit:hover {
   background: var(--purple-100);
   border-color: var(--purple-300);
   color: var(--purple-700);
