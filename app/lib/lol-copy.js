@@ -1,6 +1,8 @@
 // Shared Legends of Learning pitch copy (consistent casing & grades).
 
-export const LOL_NAV_TAGLINE = "A fun free resource from Legends of Learning";
+export const LOL_NAV_LEAD = "A fun free resource from";
+
+export const LOL_NAV_TAGLINE = `${LOL_NAV_LEAD} Legends of Learning`;
 
 export const LOL_HERO_TITLE = "Teacher Meme Library";
 

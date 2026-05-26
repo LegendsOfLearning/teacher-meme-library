@@ -10,7 +10,8 @@ import { getGalleryItemById } from "../lib/gallery";
 import SharePanel from "../components/SharePanel";
 import MemeQuickActions from "../components/MemeQuickActions";
 import LolSignupCta from "../components/LolSignupCta";
-import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../lib/lol-copy";
+import LolNavBrand from "../components/LolNavBrand";
+import { LOL_FOOTER_LINE } from "../lib/lol-copy";
 
 // ─── Inline icon set ─────────────────────────────────────────────────────
 function Icon({ name }) {
@@ -224,20 +225,7 @@ export default function CustomizePage() {
     return (
       <>
         <nav className="nav">
-          <Link
-            href="/"
-            className="nav-brand"
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <Image
-              src="/legends-logo-white.png"
-              alt="Legends of Learning"
-              width={110}
-              height={40}
-              priority
-            />
-            <span className="nav-title">{LOL_NAV_TAGLINE}</span>
-          </Link>
+          <LolNavBrand />
         </nav>
         <div className="loading-wrapper">
           <div className="loading-spinner" />
@@ -250,23 +238,10 @@ export default function CustomizePage() {
   return (
     <>
       <nav className="nav">
-        <Link
-          href="/"
-          className="nav-brand"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          <Image
-            src="/legends-logo-white.png"
-            alt="Legends of Learning"
-            width={110}
-            height={40}
-            priority
-          />
-          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
-        </Link>
         <Link href="/" className="nav-link">
           ← All memes
         </Link>
+        <LolNavBrand />
       </nav>
 
       <section className="hero customize-hero">

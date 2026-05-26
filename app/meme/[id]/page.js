@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { getMeme } from "../../lib/storage";
 import ShareActions from "./ShareActions";
 import MemeViewTracker from "../../components/MemeViewTracker";
 import LolSignupCta from "../../components/LolSignupCta";
-import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../../lib/lol-copy";
+import LolNavBrand from "../../components/LolNavBrand";
+import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
 
 export const dynamic = "force-dynamic";
 
@@ -74,20 +74,7 @@ export default async function MemePage({ params }) {
     <>
       <MemeViewTracker memeId={meme.id} />
       <nav className="nav">
-        <Link
-          href="/"
-          className="nav-brand"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          <Image
-            src="/legends-logo-white.png"
-            alt="Legends of Learning"
-            width={110}
-            height={40}
-            priority
-          />
-          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
-        </Link>
+        <LolNavBrand />
       </nav>
 
       <main className="share-page">

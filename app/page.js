@@ -1,4 +1,3 @@
-import Image from "next/image";
 import path from "node:path";
 import { statSync } from "node:fs";
 import {
@@ -9,13 +8,13 @@ import { getHotMemes, getMemeOfTheDay } from "./lib/gallery-featured";
 import GalleryGrid from "./gallery/GalleryGrid";
 import HomeFeaturedStrip from "./components/HomeFeaturedStrip";
 import HomePageBottom from "./components/HomePageBottom";
+import LolNavBrand from "./components/LolNavBrand";
 import {
   LOL_HERO_BODY,
   LOL_HERO_TAGLINE,
   LOL_HERO_TITLE,
   LOL_LIBRARY_HEADING,
   LOL_LIBRARY_LEAD,
-  LOL_NAV_TAGLINE,
 } from "./lib/lol-copy";
 
 function withCacheBust(items) {
@@ -55,16 +54,7 @@ export default async function Home() {
   return (
     <>
       <nav className="nav">
-        <div className="nav-brand">
-          <Image
-            src="/legends-logo-white.png"
-            alt="Legends of Learning"
-            width={110}
-            height={40}
-            priority
-          />
-          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
-        </div>
+        <LolNavBrand />
       </nav>
 
       <section className="hero hero-compact" aria-labelledby="hero-headline">

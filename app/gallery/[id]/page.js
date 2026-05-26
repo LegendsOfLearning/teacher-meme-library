@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { getGalleryItemById } from "../../lib/gallery";
 import ShareGalleryActions from "./ShareGalleryActions";
 import LolSignupCta from "../../components/LolSignupCta";
-import { LOL_FOOTER_LINE, LOL_NAV_TAGLINE } from "../../lib/lol-copy";
+import LolNavBrand from "../../components/LolNavBrand";
+import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
 
 // Permanent, shareable, social-preview-ready URL for a single
 // gallery item. Mirrors /meme/[id] but reads from the curated
@@ -65,23 +65,10 @@ export default async function GalleryItemPage({ params }) {
   return (
     <>
       <nav className="nav">
-        <Link
-          href="/"
-          className="nav-brand"
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          <Image
-            src="/legends-logo-white.png"
-            alt="Legends of Learning"
-            width={110}
-            height={40}
-            priority
-          />
-          <span className="nav-title">{LOL_NAV_TAGLINE}</span>
-        </Link>
         <Link href="/" className="nav-link">
           ← All memes
         </Link>
+        <LolNavBrand />
       </nav>
 
       <main className="share-page">
