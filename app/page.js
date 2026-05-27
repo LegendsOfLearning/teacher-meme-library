@@ -32,11 +32,11 @@ function withCacheBust(items) {
 }
 
 export const metadata = {
-  title: "Teacher Meme Library | Legends of Learning",
+  title: "Free Classroom Memes | Legends of Learning",
   description:
-    "A free teacher meme library from Legends of Learning. Share or customize classroom-safe memes — then explore free game-based learning when you're ready.",
+    "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes — then explore free game-based learning when you're ready.",
   openGraph: {
-    title: "Teacher Meme Library",
+    title: "Free Classroom Memes",
     description:
       "Hand-picked, classroom-safe teacher memes. Share or remix in two clicks.",
     type: "website",

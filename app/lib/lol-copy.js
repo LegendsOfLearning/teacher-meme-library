@@ -4,7 +4,7 @@ export const LOL_NAV_LEAD = "A fun free resource from";
 
 export const LOL_NAV_TAGLINE = `${LOL_NAV_LEAD} Legends of Learning`;
 
-export const LOL_HERO_TITLE = "Teacher Meme Library";
+export const LOL_HERO_TITLE = "Free Classroom Memes";
 
 export const LOL_HERO_TAGLINE =
   "Bringing joy to classrooms, one teacher meme at a time!";
