@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { LOL_ABOUT_URL, LOL_SIGNUP_URL } from "../lib/share-links";
 import { trackEvent } from "../lib/analytics";
