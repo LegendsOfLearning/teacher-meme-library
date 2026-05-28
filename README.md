@@ -66,7 +66,7 @@ app/
     ├── workflow.js          The 9-step agentic pipeline
     ├── llm.js               Model-agnostic LLM adapter (OpenAI today)
     ├── render.js            sharp + SVG meme renderer
-    ├── storage.js           File-based meme persistence (PNG + JSON)
+    ├── storage.js           Meme persistence (local disk / Vercel Blob)
     ├── moderation.js        OpenAI omni-moderation wrapper
     └── blocklist.js         Fast local blocklist with leet-speak fuzzing
 

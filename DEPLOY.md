@@ -52,6 +52,7 @@ En **Project → Settings → Environment Variables**:
 | `OPENAI_API_KEY` | Recomendada | Sin ella, customize/generate usan captions de ejemplo + blocklist (MVP funciona, menos “mágico”). |
 | `OPENAI_MODEL` | Opcional | Default `gpt-4.1-mini`. |
 | `NEXT_PUBLIC_SITE_URL` | Recomendada en prod | URL canónica, ej. `https://teacher-meme-library.vercel.app` — mejora previews al compartir en `/meme/[id]`. |
+| `BLOB_READ_WRITE_TOKEN` | **Requerida en prod** | Crea un **Blob store** en Vercel (Project → Storage → Connect Store → Blob). Vercel inyecta el token solo. Sin Blob, customize/generate guardan un PNG inline (download OK, share links no persisten). |
 
 `VERCEL_URL` la rellena Vercel sola si no pones `NEXT_PUBLIC_SITE_URL`.
 
@@ -65,9 +66,11 @@ Copia desde `.env.example`; **no** subas `.env.local` a git.
 
 ## Limitación conocida (MVP)
 
-Los memes **nuevos** guardados en `/public/memes` y `/data/memes` viven en el filesystem del servidor. En Vercel ese disco es **efímero**: un meme generado puede no persistir tras un redeploy o cold start. La **galería curada** en `/public/gallery` sí es permanente (va en el build).
+En **local**, los memes nuevos se guardan en `public/memes/` + `data/memes/`.
 
-Para persistencia real en producción: Vercel Blob, S3 o R2 (futuro).
+En **Vercel**, conecta un **Blob store** (ver `BLOB_READ_WRITE_TOKEN` arriba). Los PNG + JSON viven en Vercel Blob con URLs públicas; `/meme/[id]` y share previews funcionan igual que en local.
+
+Sin Blob store, customize/generate **no fallan**: devuelven un PNG inline para preview/download, pero el link `/meme/<id>` no persistirá.
 
 ## Después del deploy
 

@@ -179,6 +179,9 @@ export default function CustomizePage() {
       if (!res.ok) throw new Error(data.error || "Edit failed");
       setMeme(data);
       setEditing(false);
+      if (data.ephemeral) {
+        showToast("Ready to download — ask your admin to enable Blob storage for share links");
+      }
       setTimeout(
         () =>
           memeAnchorRef.current?.scrollIntoView({
@@ -192,7 +195,7 @@ export default function CustomizePage() {
     } finally {
       setLoading(false);
     }
-  }, [editValues, format, item, safetyError]);
+  }, [editValues, format, item, safetyError, showToast]);
 
   const startEditAgain = () => {
     if (!meme) return;

@@ -5,6 +5,7 @@
   "description": "Teacher Meme Generator — 20 real meme formats, multi-step agentic captioning, school-safe by design. By Legends of Learning.",
   "engines": { "node": ">=20" },
   "dependencies": {
+    "@vercel/blob": "^2.4.0",
     "nanoid": "^5.0.0",
     "next": "latest",
     "react": "latest",

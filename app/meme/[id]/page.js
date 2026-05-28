@@ -6,7 +6,7 @@ import MemeViewTracker from "../../components/MemeViewTracker";
 import LolSignupCta from "../../components/LolSignupCta";
 import LolNavBrand from "../../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
-import { serverShareOrigin } from "../../lib/share-links";
+import { absoluteUrl, serverShareOrigin } from "../../lib/share-links";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
   const origin = serverShareOrigin();
   const description = describeCaption(meme.captions);
   const title = `${meme.formatName} · Teacher meme`;
-  const fullImageUrl = `${origin}${meme.pngUrl}`;
+  const fullImageUrl = absoluteUrl(meme.pngUrl);
   const fullPageUrl = `${origin}${meme.sharePath}`;
   return {
     title: `${title} | Legends of Learning`,
