@@ -1,101 +1,30 @@
 // Server-side meme renderer using sharp + SVG overlays.
 //
-// ── Why we install fonts at startup instead of @font-face data: URLs ──
-// sharp 0.34's bundled librsvg (2.61) does NOT honor @font-face rules
-// at all — base64-embedded fonts, file:// URLs, every MIME variant,
-// they all silently fall back to a generic sans-serif. I tested seven
-// permutations and every single one rendered byte-identically to the
-// fallback, which means our memes were shipping in DejaVu/Helvetica
-// the whole time, not Anton. That's why teachers were seeing thin,
-// not-Impact-looking text no matter how much we cranked the stroke.
+// Fonts: see font-setup.js — must load BEFORE sharp so librsvg/fontconfig
+// can find Impact + Comic Neue on Vercel (FONTCONFIG_FILE → /tmp).
 //
-// The fix that actually works: install fonts into a directory the
-// OS font discovery layer (Core Text on macOS, fontconfig on Linux)
-// will scan, then reference them by their INTERNAL family name in
-// the SVG. We do this once per process at startup. On macOS we copy
-// to ~/Library/Fonts; on Linux to ~/.fonts (auto-scanned by
-// fontconfig). Copy is idempotent and cheap (~200KB).
-//
-// Internal font family names (from the TTF name table):
-//   Anton-Regular.ttf   -> "Anton"
+// Internal font family names (TTF name table):
+//   Impact.ttf          -> "Impact"
+//   Anton-Regular.ttf   -> "Anton" (legacy fallback)
 //   ComicNeue-Bold.ttf  -> "Comic Neue" (weight 700)
 //
 // ── Style keys ──
-//   "caption": Anton (Impact-substitute), ALL CAPS, white fill, heavy
-//              black stroke. Used on EVERY format (including formats
-//              like Drake / Expanding Brain whose right-side panels
-//              are blank — uniform Impact styling looks more like a
-//              real internet meme than mixing fonts/colors).
-//   "mocking": Anton + alternating mIxEd cAsE.
-//   "sign":    Anton on the cardboard "Change my mind" sign.
+//   "caption": Impact, ALL CAPS, white fill, heavy black stroke.
+//   "mocking": Impact + alternating mIxEd cAsE.
+//   "sign":    Impact on the cardboard "Change my mind" sign.
 //   "doge":    Comic Neue Bold, lowercase, colored fill + black stroke.
 
+import "./font-setup.js";
 import sharp from "sharp";
 import path from "node:path";
-import os from "node:os";
-import { promises as fs, existsSync, mkdirSync, copyFileSync } from "node:fs";
+import { promises as fs } from "node:fs";
+import { ensureFontsInstalled } from "./font-setup.js";
 
-// These MUST match the fonts' internal family names (as listed in
-// the TTF name table), not our own labels. librsvg/pango look up
-// fonts by that internal name via fontconfig/Core Text.
-const IMPACT_FAMILY = "Anton";
+export { ensureFontsInstalled };
+
+// Must match internal TTF family names — librsvg/pango look up via fontconfig.
+const IMPACT_FAMILY = "Impact";
 const COMIC_FAMILY = "Comic Neue";
-
-// Where the OS font discovery layer scans for user fonts. macOS Core
-// Text scans ~/Library/Fonts automatically; Linux fontconfig scans
-// ~/.fonts (and ~/.local/share/fonts) on default install.
-function osUserFontsDir() {
-  if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Fonts");
-  }
-  // Linux + Windows fall back to a fontconfig-scanned dir. On Linux
-  // ~/.fonts is the legacy path; ~/.local/share/fonts is the XDG
-  // path. We use the legacy path because fontconfig versions
-  // shipped with sharp's prebuilt libvips scan both. On Windows
-  // this is a noop directory — sharp on Windows uses DirectWrite
-  // which scans %WINDIR%\Fonts, but our deploy target is Linux.
-  return path.join(os.homedir(), ".fonts");
-}
-
-// Install our bundled OFL fonts into the OS user-fonts dir at module
-// load time, synchronously, BEFORE sharp/libvips's font cache is
-// initialized. If we did this asynchronously the first request might
-// race ahead of the copy, libvips would scan an empty dir, cache the
-// result, and never re-scan — that meme would (and every subsequent
-// render in the same process would) fall back to the system default.
-function installFontsSync() {
-  const srcDir = path.join(process.cwd(), "public", "fonts");
-  const dstDir = osUserFontsDir();
-  try {
-    mkdirSync(dstDir, { recursive: true });
-  } catch {}
-  const sources = ["Anton-Regular.ttf", "ComicNeue-Bold.ttf"];
-  for (const name of sources) {
-    const src = path.join(srcDir, name);
-    const dst = path.join(dstDir, name);
-    if (existsSync(dst)) continue;
-    try {
-      copyFileSync(src, dst);
-    } catch (err) {
-      // We're best-effort here. If the dest dir isn't writable we
-      // log and continue — the meme will fall back to a system font
-      // rather than crashing the server.
-      console.warn(
-        `[render] failed to install font ${name} -> ${dst}: ${err.message}`
-      );
-    }
-  }
-}
-
-installFontsSync();
-
-// Exposed only so tests/CLIs can verify the install ran. Production
-// code does not need to call this — the sync install above runs at
-// module load.
-export function ensureFontsInstalled() {
-  installFontsSync();
-  return Promise.resolve();
-}
 
 // Kept for back-compat with the rest of the renderer; now returns an
 // empty <defs> because @font-face data: URLs do not work in librsvg
@@ -669,15 +598,7 @@ export async function padPngToSquare(pngBuf) {
 
 function avgCharWidth(family) {
   if (family === COMIC_FAMILY) return 0.55;
-  // Anton averages 0.50em across the alphabet at all caps. Real
-  // captions skew slightly wider because they tend to have round
-  // glyphs (O, G, C, D) and double-stem letters (M, W) — a 0.55
-  // bias makes the widest-line wrap calculation err on the side of
-  // fitting without underweighting fs. This number was tuned AGAINST
-  // the actual Anton font once we got librsvg to load it; before
-  // that fix librsvg was silently falling back to Helvetica-Bold
-  // (≈0.67em average) and the renderer was tuned to compensate for
-  // that wrong font, which is why everything looked thin.
+  if (family === IMPACT_FAMILY) return 0.62;
   return 0.55;
 }
 
@@ -857,6 +778,7 @@ function resolveZoneStyle(zone) {
     case "doge":
       return {
         family: COMIC_FAMILY,
+        weight: 700,
         transform: (s) => s.toLowerCase(),
         fill: zone.color || "#ff3b3b",
         stroke: "#000000",
@@ -1026,11 +948,12 @@ function renderZone(zone, rawText, imgW, imgH, watermark) {
               2
             )}" stroke-linejoin="round" paint-order="stroke fill"`
           : "";
+      const weightAttr = style.weight ? ` font-weight="${style.weight}"` : "";
       return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
         2
       )}" font-family="${style.family}" font-size="${fs.toFixed(
         2
-      )}" fill="${style.fill}"${strokeAttrs} text-anchor="${anchor}">${escXml(line)}</text>`;
+      )}" fill="${style.fill}"${weightAttr}${strokeAttrs} text-anchor="${anchor}">${escXml(line)}</text>`;
     })
     .join("\n");
 
