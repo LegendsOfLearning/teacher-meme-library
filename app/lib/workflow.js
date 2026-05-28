@@ -378,8 +378,8 @@ function step6_pickBest({ candidates, scores, excludeIndexes = [] }) {
 }
 
 // ─── Step 7: render meme ─────────────────────────────────────────────────
-async function step7_render({ format, captions }) {
-  const png = await renderMeme(format, captions);
+async function step7_render({ format, captions, sourceFile }) {
+  const png = await renderMeme(format, captions, { sourceFile });
   return {
     png,
     event: { step: 7, name: "render", bytes: png.length },
@@ -567,6 +567,7 @@ export async function generateMeme({
   formatId,
   userCaptions,
   excludeFormatIds = [],
+  sourceFile,
 }) {
   const trace = [];
   const situation =
@@ -648,7 +649,7 @@ export async function generateMeme({
     attempts++;
     triedIdx.add(chosenIdx);
 
-    const s7 = await step7_render({ format, captions: chosen });
+    const s7 = await step7_render({ format, captions: chosen, sourceFile });
     png = s7.png;
     trace.push(s7.event);
 

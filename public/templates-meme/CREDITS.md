@@ -39,6 +39,8 @@ For a production deployment of this app you should:
 | `rickroll.jpg` | Rick Astley — Never Gonna Give You Up (imgflip slug `jupgp`) |
 | `doge.jpg` | Doge (Kabosu, the Shiba) |
 | `crying-cat.jpg` | Crying Cat |
+| `crying-cat-gallery-papers.png` | Blank gallery-layout Crying Cat (papers variant) |
+| `crying-cat-gallery-copier.png` | Blank gallery-layout Crying Cat (copier variant) |
 | `math-lady.jpg` | Math Lady / Confused Lady |
 | `spider-pointing.jpg` | Spider-Man Pointing (3-Spideys variant) |
 | `sad-pablo.jpg` | Sad Pablo Escobar (waiting) |

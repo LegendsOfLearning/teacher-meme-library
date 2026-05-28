@@ -171,6 +171,7 @@ export default function CustomizePage() {
         body: JSON.stringify({
           formatId: format.id,
           captions: editValues,
+          galleryFile: item?.file || null,
           situationId: item?.situations?.[0] || "lesson-planning",
           toneId: "relatable",
         }),

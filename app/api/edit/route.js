@@ -16,7 +16,7 @@ export const maxDuration = 60;
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { formatId, captions, situationId, toneId } = body || {};
+    const { formatId, captions, situationId, toneId, galleryFile } = body || {};
 
     const format = getFormatById(formatId);
     if (!format) {
@@ -52,6 +52,7 @@ export async function POST(request) {
       toneId: toneId || "relatable",
       formatId,
       userCaptions: cleanCaptions,
+      sourceFile: galleryFile || null,
     });
 
     return NextResponse.json(record);

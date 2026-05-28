@@ -787,9 +787,11 @@ export const memeFormats = [
   {
     id: "crying-cat",
     name: "Crying Cat",
-    file: `${FILE_BASE}/crying-cat.jpg`,
-    width: 300,
-    height: 300,
+    file: "/gallery/crying-cat-papers.png",
+    renderFile: "/templates-meme/crying-cat-gallery-papers.png",
+    width: 1536,
+    height: 1536,
+    skipWatermark: true,
     description:
       "Cat with tears in its eyes giving the camera the saddest brave face on the internet. Use it for 'I'm holding it together (I am not holding it together)' moments.",
     jokeStructure:
@@ -798,7 +800,7 @@ export const memeFormats = [
       {
         key: "top",
         label: "What you say while crying inside",
-        x: 0.02, y: 0.02, w: 0.96, h: 0.22,
+        x: 0.02, y: 0.02, w: 0.96, h: 0.20,
         align: "center", style: "caption", maxLines: 2,
       },
     ],

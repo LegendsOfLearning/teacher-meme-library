@@ -1382,10 +1382,29 @@ async function loadLogoBuffer(targetWidth) {
  *                           render as empty strings.
  * @returns {Promise<Buffer>} PNG buffer.
  */
-export async function renderMeme(format, captions) {
-  // `renderFile` points at a blank imgflip-style template; `file` may
-  // still reference the curated AI gallery PNG used only for thumbnails.
-  const sourcePath = format.renderFile || format.file;
+// Gallery thumbnail → blank customize template. Keeps the curated
+// gallery cat/art instead of swapping in a different imgflip JPEG.
+export const GALLERY_RENDER_SOURCES = {
+  "/gallery/crying-cat-papers.png":
+    "/templates-meme/crying-cat-gallery-papers.png",
+  "/gallery/crying-cat-copier.png":
+    "/templates-meme/crying-cat-gallery-copier.png",
+  "/gallery/same-picture-group-work.png":
+    "/templates-meme/pam-same-picture-gallery.png",
+  "/gallery/same-picture-bell.png":
+    "/templates-meme/pam-same-picture-gallery.png",
+};
+
+function resolveRenderSource(format, sourceFile) {
+  if (sourceFile && GALLERY_RENDER_SOURCES[sourceFile]) {
+    return GALLERY_RENDER_SOURCES[sourceFile];
+  }
+  if (sourceFile) return sourceFile;
+  return format.renderFile || format.file;
+}
+
+export async function renderMeme(format, captions, options = {}) {
+  const sourcePath = resolveRenderSource(format, options.sourceFile);
   const templatePath = path.join(
     process.cwd(),
     "public",
