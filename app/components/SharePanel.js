@@ -7,6 +7,7 @@ import {
 } from "../lib/share-links";
 import { LOL_SHARE_PANEL_INTRO } from "../lib/lol-copy";
 import { trackEvent } from "../lib/analytics";
+import { shareMemeAsFile } from "../lib/share-image";
 
 function SocialIcon({ id }) {
   const common = { width: 20, height: 20, "aria-hidden": true };
@@ -126,22 +127,56 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
     [onToast]
   );
 
+  const shareImageSocial = useCallback(
+    async (s) => {
+      trackEvent("meme_share_social", {
+        platform: s.id,
+        page_path:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
+      });
+      if (!ctx.imageUrl) {
+        if (s.href) window.open(s.href, "_blank", "noopener,noreferrer");
+        return;
+      }
+      try {
+        const result = await shareMemeAsFile({
+          imageUrl: ctx.imageUrl,
+          title: ctx.shareTitle,
+          text: ctx.shareText,
+          pageUrl: ctx.pageUrl,
+        });
+        if (result.ok) {
+          onToast?.("Choose WhatsApp, Messages, or another app");
+          return;
+        }
+        if (s.href) {
+          window.open(s.href, "_blank", "noopener,noreferrer");
+          onToast?.("Sending link — for the image, use Download or Copy");
+        }
+      } catch {
+        onToast?.("Could not share image — try Download");
+      }
+    },
+    [ctx, onToast]
+  );
+
   const deviceShare = useCallback(async () => {
-    if (typeof navigator === "undefined" || !navigator.share) {
+    if (!ctx.imageUrl) {
       onToast?.("Use the social buttons or copy a link below");
       return;
     }
     try {
-      const payload = {
+      const result = await shareMemeAsFile({
+        imageUrl: ctx.imageUrl,
         title: ctx.shareTitle,
         text: ctx.shareText,
-        url: ctx.pageUrl,
-      };
-      if (ctx.imageUrl && navigator.canShare?.({ files: [] }) !== false) {
-        await navigator.share(payload);
-      } else {
-        await navigator.share(payload);
+        pageUrl: ctx.pageUrl,
+      });
+      if (result.ok) {
+        onToast?.("Choose WhatsApp, Messages, or another app");
+        return;
       }
+      onToast?.("Use WhatsApp or SMS above, or download the image");
     } catch (err) {
       if (err?.name !== "AbortError") {
         onToast?.("Share cancelled or not available on this device");
@@ -172,6 +207,17 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
             >
               <SocialIcon id={s.id} />
             </button>
+          ) : s.action === "share_image" ? (
+            <button
+              key={s.id}
+              type="button"
+              className={`share-social-btn ${s.className}`}
+              title={`Share image on ${s.label}`}
+              aria-label={`Share image on ${s.label}`}
+              onClick={() => shareImageSocial(s)}
+            >
+              <SocialIcon id={s.id} />
+            </button>
           ) : (
             <a
               key={s.id}
@@ -198,7 +244,7 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
       </div>
 
       <button type="button" className="share-device-btn" onClick={deviceShare}>
-        Share via your device
+        Share meme image (WhatsApp, Messages…)
       </button>
 
       <CopyField

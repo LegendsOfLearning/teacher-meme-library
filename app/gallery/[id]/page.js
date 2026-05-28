@@ -5,6 +5,7 @@ import ShareGalleryActions from "./ShareGalleryActions";
 import LolSignupCta from "../../components/LolSignupCta";
 import LolNavBrand from "../../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
+import { serverShareOrigin } from "../../lib/share-links";
 
 // Permanent, shareable, social-preview-ready URL for a single
 // gallery item. Mirrors /meme/[id] but reads from the curated
@@ -15,19 +16,13 @@ import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
 // rich previews on Slack / WhatsApp / X / iMessage all show the
 // meme image with our logo intact.
 
-function buildOrigin() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3001";
-}
-
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const item = getGalleryItemById(id);
   if (!item) {
     return { title: "Meme not found · Legends of Learning" };
   }
-  const origin = buildOrigin();
+  const origin = serverShareOrigin();
   const title = `${item.formatName} · Teacher meme`;
   const description = item.captionPreview || "A teacher meme.";
   const fullImageUrl = `${origin}${item.file}`;
@@ -44,6 +39,8 @@ export async function generateMetadata({ params }) {
       images: [
         {
           url: fullImageUrl,
+          width: 1200,
+          height: 1200,
           alt: `${item.formatName} teacher meme`,
         },
       ],

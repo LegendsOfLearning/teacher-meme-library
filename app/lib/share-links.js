@@ -6,11 +6,27 @@ export const LOL_SIGNUP_URL =
 export const LOL_ABOUT_URL =
   "https://www.legendsoflearning.com?utm_source=teacher_meme_generator&utm_medium=referral&utm_campaign=meme_awareness";
 
+export const PRODUCTION_SITE_URL = "https://teacher-meme-library.vercel.app";
+
+/** Canonical origin for SSR metadata (OG / WhatsApp previews). */
+export function serverShareOrigin() {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (process.env.VERCEL_ENV === "production") return PRODUCTION_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3001";
+}
+
 /** Canonical origin for share links (prod URL when env is set). */
 export function shareOrigin() {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
   if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined") return window.location.origin;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "teacher-meme-library.vercel.app") return PRODUCTION_SITE_URL;
+    return window.location.origin;
+  }
+  if (process.env.VERCEL_ENV === "production") return PRODUCTION_SITE_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "";
 }
@@ -75,6 +91,7 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
     {
       id: "sms",
       label: "SMS",
+      action: "share_image",
       href: `sms:?&body=${combined}`,
       className: "sms",
     },
@@ -119,6 +136,7 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
     {
       id: "whatsapp",
       label: "WhatsApp",
+      action: "share_image",
       href: `https://wa.me/?text=${combined}`,
       className: "whatsapp",
     },

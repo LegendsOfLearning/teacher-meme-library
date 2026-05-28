@@ -1,5 +1,6 @@
 import { Montserrat } from "next/font/google";
 import "./globals.css";
+import { serverShareOrigin } from "./lib/share-links";
 
 // Per the LOL brand guide, Montserrat is the single typeface across the
 // UI (display + body). We load the full weight range we use in CSS.
@@ -14,10 +15,7 @@ export const metadata = {
   title: "Free Classroom Memes | Legends of Learning",
   description:
     "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes — free game-based learning when you're ready.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3001")
-  ),
+  metadataBase: new URL(serverShareOrigin()),
   openGraph: {
     title: "Teacher Meme Generator",
     description:

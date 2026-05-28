@@ -1577,6 +1577,11 @@ a {
   margin-top: 14px;
 }
 
+.share-page-share-more {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
 .share-landing-signup {
   max-width: 720px;
   margin: 28px auto 0;
