@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { findBlockedTerm, BLOCKLIST_USER_MESSAGE } from "../../lib/blocklist";
+
+export const runtime = "nodejs";
 import { describeBlock, moderateText } from "../../lib/moderation";
 import { saveBlockedWithoutApi, MODERATION_NOT_CONFIGURED_MESSAGE } from "../../lib/moderation-policy";
 
@@ -48,6 +50,10 @@ export async function POST(request) {
           blocked: false,
           reviewLevel: "blocklist_only",
           warning: moderation.message,
+          moderationReason: moderation.reason || null,
+          moderationDetail: moderation.error
+            ? String(moderation.error).slice(0, 200)
+            : null,
         });
       }
       return NextResponse.json(

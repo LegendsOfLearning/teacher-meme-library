@@ -1,8 +1,11 @@
+import { NextResponse } from "next/server";
 import { moderateText } from "../../lib/moderation";
 import {
   hasOpenAIKey,
   saveBlockedWithoutApi,
 } from "../../lib/moderation-policy";
+
+export const runtime = "nodejs";
 
 /** GET — diagnose OpenAI moderation setup (no secrets returned). */
 export async function GET() {
