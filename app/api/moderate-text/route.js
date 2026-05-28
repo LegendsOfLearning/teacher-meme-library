@@ -41,6 +41,15 @@ export async function POST(request) {
 
     const moderation = await moderateText(value);
     if (!moderation.ok) {
+      // API down / misconfigured: allow typing; save path still enforces full review.
+      if (moderation.category === "moderation_unavailable") {
+        return NextResponse.json({
+          ok: true,
+          blocked: false,
+          reviewLevel: "blocklist_only",
+          warning: moderation.message,
+        });
+      }
       return NextResponse.json(
         {
           ok: false,
@@ -54,8 +63,6 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    // Live preview: blocklist + OpenAI when available. If API is down, allow
-    // editing; save still runs the full review stack.
     return NextResponse.json({
       ok: true,
       blocked: false,
