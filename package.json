@@ -16,6 +16,8 @@
     "build": "next build",
     "start": "next start --port 3001",
     "lint": "next lint",
-    "smoke:render": "node scripts/smoke-render.mjs"
+    "smoke:render": "node scripts/smoke-render.mjs",
+    "audit:safety": "node scripts/audit-safety.mjs",
+    "test:blocklist": "node scripts/test-blocklist.mjs"
   }
 }

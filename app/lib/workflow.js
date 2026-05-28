@@ -407,15 +407,39 @@ async function step8_adversarialReview({ candidates, idx }) {
   if (!mod.ok) {
     return {
       ok: false,
-      reason: "moderation",
+      reason: mod.category === "moderation_unavailable" ? "moderation_unavailable" : "moderation",
       category: mod.category,
-      message: describeBlock(mod),
+      message: mod.message || describeBlock(mod),
       event: { ...event, ok: false, category: mod.category },
     };
+  }
+  if (mod.skipped) {
+    const { moderationRequired, MODERATION_UNAVAILABLE_MESSAGE } = await import(
+      "./moderation-policy.js"
+    );
+    if (moderationRequired()) {
+      return {
+        ok: false,
+        reason: "moderation_unavailable",
+        message: MODERATION_UNAVAILABLE_MESSAGE,
+        event: { ...event, ok: false, skipped: mod.reason },
+      };
+    }
   }
 
   // Layer C: stricter LLM-based brand review (skipped if no API key).
   if (!llmConfigured()) {
+    const { moderationRequired, MODERATION_UNAVAILABLE_MESSAGE } = await import(
+      "./moderation-policy.js"
+    );
+    if (moderationRequired()) {
+      return {
+        ok: false,
+        reason: "moderation_unavailable",
+        message: MODERATION_UNAVAILABLE_MESSAGE,
+        event: { ...event, ok: false, source: "no-llm" },
+      };
+    }
     return { ok: true, event: { ...event, ok: true, source: "no-llm" } };
   }
 
@@ -444,7 +468,17 @@ Output STRICT JSON: { "ok": true } if the caption is safe to ship. { "ok": false
       maxTokens: 80,
     });
   } catch (e) {
-    // On LLM error, fall back to ok (we already passed blocklist + moderation).
+    const { moderationRequired, MODERATION_UNAVAILABLE_MESSAGE } = await import(
+      "./moderation-policy.js"
+    );
+    if (moderationRequired()) {
+      return {
+        ok: false,
+        reason: "moderation_unavailable",
+        message: MODERATION_UNAVAILABLE_MESSAGE,
+        event: { ...event, ok: false, error: e.message, source: "fallback" },
+      };
+    }
     return { ok: true, event: { ...event, ok: true, error: e.message, source: "fallback" } };
   }
 
@@ -498,13 +532,17 @@ export async function validateUserCaptions(format, captions) {
         "This caption doesn't meet our community guidelines.",
     };
   }
-  if (mod.skipped && process.env.REQUIRE_MODERATION_API === "true") {
-    return {
-      ok: false,
-      reason: "moderation_unavailable",
-      message:
-        "Safety review is temporarily unavailable. Please try again in a few minutes.",
-    };
+  if (mod.skipped) {
+    const { moderationRequired, MODERATION_UNAVAILABLE_MESSAGE } = await import(
+      "./moderation-policy.js"
+    );
+    if (moderationRequired()) {
+      return {
+        ok: false,
+        reason: "moderation_unavailable",
+        message: MODERATION_UNAVAILABLE_MESSAGE,
+      };
+    }
   }
   return { ok: true };
 }

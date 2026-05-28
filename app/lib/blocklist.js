@@ -26,13 +26,28 @@ const LEET_MAP = {
   "{": "c",
 };
 
+// Common Cyrillic/Greek homoglyphs used to bypass Latin filters.
+const HOMOGLYPH_MAP = {
+  "\u0430": "a",
+  "\u0435": "e",
+  "\u043e": "o",
+  "\u0440": "p",
+  "\u0441": "c",
+  "\u0443": "y",
+  "\u0445": "x",
+  "\u0456": "i",
+  "\u04cf": "l",
+  "\u03b1": "a",
+  "\u03bf": "o",
+};
+
 function normalize(input) {
   return String(input || "")
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .split("")
-    .map((c) => LEET_MAP[c] || c)
+    .map((c) => HOMOGLYPH_MAP[c] || LEET_MAP[c] || c)
     .join("");
 }
 
@@ -66,6 +81,12 @@ const SUBSTRING_BLOCKED = [
   "motherfucker",
   "motherfucking",
   "phuck",
+  "fvck",
+  "fxck",
+  "sh1t",
+  "shlt",
+  "sht",
+  "shyt",
   "shit",
   "shitty",
   "shithead",

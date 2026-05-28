@@ -98,18 +98,7 @@ export default async function MemePage({ params }) {
 
         <ShareActions meme={meme} />
 
-        <LolSignupCta />
-
-        <div className="share-cta-card">
-          <h2>Make your own</h2>
-          <p>
-            Browse the library, customize a template, and share in two
-            clicks.
-          </p>
-          <Link href="/" className="cta-button">
-            Browse teacher memes
-          </Link>
-        </div>
+        <LolSignupCta variant="landing" />
       </main>
 
       <footer className="footer">{LOL_FOOTER_LINE}</footer>

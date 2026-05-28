@@ -4,7 +4,6 @@ import { getGalleryItemById } from "../../lib/gallery";
 import ShareGalleryActions from "./ShareGalleryActions";
 import LolSignupCta from "../../components/LolSignupCta";
 import LolNavBrand from "../../components/LolNavBrand";
-import { MemeActionIcon } from "../../components/MemeCardActions";
 import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
 
 // Permanent, shareable, social-preview-ready URL for a single
@@ -84,37 +83,7 @@ export default async function GalleryItemPage({ params }) {
 
         <ShareGalleryActions item={item} />
 
-        <LolSignupCta />
-
-        {item.remixFormatId && item.captions ? (
-          <div className="share-cta-card">
-            <h2>Make it yours</h2>
-            <p>
-              Same template, your words. Edit the captions in two clicks and
-              download a fresh version — automatically reviewed for the
-              classroom.
-            </p>
-            <Link
-              href={`/customize?id=${encodeURIComponent(item.id)}`}
-              className="cta-button cta-button--with-icon"
-              aria-label="Customize this template"
-            >
-              <MemeActionIcon name="edit" size={18} />
-              <span>Customize this template</span>
-            </Link>
-          </div>
-        ) : (
-          <div className="share-cta-card">
-            <h2>Make your own</h2>
-            <p>
-              Browse the library, pick a template, and share a laugh with
-              your team — free from Legends of Learning.
-            </p>
-            <Link href="/" className="cta-button">
-              Create your own teacher meme
-            </Link>
-          </div>
-        )}
+        <LolSignupCta variant="landing" />
       </main>
 
       <footer className="footer">{LOL_FOOTER_LINE}</footer>

@@ -6,13 +6,21 @@ export const LOL_SIGNUP_URL =
 export const LOL_ABOUT_URL =
   "https://www.legendsoflearning.com?utm_source=teacher_meme_generator&utm_medium=referral&utm_campaign=meme_awareness";
 
+/** Canonical origin for share links (prod URL when env is set). */
+export function shareOrigin() {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (typeof window !== "undefined") return window.location.origin;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "";
+}
+
 export function absoluteUrl(pathOrUrl) {
   if (!pathOrUrl) return "";
   if (pathOrUrl.startsWith("http")) return pathOrUrl;
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}${pathOrUrl}`;
-  }
-  return pathOrUrl;
+  const origin = shareOrigin();
+  if (!origin) return pathOrUrl;
+  return `${origin}${pathOrUrl}`;
 }
 
 /** Resolve page URL, direct image URL, title, and share text. */
@@ -62,7 +70,20 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
   const title = encodeURIComponent(shareTitle);
   const combined = encodeURIComponent(`${shareText} ${pageUrl}`);
 
+  // Order tuned for US teachers: iMessage/SMS and email first; WhatsApp last.
   return [
+    {
+      id: "sms",
+      label: "SMS",
+      href: `sms:?&body=${combined}`,
+      className: "sms",
+    },
+    {
+      id: "email",
+      label: "Email",
+      href: `mailto:?subject=${title}&body=${text}%0A%0A${url}`,
+      className: "email",
+    },
     {
       id: "facebook",
       label: "Facebook",
@@ -70,16 +91,24 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
       className: "facebook",
     },
     {
-      id: "x",
-      label: "X",
-      href: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-      className: "x",
+      id: "instagram",
+      label: "Instagram",
+      className: "instagram",
+      action: "copy",
+      copyValue: `${shareText} ${pageUrl}`,
+      copyMessage: "Link copied — paste in Instagram",
     },
     {
       id: "pinterest",
       label: "Pinterest",
       href: `https://pinterest.com/pin/create/button/?url=${url}&description=${text}`,
       className: "pinterest",
+    },
+    {
+      id: "x",
+      label: "X",
+      href: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      className: "x",
     },
     {
       id: "reddit",
@@ -92,12 +121,6 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
       label: "WhatsApp",
       href: `https://wa.me/?text=${combined}`,
       className: "whatsapp",
-    },
-    {
-      id: "email",
-      label: "Email",
-      href: `mailto:?subject=${title}&body=${text}%0A%0A${url}`,
-      className: "email",
     },
   ];
 }

@@ -2,6 +2,11 @@
 // Used as a second-line defense after the blocklist.
 // Educational context => stricter thresholds than OpenAI's defaults.
 
+import {
+  moderationRequired,
+  MODERATION_UNAVAILABLE_MESSAGE,
+} from "./moderation-policy.js";
+
 const MODERATION_URL = "https://api.openai.com/v1/moderations";
 const MODERATION_MODEL = "omni-moderation-latest";
 
@@ -76,16 +81,32 @@ function evaluateResult(result) {
   return { ok: true, reason: null, category: null, score: 0 };
 }
 
+function unavailableResult(reason, extra = {}) {
+  if (moderationRequired()) {
+    return {
+      ok: false,
+      skipped: true,
+      reason,
+      category: "moderation_unavailable",
+      score: 0,
+      message: MODERATION_UNAVAILABLE_MESSAGE,
+      ...extra,
+    };
+  }
+  return {
+    ok: true,
+    skipped: true,
+    reason,
+    category: null,
+    score: 0,
+    ...extra,
+  };
+}
+
 async function callModeration(input) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return {
-      ok: true,
-      skipped: true,
-      reason: "no_api_key",
-      category: null,
-      score: 0,
-    };
+    return unavailableResult("no_api_key");
   }
 
   let response;
@@ -99,28 +120,14 @@ async function callModeration(input) {
       body: JSON.stringify({ model: MODERATION_MODEL, input }),
     });
   } catch (err) {
-    // Network / DNS failures => fail open at this layer; the blocklist already
-    // ran and is the local backstop.
-    return {
-      ok: true,
-      skipped: true,
-      reason: "network_error",
-      category: null,
-      score: 0,
-      error: err?.message,
-    };
+    return unavailableResult("network_error", { error: err?.message });
   }
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    return {
-      ok: true,
-      skipped: true,
-      reason: "api_error",
-      category: null,
-      score: 0,
+    return unavailableResult("api_error", {
       error: `HTTP ${response.status}: ${text.slice(0, 200)}`,
-    };
+    });
   }
 
   const data = await response.json();

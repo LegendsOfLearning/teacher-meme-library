@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LOL_ABOUT_URL, LOL_SIGNUP_URL } from "../lib/share-links";
+import { trackEvent } from "../lib/analytics";
 import {
   LOL_FOOTER_LINE,
   LOL_HOME_BOTTOM_BODY,
@@ -22,6 +23,9 @@ export default function HomePageBottom() {
               className="cta-button"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent("lol_signup_click", { location: "home_bottom" })
+              }
             >
               Explore free games for teachers
             </Link>
@@ -30,6 +34,9 @@ export default function HomePageBottom() {
               className="home-bottom-link"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                trackEvent("lol_about_click", { location: "home_bottom" })
+              }
             >
               About Legends of Learning
             </Link>

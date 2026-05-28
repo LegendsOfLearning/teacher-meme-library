@@ -1567,6 +1567,34 @@ a {
   height: 40px;
 }
 
+.meme-icon-btn--active {
+  border-color: var(--purple-500);
+  background: var(--purple-100);
+  color: var(--purple-700);
+}
+
+.share-page-actions + .share-panel {
+  margin-top: 14px;
+}
+
+.share-landing-signup {
+  max-width: 720px;
+  margin: 28px auto 0;
+  padding: 0 16px 8px;
+  text-align: center;
+}
+
+.share-landing-signup .home-bottom-cta {
+  padding: 24px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.share-landing-signup .home-bottom-safety {
+  margin-top: 16px;
+}
+
 .share-panel-intro {
   margin: -6px 0 14px;
   font-size: 0.85rem;
@@ -1731,8 +1759,23 @@ a {
   background: #000;
 }
 
+.share-menu-icon.sms {
+  background: #34c759;
+}
+
 .share-menu-icon.whatsapp {
   background: #25d366;
+}
+
+.share-menu-icon.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }
 
 .share-menu-icon.email {
@@ -1794,7 +1837,11 @@ a {
 .share-social-btn {
   width: 44px;
   height: 44px;
+  border: none;
   border-radius: 8px;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1820,8 +1867,21 @@ a {
 .share-social-btn.reddit {
   background: #ff4500;
 }
+.share-social-btn.sms {
+  background: #34c759;
+}
 .share-social-btn.whatsapp {
   background: #25d366;
+}
+.share-social-btn.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
 }
 .share-social-btn.email {
   background: #6b7280;

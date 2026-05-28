@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { findBlockedTerm, BLOCKLIST_USER_MESSAGE } from "../../lib/blocklist";
 import { describeBlock, moderateText } from "../../lib/moderation";
+import {
+  moderationRequired,
+  MODERATION_UNAVAILABLE_MESSAGE,
+} from "../../lib/moderation-policy";
 
 export async function POST(request) {
   try {
@@ -34,10 +38,22 @@ export async function POST(request) {
           blocked: true,
           category: moderation.category,
           message:
+            moderation.message ||
             describeBlock(moderation) ||
             "This text doesn't meet our community guidelines.",
         },
         { status: 400 }
+      );
+    }
+    if (moderation.skipped && moderationRequired()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          blocked: true,
+          category: "moderation_unavailable",
+          message: MODERATION_UNAVAILABLE_MESSAGE,
+        },
+        { status: 503 }
       );
     }
 

@@ -152,7 +152,9 @@ export default function CustomizePage() {
           setSafetyError("");
         }
       } catch {
-        setSafetyError("");
+        setSafetyError(
+          "Couldn't check safety right now — try again before saving."
+        );
       }
     }, 450);
     return () => clearTimeout(timer);

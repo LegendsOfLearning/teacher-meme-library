@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import SharePanel from "../../components/SharePanel";
-import MemeQuickActions from "../../components/MemeQuickActions";
-import LolSignupStrip from "../../components/LolSignupStrip";
+import SharePageActions from "../../components/SharePageActions";
 
 export default function ShareActions({ meme }) {
   const [toast, setToast] = useState("");
-  const [showSocial, setShowSocial] = useState(false);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -21,7 +18,7 @@ export default function ShareActions({ meme }) {
 
   return (
     <>
-      <MemeQuickActions
+      <SharePageActions
         meme={meme}
         share={{
           path: meme.sharePath,
@@ -30,20 +27,7 @@ export default function ShareActions({ meme }) {
           imageUrl: meme.pngUrl,
         }}
         onToast={showToast}
-        onShareMore={() => setShowSocial(true)}
       />
-      {showSocial ? (
-        <SharePanel
-          share={{
-            path: meme.sharePath,
-            title: `${meme.formatName} · Teacher meme`,
-            text: `Found my new favorite teacher meme — "${captionText}"`,
-            imageUrl: meme.pngUrl,
-          }}
-          onToast={showToast}
-        />
-      ) : null}
-      <LolSignupStrip />
       <div className={`toast ${toast ? "visible" : ""}`}>{toast}</div>
     </>
   );

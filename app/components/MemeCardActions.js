@@ -6,6 +6,7 @@ import {
   copyImageToClipboard,
   fetchAndDownloadSquare,
 } from "../lib/download-square";
+import { trackEvent } from "../lib/analytics";
 
 export function MemeActionIcon({ name, size = 16 }) {
   const common = {
@@ -79,6 +80,7 @@ export default function MemeCardActions({
       const name =
         item.file.split("?")[0].split("/").pop() || "teacher-meme.png";
       await fetchAndDownloadSquare(item.file, name);
+      trackEvent("meme_download", { meme_id: item.id });
       onToast?.("Downloaded");
     } catch {
       onToast?.("Download failed");
@@ -122,7 +124,10 @@ export default function MemeCardActions({
         className="meme-icon-btn"
         aria-label="Share"
         title="Share"
-        onClick={() => onShare?.(item)}
+        onClick={() => {
+          trackEvent("meme_share_open", { meme_id: item.id, source: "gallery_card" });
+          onShare?.(item);
+        }}
       >
         <MemeActionIcon name="share" size={iconSize} />
       </button>
