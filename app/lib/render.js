@@ -1099,23 +1099,8 @@ async function buildSvgOverlay(format, captions, watermark, size) {
   const fontStyle = await getFontStyle();
   const parts = [];
   const syncCaps = computeSyncSizeCaps(format, captions, W, H);
-  // First pass: any per-zone background mask. Used by gallery-derived
-  // templates whose source pixels already carry an AI-baked caption
-  // (and watermark). The mask is opaque and covers the FULL zone —
-  // both the baked text AND the baked watermark — so neither leaks
-  // through. The renderer then composites a fresh logo on top in
-  // renderMeme(), giving a clean stacked result:
-  //   source -> opaque mask -> fresh caption -> fresh watermark.
-  // Text zone shrinking against the watermark happens in renderZone,
-  // so the new caption never overlaps the new watermark even though
-  // the mask underneath does.
-  //
-  // `decorative: true` zones are mask-only (no rendered caption, not
-  // shown in the customize form, not asked of the LLM). We use these
-  // to cover AI-baked text in positions where the format has no
-  // matching caption slot — e.g. the conspiracy-board AI image has
-  // text at TOP and BOTTOM but the format only takes one caption,
-  // so the OTHER position needs a silent mask or it bleeds through.
+  // First pass: explicit per-zone masks declared on the format
+  // (decorative covers, trade-offer white boxes, etc.).
   for (const zone of format.zones) {
     if (!zone.maskFill || zone.maskTight) continue;
     const hasCaption =
@@ -1395,6 +1380,66 @@ export const GALLERY_RENDER_SOURCES = {
     "/templates-meme/pam-same-picture-gallery.png",
 };
 
+function isGalleryPath(filePath) {
+  return typeof filePath === "string" && filePath.includes("/gallery/");
+}
+
+function defaultZoneMaskFill(zone) {
+  if (zone.maskFill) return zone.maskFill;
+  if (zone.style === "sign" || zone.style === "dark-on-light") {
+    return "#ffffff";
+  }
+  return "#000000";
+}
+
+/** Full-band erase rect — gallery Impact strips sit in letterbox bands. */
+function zoneEraseRect(zone, W, H) {
+  const isTopBand = zone.y + zone.h <= 0.35;
+  const isBottomBand = zone.y >= 0.65;
+  if (zone.style === "sign" || zone.style === "dark-on-light") {
+    return {
+      x: zone.x * W,
+      y: zone.y * H,
+      w: zone.w * W,
+      h: zone.h * H,
+    };
+  }
+  if (isTopBand) {
+    const band =
+      zone.y + zone.h <= 0.25 ? 0.34 : 0.30;
+    return { x: 0, y: 0, w: W, h: Math.round(H * band) };
+  }
+  if (isBottomBand) {
+    const y = Math.round(H * 0.72);
+    return { x: 0, y, w: W, h: H - y };
+  }
+  return {
+    x: zone.x * W,
+    y: zone.y * H,
+    w: zone.w * W,
+    h: zone.h * H,
+  };
+}
+
+async function eraseBakedCaptionsFromBase(baseBuf, format, size) {
+  const W = size.width;
+  const H = size.height;
+  const parts = [];
+  for (const zone of format.zones) {
+    if (zone.decorative) continue;
+    const rect = zoneEraseRect(zone, W, H);
+    const fill = defaultZoneMaskFill(zone);
+    parts.push(
+      `<rect x="${rect.x.toFixed(2)}" y="${rect.y.toFixed(2)}" width="${rect.w.toFixed(2)}" height="${rect.h.toFixed(2)}" fill="${fill}"/>`
+    );
+  }
+  if (!parts.length) return baseBuf;
+  const svg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join("")}</svg>`
+  );
+  return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
+}
+
 function resolveRenderSource(format, sourceFile) {
   if (sourceFile && GALLERY_RENDER_SOURCES[sourceFile]) {
     return GALLERY_RENDER_SOURCES[sourceFile];
@@ -1411,22 +1456,27 @@ export async function renderMeme(format, captions, options = {}) {
     sourcePath.replace(/^\//, "")
   );
 
-  // Some "gallery-derived" formats (e.g. waiting-skeleton, doomer)
-  // use the AI-generated gallery PNG as their template — those source
-  // images already carry the Legends of Learning watermark, so the
-  // pipeline must NOT composite a second one on top. The format opts
-  // into this by setting `skipWatermark: true`.
-  const skipWatermark = format.skipWatermark === true;
+  const meta = await sharp(templatePath).metadata();
+  // High-res gallery (or blank gallery-derived) templates keep their
+  // native pixels so caption zones align with the art — not imgflip
+  // dimensions that letterbox into black bars.
+  const size =
+    meta.width >= 1000
+      ? { width: meta.width, height: meta.height }
+      : getRenderSize(format);
 
-  // Upscale the source template to at least OUTPUT_MIN_WIDTH so even
-  // small templates (Crying Cat = 300×300, Mocking SpongeBob = 502×353)
-  // get rendered with the same chunky Impact typography weight as the
-  // gallery's high-res references. `kernel: lanczos3` keeps edges
-  // sharp on bitmap upscales.
-  const size = getRenderSize(format);
-  const baseBuf = await sharp(templatePath)
+  const eraseBakedCaptions = isGalleryPath(options.sourceFile);
+
+  const skipWatermark =
+    format.skipWatermark === true || isGalleryPath(options.sourceFile);
+
+  let baseBuf = await sharp(templatePath)
     .resize(size.width, size.height, { fit: "fill", kernel: "lanczos3" })
     .toBuffer();
+
+  if (eraseBakedCaptions) {
+    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size);
+  }
 
   const placement = skipWatermark
     ? null
