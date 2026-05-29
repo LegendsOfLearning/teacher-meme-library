@@ -48,6 +48,9 @@ function configureFontconfig(fontDir) {
   const confPath = path.join(os.tmpdir(), "meme-generator-fonts.conf");
   const cacheDir = path.join(os.tmpdir(), "meme-generator-fontconfig-cache");
   mkdirSync(cacheDir, { recursive: true });
+  const impactPath = path.join(fontDir, "Impact.ttf");
+  const antonPath = path.join(fontDir, "Anton-Regular.ttf");
+  const comicPath = path.join(fontDir, "ComicNeue-Bold.ttf");
   writeFileSync(
     confPath,
     `<?xml version="1.0"?>
@@ -55,9 +58,23 @@ function configureFontconfig(fontDir) {
 <fontconfig>
   <dir>${fontDir}</dir>
   <cachedir>${cacheDir}</cachedir>
+  <match target="pattern">
+    <test qual="any" name="family"><string>Impact</string></test>
+    <edit name="file" mode="assign" binding="strong"><string>${impactPath}</string></edit>
+    <edit name="family" mode="assign" binding="strong"><string>Impact</string></edit>
+  </match>
+  <match target="pattern">
+    <test qual="any" name="family"><string>Anton</string></test>
+    <edit name="file" mode="assign" binding="strong"><string>${antonPath}</string></edit>
+  </match>
+  <match target="pattern">
+    <test qual="any" name="family"><string>Comic Neue</string></test>
+    <edit name="file" mode="assign" binding="strong"><string>${comicPath}</string></edit>
+  </match>
 </fontconfig>`
   );
   process.env.FONTCONFIG_FILE = confPath;
+  process.env.FONTCONFIG_PATH = confPath;
 }
 
 function installFontsSync() {

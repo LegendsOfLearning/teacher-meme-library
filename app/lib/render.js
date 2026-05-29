@@ -610,6 +610,14 @@ function escXml(s) {
     .replace(/"/g, "&quot;");
 }
 
+/** Curly quotes etc. often lack glyphs in bundled meme fonts on Linux. */
+function normalizeCaptionText(s) {
+  return String(s)
+    .replace(/[\u2018\u2019\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u2033]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-");
+}
+
 // Alternate caps starting lowercase, leaving non-letters alone.
 function toMockingCase(text) {
   let out = "";
@@ -836,7 +844,7 @@ export function getRenderSize(format) {
 function measureZoneFs(zone, rawText, imgW, imgH) {
   if (rawText == null || String(rawText).trim() === "") return null;
   const style = resolveZoneStyle(zone);
-  const text = style.transform(String(rawText).trim());
+  const text = style.transform(normalizeCaptionText(String(rawText).trim()));
   const w = zone.w * imgW;
   const h = zone.h * imgH;
   const naturalStart = Math.min(h * 0.95, w * 0.42);
@@ -907,7 +915,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
       strokeRatio: Math.min(0.42, style.strokeRatio * 1.55),
     };
   }
-  const text = style.transform(String(rawText).trim());
+  const text = style.transform(normalizeCaptionText(String(rawText).trim()));
 
   let x = zone.x * imgW;
   let y = zone.y * imgH;
@@ -1044,6 +1052,12 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
     .join("\n");
 
   let fragment = textEls;
+  if (coverBaked && lines.some((l) => l.trim()) && !zone.maskTight) {
+    const zoneMask = `<rect x="${x.toFixed(2)}" y="${y.toFixed(
+      2
+    )}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" fill="#000000"/>`;
+    fragment = `${zoneMask}\n${fragment}`;
+  }
   if (coverBaked && strokeWidthFinal > 0) {
     const knockout = lines
       .map((line, i) => {
@@ -1417,8 +1431,8 @@ function defaultZoneMaskFill(zone) {
   return "#000000";
 }
 
-/** Full-band erase rect — only for letterbox gallery art (black bars). */
-function zoneEraseRect(zone, W, H) {
+/** Erase rect for baked gallery captions (letterbox bars vs on-photo zones). */
+function zoneEraseRect(zone, W, H, { letterbox = true } = {}) {
   const isTopBand = zone.y + zone.h <= 0.35;
   const isBottomBand = zone.y >= 0.65;
   if (zone.style === "sign" || zone.style === "dark-on-light") {
@@ -1428,6 +1442,15 @@ function zoneEraseRect(zone, W, H) {
       w: zone.w * W,
       h: zone.h * H,
     };
+  }
+  if (!letterbox) {
+    const padX = zone.w * 0.04;
+    const padY = zone.h * 0.35;
+    const x = Math.max(0, (zone.x - padX) * W);
+    const y = Math.max(0, (zone.y - padY) * H);
+    const w = Math.min(W - x, (zone.w + padX * 2) * W);
+    const h = Math.min(H - y, (zone.h + padY * 2) * H);
+    return { x, y, w, h };
   }
   if (isTopBand) {
     const frac = Math.min(0.28, zone.y + zone.h + 0.05);
@@ -1474,13 +1497,13 @@ async function galleryUsesLetterboxBands(imageBuf) {
   return topMean < 25 && midMean > 55;
 }
 
-async function eraseBakedCaptionsFromBase(baseBuf, format, size) {
+async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
   const W = size.width;
   const H = size.height;
   const parts = [];
   for (const zone of format.zones) {
     if (zone.decorative) continue;
-    const rect = zoneEraseRect(zone, W, H);
+    const rect = zoneEraseRect(zone, W, H, opts);
     const fill = defaultZoneMaskFill(zone);
     parts.push(
       `<rect x="${rect.x.toFixed(2)}" y="${rect.y.toFixed(2)}" width="${rect.w.toFixed(2)}" height="${rect.h.toFixed(2)}" fill="${fill}"/>`
@@ -1502,6 +1525,8 @@ function resolveRenderSource(format, sourceFile) {
 }
 
 export async function renderMeme(format, captions, options = {}) {
+  await ensureFontsInstalled();
+
   const sourcePath = resolveRenderSource(format, options.sourceFile);
   const templatePath = path.join(
     process.cwd(),
@@ -1529,9 +1554,10 @@ export async function renderMeme(format, captions, options = {}) {
 
   let coverBakedCaptions = false;
   if (eraseBakedCaptions) {
-    if (await galleryUsesLetterboxBands(baseBuf)) {
-      baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size);
-    }
+    const letterbox = await galleryUsesLetterboxBands(baseBuf);
+    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size, {
+      letterbox,
+    });
     // Knockout stroke paints over any baked caption pixels that survive
     // the band erase (common when Impact strokes bleed into the photo).
     coverBakedCaptions = true;
