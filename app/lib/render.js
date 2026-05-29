@@ -1053,16 +1053,22 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
 
   let fragment = textEls;
   if (coverBaked && lines.some((l) => l.trim()) && !zone.maskTight) {
-    const zoneMask = `<rect x="${x.toFixed(2)}" y="${y.toFixed(
+    const bleedX = w * 0.04;
+    const bleedY = h * 0.5;
+    const mx = Math.max(0, x - bleedX);
+    const my = Math.max(0, y - bleedY);
+    const mw = Math.min(imgW - mx, w + bleedX * 2);
+    const mh = Math.min(imgH - my, h + bleedY * 2);
+    const zoneMask = `<rect x="${mx.toFixed(2)}" y="${my.toFixed(
       2
-    )}" width="${w.toFixed(2)}" height="${h.toFixed(2)}" fill="#000000"/>`;
+    )}" width="${mw.toFixed(2)}" height="${mh.toFixed(2)}" fill="#000000"/>`;
     fragment = `${zoneMask}\n${fragment}`;
   }
   if (coverBaked && strokeWidthFinal > 0) {
     const knockout = lines
       .map((line, i) => {
         const ly = firstBaseline + i * lineHeight;
-        const kStroke = Math.min(48, strokeWidthFinal * 2.4);
+        const kStroke = Math.min(56, strokeWidthFinal * 3);
         return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
           2
         )}" font-family="${style.family}" font-size="${fs.toFixed(
@@ -1410,9 +1416,9 @@ async function loadLogoBuffer(targetWidth) {
 // gallery cat/art instead of swapping in a different imgflip JPEG.
 export const GALLERY_RENDER_SOURCES = {
   "/gallery/disaster-girl-admin.png":
-    "/templates-meme/disaster-girl-gallery-blank.png",
+    "/templates-meme/disaster-girl.jpg",
   "/gallery/grumpy-cat-plans.png":
-    "/templates-meme/grumpy-cat-plans-blank.png",
+    "/templates-meme/grumpy-cat.jpg",
   "/gallery/crying-cat-papers.png":
     "/templates-meme/crying-cat-gallery-papers.png",
   "/gallery/crying-cat-copier.png":
@@ -1629,8 +1635,6 @@ export async function renderMeme(format, captions, options = {}) {
       letterbox,
       bandBounds,
     });
-    // Knockout stroke paints over any baked caption pixels that survive
-    // the band erase (common when Impact strokes bleed into the photo).
     coverBakedCaptions = true;
   }
 
