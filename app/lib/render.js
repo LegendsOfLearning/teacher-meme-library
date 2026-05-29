@@ -896,11 +896,17 @@ function computeSyncSizeCaps(format, captions, imgW, imgH) {
   return caps;
 }
 
-function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs) {
+function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked) {
   if (rawText == null || String(rawText).trim() === "") {
     return { fragment: "", bbox: null };
   }
-  const style = resolveZoneStyle(zone);
+  let style = resolveZoneStyle(zone);
+  if (coverBaked && style.strokeRatio > 0) {
+    style = {
+      ...style,
+      strokeRatio: Math.min(0.42, style.strokeRatio * 1.55),
+    };
+  }
   const text = style.transform(String(rawText).trim());
 
   let x = zone.x * imgW;
@@ -1037,6 +1043,24 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs) {
     })
     .join("\n");
 
+  let fragment = textEls;
+  if (coverBaked && strokeWidthFinal > 0) {
+    const knockout = lines
+      .map((line, i) => {
+        const ly = firstBaseline + i * lineHeight;
+        const kStroke = Math.min(48, strokeWidthFinal * 2.4);
+        return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
+          2
+        )}" font-family="${style.family}" font-size="${fs.toFixed(
+          2
+        )}" fill="#000000" stroke="#000000" stroke-width="${kStroke.toFixed(
+          2
+        )}" stroke-linejoin="round" paint-order="stroke fill" text-anchor="${anchor}">${escXml(line)}</text>`;
+      })
+      .join("\n");
+    fragment = `${knockout}\n${textEls}`;
+  }
+
   // Tight mask: only covers the caption glyphs (+ small pad), not the
   // full zone band. Used on AI gallery sources that still have baked-in
   // text when no blank `renderFile` template exists yet.
@@ -1073,7 +1097,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs) {
       family: style.family,
       wideGlyphs: zone.style === "mocking",
     });
-    return { fragment: `${mask}\n${textEls}`, bbox };
+    return { fragment: `${mask}\n${fragment}`, bbox };
   }
 
   const bbox = measureCaptionBBox({
@@ -1090,10 +1114,10 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs) {
     family: style.family,
     wideGlyphs: zone.style === "mocking",
   });
-  return { fragment: textEls, bbox };
+  return { fragment, bbox };
 }
 
-async function buildSvgOverlay(format, captions, watermark, size) {
+async function buildSvgOverlay(format, captions, watermark, size, coverBaked = false) {
   const W = size.width;
   const H = size.height;
   const fontStyle = await getFontStyle();
@@ -1123,7 +1147,8 @@ async function buildSvgOverlay(format, captions, watermark, size) {
       W,
       H,
       watermark,
-      syncCaps.get(zone.key)
+      syncCaps.get(zone.key),
+      coverBaked
     );
     if (rendered?.fragment) parts.push(rendered.fragment);
   }
@@ -1392,7 +1417,7 @@ function defaultZoneMaskFill(zone) {
   return "#000000";
 }
 
-/** Full-band erase rect — gallery Impact strips sit in letterbox bands. */
+/** Full-band erase rect — only for letterbox gallery art (black bars). */
 function zoneEraseRect(zone, W, H) {
   const isTopBand = zone.y + zone.h <= 0.35;
   const isBottomBand = zone.y >= 0.65;
@@ -1405,12 +1430,11 @@ function zoneEraseRect(zone, W, H) {
     };
   }
   if (isTopBand) {
-    const band =
-      zone.y + zone.h <= 0.25 ? 0.34 : 0.30;
-    return { x: 0, y: 0, w: W, h: Math.round(H * band) };
+    const frac = Math.min(0.28, zone.y + zone.h + 0.05);
+    return { x: 0, y: 0, w: W, h: Math.round(H * frac) };
   }
   if (isBottomBand) {
-    const y = Math.round(H * 0.72);
+    const y = Math.round(H * Math.max(zone.y - 0.04, 0.74));
     return { x: 0, y, w: W, h: H - y };
   }
   return {
@@ -1419,6 +1443,35 @@ function zoneEraseRect(zone, W, H) {
     w: zone.w * W,
     h: zone.h * H,
   };
+}
+
+/** True when the gallery PNG uses black letterbox caption bars. */
+async function galleryUsesLetterboxBands(imageBuf) {
+  const { data, info } = await sharp(imageBuf)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const W = info.width;
+  const H = info.height;
+  const bandRows = Math.max(12, Math.round(H * 0.08));
+  const midRow = Math.round(H * 0.5);
+
+  function rowMean(y) {
+    let sum = 0;
+    for (let x = 0; x < W; x++) {
+      sum += data[(y * W + x) * info.channels];
+    }
+    return sum / W;
+  }
+
+  let topSum = 0;
+  let midSum = 0;
+  for (let y = 0; y < bandRows; y++) topSum += rowMean(y);
+  for (let y = midRow - Math.floor(bandRows / 2); y < midRow + Math.ceil(bandRows / 2); y++) {
+    midSum += rowMean(y);
+  }
+  const topMean = topSum / bandRows;
+  const midMean = midSum / bandRows;
+  return topMean < 25 && midMean > 55;
 }
 
 async function eraseBakedCaptionsFromBase(baseBuf, format, size) {
@@ -1474,8 +1527,14 @@ export async function renderMeme(format, captions, options = {}) {
     .resize(size.width, size.height, { fit: "fill", kernel: "lanczos3" })
     .toBuffer();
 
+  let coverBakedCaptions = false;
   if (eraseBakedCaptions) {
-    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size);
+    if (await galleryUsesLetterboxBands(baseBuf)) {
+      baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size);
+    }
+    // Knockout stroke paints over any baked caption pixels that survive
+    // the band erase (common when Impact strokes bleed into the photo).
+    coverBakedCaptions = true;
   }
 
   const placement = skipWatermark
@@ -1486,7 +1545,13 @@ export async function renderMeme(format, captions, options = {}) {
     ? { corner: placement.corner, reservePx: placement.reservePx }
     : null;
 
-  const svg = await buildSvgOverlay(format, captions, watermark, size);
+  const svg = await buildSvgOverlay(
+    format,
+    captions,
+    watermark,
+    size,
+    coverBakedCaptions
+  );
 
   const composites = [{ input: Buffer.from(svg), top: 0, left: 0 }];
   if (placement) {
@@ -1514,6 +1579,9 @@ export async function renderMeme(format, captions, options = {}) {
     .png({ compressionLevel: 9, quality: 92 })
     .toBuffer();
 
+  if (size.width === size.height) {
+    return composed;
+  }
   return padPngToSquare(composed);
 }
 
