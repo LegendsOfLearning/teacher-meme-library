@@ -26,6 +26,33 @@
 // the Legends of Learning watermark before they ship.
 
 export const galleryItems = [
+  // ── Vadim's picks (featured examples) ────────────────────────────
+  {
+    id: "v01",
+    file: "/gallery/boromir-backup.png",
+    formatName: "One Does Not Simply",
+    captionPreview:
+      "ONE DOES NOT SIMPLY TEACH ALL DAY WITHOUT A LITTLE FUN AND A LOT OF BACKUP",
+    remixFormatId: null,
+    captions: null,
+    customizable: false,
+    featured: true,
+    searchKeywords: ["boromir", "fun", "backup", "support"],
+    situations: ["classroom-management", "monday-chaos"],
+  },
+  {
+    id: "v02",
+    file: "/gallery/drake-engaging.png",
+    formatName: "Drake Yes / No",
+    captionPreview:
+      "TRYING TO MAKE LEARNING ENGAGING ALL BY YOURSELF / TEACHER MEMES, CURRICULUM GAMES, AND A GROUP CHAT THAT GETS IT",
+    remixFormatId: null,
+    captions: null,
+    customizable: false,
+    featured: true,
+    searchKeywords: ["drake", "engaging", "curriculum games", "community"],
+    situations: ["lesson-planning", "students-not-reading"],
+  },
   // ── Distracted Boyfriend ─────────────────────────────────────────
   {
     id: "g01",
@@ -1172,6 +1199,8 @@ export const galleryItems = [
 // The build script (scripts/build-gallery.mjs) uses this to know
 // which input → output to watermark.
 export const gallerySourceMap = {
+  "meme-boromir-backup.png": "boromir-backup.png",
+  "meme-drake-engaging.png": "drake-engaging.png",
   "meme-distracted-boyfriend-teacher.png": "distracted-boyfriend-off-topic.png",
   "meme-distracted-boyfriend-grading.png": "distracted-boyfriend-grading.png",
   "meme-harold-explaining.png": "harold-explaining.png",

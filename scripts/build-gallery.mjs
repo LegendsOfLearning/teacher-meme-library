@@ -12,6 +12,7 @@ import sharp from "sharp";
 import { galleryItems, gallerySourceMap } from "../app/lib/gallery.js";
 import { getFormatById } from "../app/lib/meme-formats.js";
 import {
+  buildMemeLoopFooterSvg,
   padPngToSquare,
   resolveWatermarkPlacement,
 } from "../app/lib/render.js";
@@ -66,6 +67,12 @@ async function processOne(srcName, outName) {
         input: placement.logoBuf,
         top: placement.logoTopPx,
         left: placement.logoLeftPx,
+        blend: "over",
+      },
+      {
+        input: buildMemeLoopFooterSvg(size.width, size.height),
+        top: 0,
+        left: 0,
         blend: "over",
       },
     ])

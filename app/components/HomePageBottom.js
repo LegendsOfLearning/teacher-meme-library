@@ -50,7 +50,7 @@ export default function HomePageBottom() {
             🛡️
           </span>
           <span>
-            <strong>Edit the captions</strong> — same image, your words.
+            <strong>Edit the captions</strong>: same image, your words.
             Every save runs through a K-8 safety check before download.
           </span>
         </p>

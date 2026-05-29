@@ -44,6 +44,8 @@ async function getFontStyle() {
 // edge at the chosen font size.
 // Default corner; renderer picks br → bl → tr → tl based on caption collision.
 export const BRAND_WATERMARK_CORNER = "br";
+export const MEME_LOOP_FOOTER_TEXT =
+  "Create your own teacher meme at www.teacher-memes.com";
 
 export const WATERMARK_CORNER_PRIORITY = ["br", "bl", "tr", "tl"];
 const LOGO_SCALE_STEPS = [1, 0.88, 0.76, 0.64, 0.55, 0.48];
@@ -1677,6 +1679,12 @@ export async function renderMeme(format, captions, options = {}) {
       blend: "over",
     });
   }
+  composites.push({
+    input: buildMemeLoopFooterSvg(size.width, size.height),
+    top: 0,
+    left: 0,
+    blend: "over",
+  });
 
   const composed = await sharp(baseBuf)
     .composite(composites)
@@ -1692,4 +1700,38 @@ export async function renderMeme(format, captions, options = {}) {
 /** True when planned caption ink overlaps the brand reserve (for tests). */
 export function captionInkOverlapsBrandReserve(bbox, reserve) {
   return Boolean(bbox && reserve && rectsOverlapPx(bbox, reserve));
+}
+
+/**
+ * Lightweight viral-loop footer drawn as a subtle band along the very
+ * bottom edge of every meme. A faint dark-to-transparent gradient keeps
+ * the line readable on any artwork while staying small and unobtrusive,
+ * so the URL travels with the image whenever it's shared or reposted.
+ */
+export function buildMemeLoopFooterSvg(
+  width,
+  height,
+  text = MEME_LOOP_FOOTER_TEXT
+) {
+  const fontSize = Math.max(12, Math.min(18, Math.round(width * 0.0135)));
+  const bandH = Math.round(fontSize * 2.4);
+  const bandTop = height - bandH;
+  // Text sits vertically centered inside the footer band.
+  const baseline = height - Math.round(bandH * 0.32);
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <defs>
+        <linearGradient id="memeFooterFade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="black" stop-opacity="0"/>
+          <stop offset="100%" stop-color="black" stop-opacity="0.55"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="${bandTop}" width="${width}" height="${bandH}" fill="url(#memeFooterFade)"/>
+      <text x="${Math.round(
+        width / 2
+      )}" y="${baseline}" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="${fontSize}" fill="white" fill-opacity="0.96" letter-spacing="0.2" font-weight="700">${escXml(
+      text
+    )}</text>
+    </svg>`
+  );
 }

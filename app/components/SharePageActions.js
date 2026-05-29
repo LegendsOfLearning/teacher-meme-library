@@ -40,9 +40,9 @@ export default function SharePageActions({ item, meme, share, onToast }) {
         page_path:
           typeof window !== "undefined" ? window.location.pathname : undefined,
       });
-      onToast?.("Saved — square PNG downloaded");
+      onToast?.("Saved: square PNG downloaded");
     } catch {
-      onToast?.("Download failed — try again");
+      onToast?.("Download failed, try again");
     }
   }, [imgSrc, downloadName, onToast]);
 
@@ -54,9 +54,9 @@ export default function SharePageActions({ item, meme, share, onToast }) {
         page_path:
           typeof window !== "undefined" ? window.location.pathname : undefined,
       });
-      onToast?.("Copied — paste into chat or email");
+      onToast?.("Copied: paste into chat or email");
     } catch {
-      onToast?.("Couldn't copy image — try Download");
+      onToast?.("Couldn't copy image, try Download");
     }
   }, [imgSrc, onToast]);
 
@@ -81,7 +81,7 @@ export default function SharePageActions({ item, meme, share, onToast }) {
       setShowSocial(true);
       onToast?.("Pick an app below, or download the image");
     } catch {
-      onToast?.("Couldn't share — try Download");
+      onToast?.("Couldn't share, try Download");
     }
   }, [imgSrc, shareContext, onToast]);
 
@@ -93,7 +93,7 @@ export default function SharePageActions({ item, meme, share, onToast }) {
     <>
       <div className="meme-quick-actions share-page-actions">
         <p className="meme-quick-actions-hint">
-          Download or share the meme image — no account needed.
+          Download or share the meme image. No account needed.
         </p>
         <div
           className="meme-card-actions meme-card-actions--icons-only"

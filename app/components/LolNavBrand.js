@@ -23,6 +23,7 @@ export default function LolNavBrand({ href = "/" }) {
         href={href}
         className="nav-brand"
         style={{ textDecoration: "none", color: "inherit" }}
+        aria-label="Legends of Learning, a fun free resource"
       >
         {inner}
       </Link>

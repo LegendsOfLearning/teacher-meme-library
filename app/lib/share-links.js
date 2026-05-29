@@ -6,6 +6,11 @@ export const LOL_SIGNUP_URL =
 export const LOL_ABOUT_URL =
   "https://www.legendsoflearning.com?utm_source=teacher_meme_generator&utm_medium=referral&utm_campaign=meme_awareness";
 
+// Awards, certifications, and 3rd-party impact evidence — used to back
+// the research claim on the Why Memes page without pushing sign-up.
+export const LOL_AWARDS_URL =
+  "https://www.legendsoflearning.com/awards/?_gl=1*15atf83*_gcl_au*MTgwNzIzMjg2Ni4xNzc5OTc1OTE5LjIxMDA1NjY0NjIuMTc3OTk5MTMxNC4xNzc5OTkxMzE1*_ga*MzcwNjAxMzY3LjE3Nzk5NzU5MTk.*_ga_W4ZPPVZLYR*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw*_ga_0BH5L68SXQ*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw";
+
 export const PRODUCTION_SITE_URL = "https://teacher-meme-library.vercel.app";
 
 /** Canonical origin for SSR metadata (OG / WhatsApp previews). */
@@ -49,7 +54,7 @@ export function resolveShareContext({ share, item, imageUrl: imageUrlProp }) {
   const shareText =
     share?.text ??
     (item
-      ? `Found my new favorite teacher meme — "${item.captionPreview || item.formatName}"`
+      ? `Found my new favorite teacher meme: "${item.captionPreview || item.formatName}"`
       : "Found my new favorite teacher meme");
 
   const pageUrl = absoluteUrl(sharePath);
@@ -113,7 +118,7 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
       className: "instagram",
       action: "copy",
       copyValue: `${shareText} ${pageUrl}`,
-      copyMessage: "Link copied — paste in Instagram",
+      copyMessage: "Link copied, paste in Instagram",
     },
     {
       id: "pinterest",

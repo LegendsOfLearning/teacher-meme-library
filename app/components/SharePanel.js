@@ -121,7 +121,7 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
         await navigator.clipboard.writeText(text);
         onToast?.(msg);
       } catch {
-        onToast?.("Couldn't copy — select the text and copy manually");
+        onToast?.("Couldn't copy. Select the text and copy manually");
       }
     },
     [onToast]
@@ -151,10 +151,10 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
         }
         if (s.href) {
           window.open(s.href, "_blank", "noopener,noreferrer");
-          onToast?.("Sending link — for the image, use Download or Copy");
+          onToast?.("Sending link. For the image, use Download or Copy");
         }
       } catch {
-        onToast?.("Could not share image — try Download");
+        onToast?.("Could not share image, try Download");
       }
     },
     [ctx, onToast]

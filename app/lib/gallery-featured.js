@@ -28,15 +28,19 @@ export function getMemeOfTheDay(items) {
   return list[idx];
 }
 
-/** Rotating “hot” set — daily shuffle, IP-safe first. */
+/** Rotating “hot” set — pinned featured picks first, then daily shuffle. */
 export function getHotMemes(items, count = 6) {
   const pool = filterFeaturedPool(items);
   const list = pool.length > 0 ? pool : [...items];
   const seed = hashString(dailySeed() + "-hot");
-  const sorted = [...list].sort(
+  const shuffled = [...list].sort(
     (a, b) => hashString(a.id + seed) - hashString(b.id + seed)
   );
-  return sorted.slice(0, Math.min(count, sorted.length));
+  // Vadim's featured picks always lead the trending strip.
+  const pinned = shuffled.filter((i) => i.featured);
+  const rest = shuffled.filter((i) => !i.featured);
+  const ordered = [...pinned, ...rest];
+  return ordered.slice(0, Math.min(count, ordered.length));
 }
 
 /** User-saved memes that are not dev/placeholder drafts. */

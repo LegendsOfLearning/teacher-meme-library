@@ -79,13 +79,13 @@ export const memeFormats = [
     zones: [
       {
         key: "no",
-        label: "Top panel — what Drake REJECTS",
+        label: "Top panel: what Drake REJECTS",
         x: 0.50, y: 0.04, w: 0.46, h: 0.42,
         align: "center", style: "dark-on-light", maxLines: 4,
       },
       {
         key: "yes",
-        label: "Bottom panel — what Drake APPROVES",
+        label: "Bottom panel: what Drake APPROVES",
         x: 0.50, y: 0.54, w: 0.46, h: 0.42,
         align: "center", style: "dark-on-light", maxLines: 4,
       },
@@ -113,13 +113,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the setup",
+        label: "Top: the setup",
         x: 0.03, y: 0.02, w: 0.94, h: 0.20,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "bottom",
-        label: "Bottom — the win",
+        label: "Bottom: the win",
         x: 0.03, y: 0.78, w: 0.94, h: 0.20,
         align: "center", style: "caption", maxLines: 2,
       },
@@ -181,13 +181,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — what's happening",
+        label: "Top: what's happening",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
       },
       {
         key: "bottom",
-        label: "Bottom — the chaos",
+        label: "Bottom: the chaos",
         x: 0.03, y: 0.75, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
       },
@@ -215,14 +215,14 @@ export const memeFormats = [
     zones: [
       {
         key: "woman",
-        label: "Yelling woman (left) — the accusation",
+        label: "Yelling woman (left): the accusation",
         x: 0.02, y: 0.68, w: 0.46, h: 0.28,
         align: "center", style: "caption", maxLines: 2, maxFontSize: 88,
         minFontSize: 44,
       },
       {
         key: "cat",
-        label: "Confused cat (right) — the defense",
+        label: "Confused cat (right): the defense",
         x: 0.52, y: 0.68, w: 0.46, h: 0.28,
         align: "center", style: "caption", maxLines: 2, maxFontSize: 88,
         minFontSize: 44,
@@ -251,13 +251,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the catastrophe",
+        label: "Top: the catastrophe",
         x: 0.03, y: 0.04, w: 0.94, h: 0.30,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
       },
       {
         key: "bottom",
-        label: "Bottom — usually \"This is fine.\"",
+        label: "Bottom: usually \"This is fine.\"",
         x: 0.03, y: 0.70, w: 0.94, h: 0.26,
         align: "center", style: "caption", maxLines: 2, minFontSize: 52,
       },
@@ -285,13 +285,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the predictable cause",
+        label: "Top: the predictable cause",
         x: 0.04, y: 0.02, w: 0.92, h: 0.20,
         align: "center", style: "caption", maxLines: 2, minFontSize: 52,
       },
       {
         key: "bottom",
-        label: "Bottom — the \"shocking\" effect",
+        label: "Bottom: the \"shocking\" effect",
         x: 0.04, y: 0.78, w: 0.92, h: 0.20,
         align: "center", style: "caption", maxLines: 2, minFontSize: 52,
       },
@@ -319,13 +319,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — what they said (normal text)",
+        label: "Top: what they said (normal text)",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 3,
       },
       {
         key: "bottom",
-        label: "Bottom — same thing in mOcKiNg cAsE (auto-applied)",
+        label: "Bottom: same thing in mOcKiNg cAsE (auto-applied)",
         x: 0.03, y: 0.68, w: 0.94, h: 0.26,
         align: "center", style: "mocking", maxLines: 2, minFontSize: 44,
       },
@@ -353,13 +353,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the cheerful claim",
+        label: "Top: the cheerful claim",
         x: 0.03, y: 0.02, w: 0.94, h: 0.18,
         align: "center", style: "caption", maxLines: 2, minFontSize: 44,
       },
       {
         key: "bottom",
-        label: "Bottom — the painful truth",
+        label: "Bottom: the painful truth",
         x: 0.03, y: 0.80, w: 0.94, h: 0.18,
         align: "center", style: "caption", maxLines: 2, minFontSize: 40,
       },
@@ -387,13 +387,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the suspicious announcement",
+        label: "Top: the suspicious announcement",
         x: 0.03, y: 0.02, w: 0.94, h: 0.20,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
       },
       {
         key: "bottom",
-        label: "Bottom — optional reaction",
+        label: "Bottom: optional reaction",
         x: 0.03, y: 0.78, w: 0.94, h: 0.20,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
       },
@@ -421,7 +421,7 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Single line — who/what we're toasting",
+        label: "Single line: who/what we're toasting",
         x: 0.03, y: 0.02, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 3,
       },
@@ -489,28 +489,28 @@ export const memeFormats = [
     zones: [
       {
         key: "level1",
-        label: "Brain 1 — the sensible take",
+        label: "Brain 1: the sensible take",
         x: 0.03, y: 0.02, w: 0.42, h: 0.22,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level2",
-        label: "Brain 2 — slightly bigger brain",
+        label: "Brain 2: slightly bigger brain",
         x: 0.03, y: 0.27, w: 0.42, h: 0.22,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level3",
-        label: "Brain 3 — galaxy brain",
+        label: "Brain 3: galaxy brain",
         x: 0.03, y: 0.52, w: 0.42, h: 0.22,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level4",
-        label: "Brain 4 — cosmic brain",
+        label: "Brain 4: cosmic brain",
         x: 0.03, y: 0.77, w: 0.42, h: 0.22,
         align: "center", style: "caption", maxLines: 2, minFontSize: 48,
         maskFill: "rgba(0,0,0,0.94)",
@@ -607,7 +607,7 @@ export const memeFormats = [
       },
       {
         key: "question",
-        label: "Bottom — \"Is this a pigeon?\" line",
+        label: "Bottom: \"Is this a pigeon?\" line",
         x: 0.04, y: 0.86, w: 0.92, h: 0.12,
         align: "center", style: "caption", maxLines: 2,
       },
@@ -635,13 +635,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the question",
+        label: "Top: the question",
         x: 0.03, y: 0.02, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "bottom",
-        label: "Bottom — the 'real' answer",
+        label: "Bottom: the 'real' answer",
         x: 0.03, y: 0.74, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },
@@ -669,14 +669,14 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the situation",
+        label: "Top: the situation",
         x: 0.03, y: 0.02, w: 0.94, h: 0.24,
         align: "center", style: "caption", maxLines: 1, maxFontSize: 88,
         minFontSize: 52,
       },
       {
         key: "bottom",
-        label: "Bottom — usually \"feels [X] man\"",
+        label: "Bottom: usually \"feels [X] man\"",
         x: 0.03, y: 0.76, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2, maxFontSize: 80,
         minFontSize: 48,
@@ -705,13 +705,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the link / setup",
+        label: "Top: the link / setup",
         x: 0.03, y: 0.02, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "bottom",
-        label: "Bottom — the reveal",
+        label: "Bottom: the reveal",
         x: 0.03, y: 0.74, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },
@@ -1387,13 +1387,13 @@ export const memeFormats = [
     zones: [
       {
         key: "p1",
-        label: "Panel 1 — Anakin's optimistic line",
+        label: "Panel 1: Anakin's optimistic line",
         x: 0.00, y: 0.30, w: 0.50, h: 0.24,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "p2",
-        label: "Panel 2 — Padmé's hopeful follow-up",
+        label: "Panel 2: Padmé's hopeful follow-up",
         x: 0.50, y: 0.30, w: 0.50, h: 0.24,
         align: "center", style: "caption", maxLines: 2,
       },
@@ -1403,13 +1403,13 @@ export const memeFormats = [
         // Leave the key/zone in place so the schema still lists it
         // (the LLM can choose to leave it blank, or drop a soft echo).
         key: "p3",
-        label: "Panel 3 — leave blank (or repeat softly)",
+        label: "Panel 3: leave blank (or repeat softly)",
         x: 0.02, y: 0.83, w: 0.46, h: 0.16,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "p4",
-        label: "Panel 4 — Padmé panicked",
+        label: "Panel 4: Padmé panicked",
         x: 0.50, y: 0.78, w: 0.50, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },

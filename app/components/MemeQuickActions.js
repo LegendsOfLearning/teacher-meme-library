@@ -34,18 +34,18 @@ export default function MemeQuickActions({
   const download = async () => {
     try {
       await fetchAndDownloadSquare(imgSrc, downloadName);
-      toast("Saved — square PNG downloaded");
+      toast("Saved: square PNG downloaded");
     } catch {
-      toast("Download failed — try again");
+      toast("Download failed, try again");
     }
   };
 
   const copyImage = async () => {
     try {
       await copyImageToClipboard(imgSrc);
-      toast("Copied — paste the image into chat or email");
+      toast("Copied: paste the image into chat or email");
     } catch {
-      toast("Couldn't copy image — try Download instead");
+      toast("Couldn't copy image, try Download instead");
     }
   };
 

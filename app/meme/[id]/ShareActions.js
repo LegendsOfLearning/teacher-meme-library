@@ -23,7 +23,7 @@ export default function ShareActions({ meme }) {
         share={{
           path: meme.sharePath,
           title: `${meme.formatName} · Teacher meme`,
-          text: `Found my new favorite teacher meme — "${captionText}"`,
+          text: `Found my new favorite teacher meme: "${captionText}"`,
           imageUrl: meme.pngUrl,
         }}
         onToast={showToast}

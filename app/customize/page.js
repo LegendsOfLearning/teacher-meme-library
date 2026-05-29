@@ -153,7 +153,7 @@ export default function CustomizePage() {
         }
       } catch {
         setSafetyError(
-          "Couldn't check safety right now — try again before saving."
+          "Couldn't check safety right now, try again before saving."
         );
       }
     }, 450);
@@ -181,7 +181,7 @@ export default function CustomizePage() {
       setMeme(data);
       setEditing(false);
       if (data.ephemeral) {
-        showToast("Ready to download — ask your admin to enable Blob storage for share links");
+        showToast("Ready to download. Ask your admin to enable Blob storage for share links");
       }
       setTimeout(
         () =>
@@ -213,7 +213,7 @@ export default function CustomizePage() {
       );
       showToast("Square meme downloaded");
     } catch {
-      showToast("Download failed — try again");
+      showToast("Download failed, try again");
     }
   };
 
@@ -244,9 +244,14 @@ export default function CustomizePage() {
   return (
     <>
       <nav className="nav">
-        <Link href="/" className="nav-link">
-          ← All memes
-        </Link>
+        <div className="nav-left">
+          <Link href="/" className="nav-link">
+            ← All memes
+          </Link>
+          <Link href="/why-memes" className="nav-link nav-link--why">
+            Why memes?
+          </Link>
+        </div>
         <LolNavBrand />
       </nav>
 
@@ -255,7 +260,7 @@ export default function CustomizePage() {
           Customize this <span className="gradient-text">template</span>
         </h1>
         <p>
-          Edit the captions — same image, your words. Every save runs
+          Edit the captions: same image, your words. Every save runs
           through a K-8 safety check before download.
         </p>
       </section>
@@ -292,7 +297,7 @@ export default function CustomizePage() {
                   share={{
                     path: meme.sharePath,
                     title: `${meme.formatName} · Teacher meme`,
-                    text: `Found my new favorite teacher meme — "${shareTextLine}"`,
+                    text: `Found my new favorite teacher meme: "${shareTextLine}"`,
                     imageUrl: meme.pngUrl,
                   }}
                   onToast={showToast}
@@ -309,7 +314,7 @@ export default function CustomizePage() {
                     share={{
                       path: meme.sharePath,
                       title: `${meme.formatName} · Teacher meme`,
-                      text: `Found my new favorite teacher meme — "${shareTextLine}"`,
+                      text: `Found my new favorite teacher meme: "${shareTextLine}"`,
                       imageUrl: meme.pngUrl,
                     }}
                     onToast={showToast}

@@ -90,9 +90,9 @@ export default function MemeCardActions({
   const copyImage = useCallback(async () => {
     try {
       await copyImageToClipboard(item.file);
-      onToast?.("Copied — paste into chat or email");
+      onToast?.("Copied: paste into chat or email");
     } catch {
-      onToast?.("Couldn't copy — try Download");
+      onToast?.("Couldn't copy, try Download");
     }
   }, [item, onToast]);
 

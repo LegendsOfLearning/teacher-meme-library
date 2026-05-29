@@ -62,9 +62,14 @@ export default async function GalleryItemPage({ params }) {
   return (
     <>
       <nav className="nav">
-        <Link href="/" className="nav-link">
-          ← All memes
-        </Link>
+        <div className="nav-left">
+          <Link href="/" className="nav-link">
+            ← All memes
+          </Link>
+          <Link href="/why-memes" className="nav-link nav-link--why">
+            Why memes?
+          </Link>
+        </div>
         <LolNavBrand />
       </nav>
 

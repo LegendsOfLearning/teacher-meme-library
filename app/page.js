@@ -4,6 +4,7 @@ import {
   galleryItems,
   gallerySituationFilters,
 } from "./lib/gallery.js";
+import Link from "next/link";
 import { getHotMemes, getMemeOfTheDay } from "./lib/gallery-featured";
 import GalleryGrid from "./gallery/GalleryGrid";
 import HomeFeaturedStrip from "./components/HomeFeaturedStrip";
@@ -34,7 +35,7 @@ function withCacheBust(items) {
 export const metadata = {
   title: "Free Classroom Memes | Legends of Learning",
   description:
-    "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes — then explore free game-based learning when you're ready.",
+    "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes, then explore free game-based learning when you're ready.",
   openGraph: {
     title: "Free Classroom Memes",
     description:
@@ -55,6 +56,9 @@ export default async function Home() {
     <>
       <nav className="nav">
         <LolNavBrand />
+        <Link href="/why-memes" className="nav-link nav-link--why">
+          Why memes?
+        </Link>
       </nav>
 
       <section className="hero hero-compact" aria-labelledby="hero-headline">

@@ -14,7 +14,7 @@ const montserrat = Montserrat({
 export const metadata = {
   title: "Free Classroom Memes | Legends of Learning",
   description:
-    "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes — free game-based learning when you're ready.",
+    "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes, plus free game-based learning when you're ready.",
   metadataBase: new URL(serverShareOrigin()),
   openGraph: {
     title: "Teacher Meme Generator",

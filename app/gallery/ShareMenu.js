@@ -155,7 +155,7 @@ export default function ShareMenu({
         await navigator.clipboard.writeText(text);
         onToast?.(msg);
       } catch {
-        onToast?.("Couldn't copy — long-press to copy manually");
+        onToast?.("Couldn't copy. Long-press to copy manually");
       }
       setOpen(false);
     },

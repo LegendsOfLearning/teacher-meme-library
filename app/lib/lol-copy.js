@@ -17,13 +17,13 @@ export const LOL_LIBRARY_LEAD =
   "Browse every meme: download, copy, share, or customize in a click.";
 
 export const LOL_SHARE_PANEL_INTRO =
-  "Paste the image into a group chat, email, or post — or share a link to this page.";
+  "Paste the image into a group chat, email, or post, or share a link to this page.";
 
 export const LOL_PITCH_SHORT =
   "Free for teachers: math and science (K–8) and U.S. history for middle school (grades 6–8).";
 
 export const LOL_PITCH_BANNER_BODY =
-  "Legends of Learning is free for teachers — thousands of standards-aligned math and science games for K–8, plus U.S. history built for middle school. Game-based learning that helps kids stay engaged.";
+  "Legends of Learning is free for teachers, with thousands of standards-aligned math and science games for K–8, plus U.S. history built for middle school. Game-based learning that helps kids stay engaged.";
 
 export const LOL_PITCH_CARD =
   "When you're ready: Legends of Learning is free for teachers. Assign math and science for K–8 and middle school U.S. history in minutes.";

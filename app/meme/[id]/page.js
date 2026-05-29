@@ -68,6 +68,9 @@ export default async function MemePage({ params }) {
     <>
       <MemeViewTracker memeId={meme.id} />
       <nav className="nav">
+        <Link href="/why-memes" className="nav-link nav-link--why">
+          Why memes?
+        </Link>
         <LolNavBrand />
       </nav>
 
