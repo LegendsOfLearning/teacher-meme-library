@@ -909,6 +909,9 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
     return { fragment: "", bbox: null };
   }
   let style = resolveZoneStyle(zone);
+  if (typeof zone.strokeRatio === "number" && Number.isFinite(zone.strokeRatio)) {
+    style = { ...style, strokeRatio: Math.max(0, zone.strokeRatio) };
+  }
   if (coverBaked && style.strokeRatio > 0) {
     style = {
       ...style,

@@ -183,13 +183,13 @@ export const memeFormats = [
         key: "top",
         label: "Top — what's happening",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
       },
       {
         key: "bottom",
         label: "Bottom — the chaos",
         x: 0.03, y: 0.75, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
       },
     ],
     exampleCaptions: [
