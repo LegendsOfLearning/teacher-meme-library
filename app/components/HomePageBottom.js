@@ -50,8 +50,8 @@ export default function HomePageBottom() {
             🛡️
           </span>
           <span>
-            <strong>Classroom-safe by default.</strong> Every caption — curated
-            or customized — passes a K-8 brand check before download.
+            <strong>Edit the captions</strong> — same image, your words.
+            Every save runs through a K-8 safety check before download.
           </span>
         </p>
 

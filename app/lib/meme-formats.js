@@ -147,13 +147,13 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        label: "Top — the hopeful part",
+        label: "Top",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },
       {
         key: "bottom",
-        label: "Bottom — the brutal twist",
+        label: "Bottom",
         x: 0.03, y: 0.75, w: 0.94, h: 0.22,
         align: "center", style: "caption", maxLines: 2,
       },

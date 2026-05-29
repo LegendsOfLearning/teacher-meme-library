@@ -46,3 +46,5 @@ For a production deployment of this app you should:
 | `sad-pablo.jpg` | Sad Pablo Escobar (waiting) |
 | `pam-same-picture.jpg` | They're the Same Picture (Pam, The Office) |
 | `pam-same-picture-gallery.png` | Blank gallery-layout Pam template (text erased for customize) |
+| `disaster-girl-gallery-blank.png` | Blank gallery-layout Disaster Girl (text erased for customize) |
+| `grumpy-cat-plans-blank.png` | Blank gallery-layout Grumpy Cat (text erased for customize) |

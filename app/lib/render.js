@@ -1409,6 +1409,10 @@ async function loadLogoBuffer(targetWidth) {
 // Gallery thumbnail → blank customize template. Keeps the curated
 // gallery cat/art instead of swapping in a different imgflip JPEG.
 export const GALLERY_RENDER_SOURCES = {
+  "/gallery/disaster-girl-admin.png":
+    "/templates-meme/disaster-girl-gallery-blank.png",
+  "/gallery/grumpy-cat-plans.png":
+    "/templates-meme/grumpy-cat-plans-blank.png",
   "/gallery/crying-cat-papers.png":
     "/templates-meme/crying-cat-gallery-papers.png",
   "/gallery/crying-cat-copier.png":
@@ -1432,7 +1436,7 @@ function defaultZoneMaskFill(zone) {
 }
 
 /** Erase rect for baked gallery captions (letterbox bars vs on-photo zones). */
-function zoneEraseRect(zone, W, H, { letterbox = true } = {}) {
+function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null } = {}) {
   const isTopBand = zone.y + zone.h <= 0.35;
   const isBottomBand = zone.y >= 0.65;
   if (zone.style === "sign" || zone.style === "dark-on-light") {
@@ -1452,12 +1456,29 @@ function zoneEraseRect(zone, W, H, { letterbox = true } = {}) {
     const h = Math.min(H - y, (zone.h + padY * 2) * H);
     return { x, y, w, h };
   }
+  if (bandBounds) {
+    if (isTopBand) {
+      const frac = Math.max(
+        bandBounds.topEndFrac,
+        Math.min(0.3, zone.y + zone.h + 0.06)
+      );
+      return { x: 0, y: 0, w: W, h: Math.round(H * frac) };
+    }
+    if (isBottomBand) {
+      const yFrac = Math.min(
+        bandBounds.bottomStartFrac,
+        Math.max(zone.y - 0.04, 0.66)
+      );
+      const y = Math.round(H * yFrac);
+      return { x: 0, y, w: W, h: H - y };
+    }
+  }
   if (isTopBand) {
-    const frac = Math.min(0.28, zone.y + zone.h + 0.05);
+    const frac = Math.min(0.18, zone.y + zone.h + 0.02);
     return { x: 0, y: 0, w: W, h: Math.round(H * frac) };
   }
   if (isBottomBand) {
-    const y = Math.round(H * Math.max(zone.y - 0.04, 0.74));
+    const y = Math.round(H * Math.max(zone.y - 0.02, 0.82));
     return { x: 0, y, w: W, h: H - y };
   }
   return {
@@ -1497,6 +1518,46 @@ async function galleryUsesLetterboxBands(imageBuf) {
   return topMean < 25 && midMean > 55;
 }
 
+/** Pixel-scan black letterbox bars so erase stays off the photo. */
+async function detectLetterboxBandBounds(imageBuf) {
+  const { data, info } = await sharp(imageBuf)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const W = info.width;
+  const H = info.height;
+  const DARK = 28;
+
+  function rowMean(y) {
+    let sum = 0;
+    for (let x = 0; x < W; x++) {
+      sum += data[(y * W + x) * info.channels];
+    }
+    return sum / W;
+  }
+
+  let topEnd = 0;
+  for (let y = 0; y < H; y++) {
+    if (rowMean(y) > DARK) {
+      topEnd = y;
+      break;
+    }
+  }
+
+  let bottomStart = H;
+  for (let y = H - 1; y >= 0; y--) {
+    if (rowMean(y) > DARK) {
+      bottomStart = y + 1;
+      break;
+    }
+  }
+
+  const pad = Math.max(8, Math.round(H * 0.012));
+  return {
+    topEndFrac: Math.min(0.22, (topEnd + pad) / H),
+    bottomStartFrac: Math.max(0.78, (bottomStart - pad) / H),
+  };
+}
+
 async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
   const W = size.width;
   const H = size.height;
@@ -1524,6 +1585,10 @@ function resolveRenderSource(format, sourceFile) {
   return format.renderFile || format.file;
 }
 
+function usesBlankGalleryTemplate(sourceFile) {
+  return Boolean(sourceFile && GALLERY_RENDER_SOURCES[sourceFile]);
+}
+
 export async function renderMeme(format, captions, options = {}) {
   await ensureFontsInstalled();
 
@@ -1543,7 +1608,9 @@ export async function renderMeme(format, captions, options = {}) {
       ? { width: meta.width, height: meta.height }
       : getRenderSize(format);
 
-  const eraseBakedCaptions = isGalleryPath(options.sourceFile);
+  const eraseBakedCaptions =
+    isGalleryPath(options.sourceFile) &&
+    !usesBlankGalleryTemplate(options.sourceFile);
 
   const skipWatermark =
     format.skipWatermark === true || isGalleryPath(options.sourceFile);
@@ -1555,8 +1622,12 @@ export async function renderMeme(format, captions, options = {}) {
   let coverBakedCaptions = false;
   if (eraseBakedCaptions) {
     const letterbox = await galleryUsesLetterboxBands(baseBuf);
+    const bandBounds = letterbox
+      ? await detectLetterboxBandBounds(baseBuf)
+      : null;
     baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size, {
       letterbox,
+      bandBounds,
     });
     // Knockout stroke paints over any baked caption pixels that survive
     // the band erase (common when Impact strokes bleed into the photo).
