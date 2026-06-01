@@ -45,7 +45,11 @@ async function getFontStyle() {
 // Default corner; renderer picks br → bl → tr → tl based on caption collision.
 export const BRAND_WATERMARK_CORNER = "br";
 export const MEME_LOOP_FOOTER_TEXT =
-  "Create your own teacher meme at www.teacher-memes.com";
+  "Create your own teacher meme at teacher-memes.com";
+
+/** Clean UI font stack for the footer signature line. */
+const FOOTER_FONT =
+  "Montserrat, 'Segoe UI', system-ui, -apple-system, sans-serif";
 
 export const WATERMARK_CORNER_PRIORITY = ["br", "bl", "tr", "tl"];
 const LOGO_SCALE_STEPS = [1, 0.88, 0.76, 0.64, 0.55, 0.48];
@@ -414,7 +418,7 @@ function fitCaptionAwayFromReserve({
     curLh = refit.lineHeight;
     curStroke =
       strokeRatio > 0
-        ? Math.min(22, Math.max(4, curFs * strokeRatio))
+        ? Math.min(40, Math.max(5, curFs * strokeRatio))
         : 0;
     blockTop = y + (h - curLines.length * curLh) / 2;
     if (isBottomBand && (corner === "br" || corner === "bl")) {
@@ -517,7 +521,7 @@ function enforceCaptionClearOfReserve(ctx) {
     lineHeight = refit.lineHeight;
     strokeWidth =
       strokeRatio > 0
-        ? Math.min(22, Math.max(4, fs * strokeRatio))
+        ? Math.min(40, Math.max(5, fs * strokeRatio))
         : 0;
     const isBottomBand = zone.y + zone.h > 0.68;
     blockTop = y + (h - lines.length * lineHeight) / 2;
@@ -775,7 +779,7 @@ function resolveZoneStyle(zone) {
         transform: toMockingCase,
         fill: "#ffffff",
         stroke: "#000000",
-        strokeRatio: 0.28,
+        strokeRatio: 0.38,
       };
     case "sign":
       return {
@@ -806,19 +810,14 @@ function resolveZoneStyle(zone) {
     default:
       // Impact white-fill + heavy black stroke on photo / black bands.
       //
-      // Stroke ratio 0.28 with paint-order=stroke fill gives a visible
-      // outline of ~14% of font size. That's higher than the canonical
-      // ~10% you see on imgflip renders, but at the resolutions the
-      // gallery thumbnails get downscaled to (1536px -> ~250px wide,
-      // a 6x reduction), a 10% stroke shrinks to 1-2 visible pixels
-      // and reads as "thin". The bumped ratio keeps the chunky
-      // AI-baked feel even after thumbnailing.
+      // Heavy stroke so programmatic captions match classic meme /
+      // AI-baked gallery typography after social downscaling.
       return {
         family: IMPACT_FAMILY,
         transform: (s) => s.toUpperCase(),
         fill: "#ffffff",
         stroke: "#000000",
-        strokeRatio: 0.28,
+        strokeRatio: 0.38,
       };
   }
 }
@@ -906,7 +905,7 @@ function computeSyncSizeCaps(format, captions, imgW, imgH) {
   return caps;
 }
 
-function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked) {
+function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked, galleryEdit = false) {
   if (rawText == null || String(rawText).trim() === "") {
     return { fragment: "", bbox: null };
   }
@@ -917,7 +916,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
   if (coverBaked && style.strokeRatio > 0) {
     style = {
       ...style,
-      strokeRatio: Math.min(0.42, style.strokeRatio * 1.55),
+      strokeRatio: Math.min(0.5, style.strokeRatio * 1.7),
     };
   }
   const text = style.transform(normalizeCaptionText(String(rawText).trim()));
@@ -1009,7 +1008,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
 
   const strokeWidth =
     style.strokeRatio > 0
-      ? Math.min(22, Math.max(4, fs * style.strokeRatio))
+      ? Math.min(40, Math.max(5, fs * style.strokeRatio))
       : 0;
 
   const laid = fitCaptionAwayFromReserve({
@@ -1057,7 +1056,8 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
     .join("\n");
 
   let fragment = textEls;
-  if (coverBaked && lines.some((l) => l.trim()) && !zone.maskTight) {
+  // Gallery edits smudge baked pixels first — only re-draw caption glyphs.
+  if (coverBaked && lines.some((l) => l.trim()) && !zone.maskTight && !galleryEdit) {
     const bleedX = w * 0.04;
     const bleedY = h * 0.5;
     const mx = Math.max(0, x - bleedX);
@@ -1070,26 +1070,32 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
     fragment = `${zoneMask}\n${fragment}`;
   }
   if (coverBaked && strokeWidthFinal > 0) {
-    const knockout = lines
-      .map((line, i) => {
-        const ly = firstBaseline + i * lineHeight;
-        const kStroke = Math.min(56, strokeWidthFinal * 3);
-        return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
-          2
-        )}" font-family="${style.family}" font-size="${fs.toFixed(
-          2
-        )}" fill="#000000" stroke="#000000" stroke-width="${kStroke.toFixed(
-          2
-        )}" stroke-linejoin="round" paint-order="stroke fill" text-anchor="${anchor}">${escXml(line)}</text>`;
-      })
+    const knockoutPasses = galleryEdit
+      ? [
+          { fill: "#ffffff", stroke: "#ffffff", mult: 5.5 },
+          { fill: "#000000", stroke: "#000000", mult: 4.5 },
+        ]
+      : [{ fill: "#000000", stroke: "#000000", mult: 3.5 }];
+    const knockout = knockoutPasses
+      .flatMap(({ fill, stroke, mult }) =>
+        lines.map((line, i) => {
+          const ly = firstBaseline + i * lineHeight;
+          const kStroke = Math.min(96, strokeWidthFinal * mult);
+          return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
+            2
+          )}" font-family="${style.family}" font-size="${fs.toFixed(
+            2
+          )}" fill="${fill}" stroke="${stroke}" stroke-width="${kStroke.toFixed(
+            2
+          )}" stroke-linejoin="round" paint-order="stroke fill" text-anchor="${anchor}">${escXml(line)}</text>`;
+        })
+      )
       .join("\n");
     fragment = `${knockout}\n${textEls}`;
   }
 
-  // Tight mask: only covers the caption glyphs (+ small pad), not the
-  // full zone band. Used on AI gallery sources that still have baked-in
-  // text when no blank `renderFile` template exists yet.
-  if (zone.maskTight && lines.some((l) => l.trim())) {
+  // Tight mask boxes are for static templates only — never on gallery edits.
+  if (zone.maskTight && !galleryEdit && lines.some((l) => l.trim())) {
     const padX = fs * 0.22;
     const padY = fs * 0.14;
     const maxLineLen = Math.max(...lines.map((l) => l.length));
@@ -1142,7 +1148,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked)
   return { fragment, bbox };
 }
 
-async function buildSvgOverlay(format, captions, watermark, size, coverBaked = false) {
+async function buildSvgOverlay(format, captions, watermark, size, coverBaked = false, galleryEdit = false) {
   const W = size.width;
   const H = size.height;
   const fontStyle = await getFontStyle();
@@ -1173,7 +1179,8 @@ async function buildSvgOverlay(format, captions, watermark, size, coverBaked = f
       H,
       watermark,
       syncCaps.get(zone.key),
-      coverBaked
+      coverBaked,
+      galleryEdit
     );
     if (rendered?.fragment) parts.push(rendered.fragment);
   }
@@ -1417,6 +1424,12 @@ async function loadLogoBuffer(targetWidth) {
  *                           render as empty strings.
  * @returns {Promise<Buffer>} PNG buffer.
  */
+// Gallery thumbnails whose captions sit ON the photo (not on black
+// letterbox bars). Letterbox detection would erase the wrong regions.
+export const GALLERY_ON_PHOTO_CAPTIONS = new Set([
+  "/gallery/boromir-backup.png",
+]);
+
 // Gallery thumbnail → blank customize template. Keeps the curated
 // gallery cat/art instead of swapping in a different imgflip JPEG.
 export const GALLERY_RENDER_SOURCES = {
@@ -1447,7 +1460,7 @@ function defaultZoneMaskFill(zone) {
 }
 
 /** Erase rect for baked gallery captions (letterbox bars vs on-photo zones). */
-function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null } = {}) {
+function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null, onPhoto = false } = {}) {
   const isTopBand = zone.y + zone.h <= 0.35;
   const isBottomBand = zone.y >= 0.65;
   if (zone.style === "sign" || zone.style === "dark-on-light") {
@@ -1460,7 +1473,7 @@ function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null } = {})
   }
   if (!letterbox) {
     const padX = zone.w * 0.04;
-    const padY = zone.h * 0.35;
+    const padY = zone.h * (onPhoto ? 0.65 : 0.35);
     const x = Math.max(0, (zone.x - padX) * W);
     const y = Math.max(0, (zone.y - padY) * H);
     const w = Math.min(W - x, (zone.w + padX * 2) * W);
@@ -1530,7 +1543,7 @@ async function galleryUsesLetterboxBands(imageBuf) {
 }
 
 /** Pixel-scan black letterbox bars so erase stays off the photo. */
-async function detectLetterboxBandBounds(imageBuf) {
+export async function detectLetterboxBandBounds(imageBuf) {
   const { data, info } = await sharp(imageBuf)
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -1569,6 +1582,57 @@ async function detectLetterboxBandBounds(imageBuf) {
   };
 }
 
+/** Height of the footer signature area for strip-clearing on edits. */
+function footerSignatureHeight(width) {
+  const fs = Math.max(13, Math.min(18, Math.round(width * 0.014)));
+  return Math.round(fs * 3);
+}
+
+/** Clear the baked footer area so new bottom captions do not compete. */
+async function stripGalleryFooterBand(baseBuf, width, height) {
+  const sigH = footerSignatureHeight(width);
+  const top = height - sigH;
+  const svg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="0" y="${top}" width="${width}" height="${sigH}" fill="#000000"/></svg>`
+  );
+  return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
+}
+
+/** Pixelate baked caption areas to local color so replacement text reads cleanly. */
+async function smudgeGalleryCaptionZones(baseBuf, format, size) {
+  const W = size.width;
+  const H = size.height;
+  let out = baseBuf;
+  for (const zone of format.zones) {
+    if (zone.decorative) continue;
+    const rect = zoneEraseRect(zone, W, H, {
+      letterbox: false,
+      onPhoto: true,
+    });
+    const left = Math.round(Math.max(0, rect.x));
+    const top = Math.round(Math.max(0, rect.y));
+    const width = Math.round(Math.min(W - left, rect.w));
+    const height = Math.round(Math.min(H - top, rect.h));
+    if (width < 8 || height < 8) continue;
+    const factor = Math.max(6, Math.round(Math.min(width, height) / 24));
+    const sw = Math.max(1, Math.round(width / factor));
+    const sh = Math.max(1, Math.round(height / factor));
+    const patch = await sharp(out)
+      .extract({ left, top, width, height })
+      .resize(sw, sh, { kernel: sharp.kernel.cubic })
+      .resize(width, height, { kernel: sharp.kernel.nearest })
+      .toBuffer();
+    out = await sharp(out)
+      .composite([{ input: patch, top, left }])
+      .toBuffer();
+  }
+  return out;
+}
+
+function isGalleryEditSource(sourceFile) {
+  return isGalleryPath(sourceFile) && !usesBlankGalleryTemplate(sourceFile);
+}
+
 async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
   const W = size.width;
   const H = size.height;
@@ -1589,20 +1653,22 @@ async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
 }
 
 function resolveRenderSource(format, sourceFile) {
-  if (sourceFile && GALLERY_RENDER_SOURCES[sourceFile]) {
-    return GALLERY_RENDER_SOURCES[sourceFile];
+  // Gallery edits always render from the clean template — no baked text
+  // to erase, clean canvas, same base photo.
+  if (sourceFile && isGalleryPath(sourceFile)) {
+    if (GALLERY_RENDER_SOURCES[sourceFile]) {
+      return GALLERY_RENDER_SOURCES[sourceFile];
+    }
+    return format.renderFile || format.file;
   }
   if (sourceFile) return sourceFile;
   return format.renderFile || format.file;
 }
 
-function usesBlankGalleryTemplate(sourceFile) {
-  return Boolean(sourceFile && GALLERY_RENDER_SOURCES[sourceFile]);
-}
-
 export async function renderMeme(format, captions, options = {}) {
   await ensureFontsInstalled();
 
+  // Gallery edits always resolve to the clean template (no baked text).
   const sourcePath = resolveRenderSource(format, options.sourceFile);
   const templatePath = path.join(
     process.cwd(),
@@ -1611,39 +1677,16 @@ export async function renderMeme(format, captions, options = {}) {
   );
 
   const meta = await sharp(templatePath).metadata();
-  // High-res gallery (or blank gallery-derived) templates keep their
-  // native pixels so caption zones align with the art — not imgflip
-  // dimensions that letterbox into black bars.
   const size =
     meta.width >= 1000
       ? { width: meta.width, height: meta.height }
       : getRenderSize(format);
 
-  const eraseBakedCaptions =
-    isGalleryPath(options.sourceFile) &&
-    !usesBlankGalleryTemplate(options.sourceFile);
-
-  const skipWatermark =
-    format.skipWatermark === true || isGalleryPath(options.sourceFile);
-
   let baseBuf = await sharp(templatePath)
     .resize(size.width, size.height, { fit: "fill", kernel: "lanczos3" })
     .toBuffer();
 
-  let coverBakedCaptions = false;
-  if (eraseBakedCaptions) {
-    const letterbox = await galleryUsesLetterboxBands(baseBuf);
-    const bandBounds = letterbox
-      ? await detectLetterboxBandBounds(baseBuf)
-      : null;
-    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, size, {
-      letterbox,
-      bandBounds,
-    });
-    coverBakedCaptions = true;
-  }
-
-  const placement = skipWatermark
+  const placement = format.skipWatermark
     ? null
     : await resolveWatermarkPlacement(format, captions, size);
 
@@ -1656,7 +1699,8 @@ export async function renderMeme(format, captions, options = {}) {
     captions,
     watermark,
     size,
-    coverBakedCaptions
+    false,
+    false
   );
 
   const composites = [{ input: Buffer.from(svg), top: 0, left: 0 }];
@@ -1679,22 +1723,30 @@ export async function renderMeme(format, captions, options = {}) {
       blend: "over",
     });
   }
-  composites.push({
-    input: buildMemeLoopFooterSvg(size.width, size.height),
-    top: 0,
-    left: 0,
-    blend: "over",
-  });
 
-  const composed = await sharp(baseBuf)
+  let composed = await sharp(baseBuf)
     .composite(composites)
     .png({ compressionLevel: 9, quality: 92 })
     .toBuffer();
 
-  if (size.width === size.height) {
-    return composed;
+  const sqMeta = await sharp(composed).metadata();
+  if (sqMeta.width !== sqMeta.height) {
+    composed = await padPngToSquare(composed);
   }
-  return padPngToSquare(composed);
+  const finalMeta = await sharp(composed).metadata();
+  composed = await sharp(composed)
+    .composite([
+      {
+        input: buildMemeLoopFooterSvg(finalMeta.width, finalMeta.height),
+        top: 0,
+        left: 0,
+        blend: "over",
+      },
+    ])
+    .png({ compressionLevel: 9, quality: 92 })
+    .toBuffer();
+
+  return composed;
 }
 
 /** True when planned caption ink overlaps the brand reserve (for tests). */
@@ -1703,33 +1755,24 @@ export function captionInkOverlapsBrandReserve(bbox, reserve) {
 }
 
 /**
- * Lightweight viral-loop footer drawn as a subtle band along the very
- * bottom edge of every meme. A faint dark-to-transparent gradient keeps
- * the line readable on any artwork while staying small and unobtrusive,
- * so the URL travels with the image whenever it's shared or reposted.
+ * Subtle signature line at the very bottom of every meme.
+ * Sits in the existing black letterbox bar — no colored banner,
+ * no gradient, just clean white text on black like imgflip / Kapwing.
  */
 export function buildMemeLoopFooterSvg(
   width,
   height,
   text = MEME_LOOP_FOOTER_TEXT
 ) {
-  const fontSize = Math.max(12, Math.min(18, Math.round(width * 0.0135)));
-  const bandH = Math.round(fontSize * 2.4);
-  const bandTop = height - bandH;
-  // Text sits vertically centered inside the footer band.
-  const baseline = height - Math.round(bandH * 0.32);
+  const fontSize = Math.max(13, Math.min(18, Math.round(width * 0.014)));
+  const bottomPad = Math.round(fontSize * 0.65);
+  const textY = height - bottomPad;
+
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <defs>
-        <linearGradient id="memeFooterFade" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="black" stop-opacity="0"/>
-          <stop offset="100%" stop-color="black" stop-opacity="0.55"/>
-        </linearGradient>
-      </defs>
-      <rect x="0" y="${bandTop}" width="${width}" height="${bandH}" fill="url(#memeFooterFade)"/>
       <text x="${Math.round(
         width / 2
-      )}" y="${baseline}" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="${fontSize}" fill="white" fill-opacity="0.96" letter-spacing="0.2" font-weight="700">${escXml(
+      )}" y="${textY}" text-anchor="middle" font-family="${FOOTER_FONT}" font-size="${fontSize}" font-weight="500" fill="#ffffff" fill-opacity="0.82" letter-spacing="0.02em">${escXml(
       text
     )}</text>
     </svg>`

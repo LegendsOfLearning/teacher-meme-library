@@ -101,6 +101,39 @@ export const memeFormats = [
   },
 
   {
+    id: "one-does-not-simply",
+    name: "One Does Not Simply",
+    file: `${FILE_BASE}/one-does-not-simply.jpg`,
+    width: 617,
+    height: 617,
+    description:
+      "Boromir making his iconic point. For the impossible asks of teaching life: 'one does not simply...'",
+    jokeStructure:
+      "TOP = the start of the line, almost always 'One does not simply'. BOTTOM = the impossible or absurd teaching task that one cannot, in fact, simply do. Keep each line punchy. E.g. TOP='One does not simply' / BOTTOM='Make it to Friday without a fire drill'.",
+    zones: [
+      {
+        key: "top",
+        label: "Top: usually \"One does not simply\"",
+        x: 0.03, y: 0.22, w: 0.94, h: 0.12,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
+      },
+      {
+        key: "bottom",
+        label: "Bottom: the impossible teaching task",
+        x: 0.03, y: 0.66, w: 0.94, h: 0.18,
+        align: "center", style: "caption", maxLines: 3, strokeRatio: 0.42,
+      },
+    ],
+    exampleCaptions: [
+      { top: "One does not simply", bottom: "Teach all day without a little fun and a lot of backup" },
+      { top: "One does not simply", bottom: "Make it to Friday without a fire drill" },
+      { top: "One does not simply", bottom: "Check email without finding three new meetings" },
+      { top: "One does not simply", bottom: "Finish the lesson before the bell rings" },
+      { top: "One does not simply", bottom: "Get through a sub day without a note home" },
+    ],
+  },
+
+  {
     id: "success-kid",
     name: "Success Kid",
     file: `${FILE_BASE}/success-kid.jpg`,
@@ -115,13 +148,13 @@ export const memeFormats = [
         key: "top",
         label: "Top: the setup",
         x: 0.03, y: 0.02, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
       },
       {
         key: "bottom",
         label: "Bottom: the win",
         x: 0.03, y: 0.78, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
       },
     ],
     exampleCaptions: [
@@ -253,13 +286,13 @@ export const memeFormats = [
         key: "top",
         label: "Top: the catastrophe",
         x: 0.03, y: 0.04, w: 0.94, h: 0.30,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 48, strokeRatio: 0.42,
       },
       {
         key: "bottom",
         label: "Bottom: usually \"This is fine.\"",
         x: 0.03, y: 0.70, w: 0.94, h: 0.26,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 52,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 52, strokeRatio: 0.42,
       },
     ],
     exampleCaptions: [

@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 // Watermarks every curated gallery PNG with the Legends of Learning
-// logo and writes the result to public/gallery/.
-//
-// Placement uses the same collision-aware resolver as live meme
-// rendering — logo moves to bl/tr/tl and scales down before overlapping
-// caption bands or baked punchlines.
+// logo + subtle footer signature and writes to public/gallery/.
 
 import path from "node:path";
 import { promises as fs } from "node:fs";
@@ -69,8 +65,17 @@ async function processOne(srcName, outName) {
         left: placement.logoLeftPx,
         blend: "over",
       },
+    ])
+    .png({ compressionLevel: 9, quality: 92 })
+    .toBuffer();
+
+  // Pad to square so letterbox bars exist, then add footer signature.
+  const square = await padPngToSquare(composed);
+  const sqMeta = await sharp(square).metadata();
+  const final = await sharp(square)
+    .composite([
       {
-        input: buildMemeLoopFooterSvg(size.width, size.height),
+        input: buildMemeLoopFooterSvg(sqMeta.width, sqMeta.height),
         top: 0,
         left: 0,
         blend: "over",
@@ -79,24 +84,55 @@ async function processOne(srcName, outName) {
     .png({ compressionLevel: 9, quality: 92 })
     .toBuffer();
 
-  const square = await padPngToSquare(composed);
-  await fs.writeFile(outPath, square);
+  await fs.writeFile(outPath, final);
 
   return {
     srcName,
     outName,
-    bytes: square.length,
+    bytes: final.length,
     corner: placement.corner,
     scale: placement.logoScale,
   };
 }
 
+/** Refresh footer on an existing gallery PNG without re-rendering captions. */
+async function overlayFooterOnly(outName) {
+  const outPath = path.join(outDir, outName);
+  let baseBuf = await fs.readFile(outPath);
+  const meta = await sharp(baseBuf).metadata();
+
+  // Clear old footer area (covers previous purple banner) before placing new one.
+  const clearH = Math.max(60, Math.round(meta.width * 0.055));
+  const clearTop = meta.height - clearH;
+  const clearSvg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${meta.width}" height="${meta.height}"><rect x="0" y="${clearTop}" width="${meta.width}" height="${clearH}" fill="#000000"/></svg>`
+  );
+  baseBuf = await sharp(baseBuf)
+    .composite([{ input: clearSvg, top: 0, left: 0 }])
+    .toBuffer();
+
+  const composed = await sharp(baseBuf)
+    .composite([
+      {
+        input: buildMemeLoopFooterSvg(meta.width, meta.height),
+        top: 0,
+        left: 0,
+        blend: "over",
+      },
+    ])
+    .png({ compressionLevel: 9, quality: 92 })
+    .toBuffer();
+  await fs.writeFile(outPath, composed);
+  return { outName, bytes: composed.length };
+}
+
 async function main() {
   await ensureDir(outDir);
 
-  const entries = Object.entries(gallerySourceMap);
   const results = [];
-  for (const [srcName, outName] of entries) {
+  const sourceOutNames = new Set(Object.values(gallerySourceMap));
+
+  for (const [srcName, outName] of Object.entries(gallerySourceMap)) {
     try {
       const r = await processOne(srcName, outName);
       results.push({ ok: true, ...r });
@@ -106,6 +142,19 @@ async function main() {
     } catch (err) {
       results.push({ ok: false, srcName, outName, error: err.message });
       console.error(`[fail] ${srcName}: ${err.message}`);
+    }
+  }
+
+  for (const item of galleryItems) {
+    const outName = item.file.replace(/^\/gallery\//, "");
+    if (sourceOutNames.has(outName)) continue;
+    try {
+      const r = await overlayFooterOnly(outName);
+      results.push({ ok: true, ...r, footerOnly: true });
+      console.log(`[footer] public/gallery/${outName} (${r.bytes} B)`);
+    } catch (err) {
+      results.push({ ok: false, outName, error: err.message });
+      console.error(`[fail] footer ${outName}: ${err.message}`);
     }
   }
 

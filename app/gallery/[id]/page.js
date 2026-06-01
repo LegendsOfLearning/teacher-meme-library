@@ -80,7 +80,6 @@ export default async function GalleryItemPage({ params }) {
 
         <div className="share-page-meta">
           <span className="meme-meta-pill">{item.formatName}</span>
-          <span className="meme-meta-pill subtle">{item.captionPreview}</span>
         </div>
 
         <ShareGalleryActions item={item} />

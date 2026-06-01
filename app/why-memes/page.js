@@ -21,7 +21,6 @@ export default function WhyMemesPage() {
       <main className="why-page">
         {/* Hero */}
         <header className="why-hero">
-          <p className="why-eyebrow">From Legends of Learning</p>
           <h1 className="why-title">Why memes?</h1>
           <p className="why-lede">
             Because Legends of Learning is all about how fun in the

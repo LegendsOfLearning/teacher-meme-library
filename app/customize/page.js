@@ -171,7 +171,9 @@ export default function CustomizePage() {
         body: JSON.stringify({
           formatId: format.id,
           captions: editValues,
-          galleryFile: item?.file || null,
+          // Render from the gallery image the user clicked so the same
+          // meme art is preserved; only the caption text changes.
+          galleryFile: item?.file ?? null,
           situationId: item?.situations?.[0] || "lesson-planning",
           toneId: "relatable",
         }),
@@ -244,14 +246,9 @@ export default function CustomizePage() {
   return (
     <>
       <nav className="nav">
-        <div className="nav-left">
-          <Link href="/" className="nav-link">
-            ← All memes
-          </Link>
-          <Link href="/why-memes" className="nav-link nav-link--why">
-            Why memes?
-          </Link>
-        </div>
+        <Link href="/" className="nav-link">
+          ← Back to memes
+        </Link>
         <LolNavBrand />
       </nav>
 
@@ -277,6 +274,22 @@ export default function CustomizePage() {
 
         {!loading && (
           <div className="meme-result" ref={memeAnchorRef}>
+            {editing ? (
+              <>
+                <EditPanel
+                  format={format}
+                  values={editValues}
+                  onChange={setEditValues}
+                  onSave={saveEdit}
+                  safetyError={safetyError}
+                  loading={loading}
+                />
+                <p className="customize-preview-note">
+                  Same meme image, your words. The preview below updates when you save.
+                </p>
+              </>
+            ) : null}
+
             <div className="meme-canvas-wrap">
               <img
                 key={meme.id}
@@ -322,16 +335,7 @@ export default function CustomizePage() {
                 ) : null}
                 <LolSignupCta />
               </>
-            ) : (
-              <EditPanel
-                format={format}
-                values={editValues}
-                onChange={setEditValues}
-                onSave={saveEdit}
-                safetyError={safetyError}
-                loading={loading}
-              />
-            )}
+            ) : null}
           </div>
         )}
       </main>

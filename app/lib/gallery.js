@@ -33,9 +33,11 @@ export const galleryItems = [
     formatName: "One Does Not Simply",
     captionPreview:
       "ONE DOES NOT SIMPLY TEACH ALL DAY WITHOUT A LITTLE FUN AND A LOT OF BACKUP",
-    remixFormatId: null,
-    captions: null,
-    customizable: false,
+    remixFormatId: "one-does-not-simply",
+    captions: {
+      top: "One does not simply",
+      bottom: "Teach all day without a little fun and a lot of backup",
+    },
     featured: true,
     searchKeywords: ["boromir", "fun", "backup", "support"],
     situations: ["classroom-management", "monday-chaos"],
@@ -46,9 +48,11 @@ export const galleryItems = [
     formatName: "Drake Yes / No",
     captionPreview:
       "TRYING TO MAKE LEARNING ENGAGING ALL BY YOURSELF / TEACHER MEMES, CURRICULUM GAMES, AND A GROUP CHAT THAT GETS IT",
-    remixFormatId: null,
-    captions: null,
-    customizable: false,
+    remixFormatId: "drake",
+    captions: {
+      no: "Trying to make learning engaging all by yourself",
+      yes: "Teacher memes, curriculum games, and a group chat that gets it",
+    },
     featured: true,
     searchKeywords: ["drake", "engaging", "curriculum games", "community"],
     situations: ["lesson-planning", "students-not-reading"],

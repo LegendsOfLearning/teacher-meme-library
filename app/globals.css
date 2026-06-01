@@ -94,10 +94,10 @@ a {
 }
 
 .nav-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -119,6 +119,7 @@ a {
   line-height: 1.2;
   color: var(--text-on-dark);
   opacity: 0.92;
+  white-space: nowrap;
 }
 
 .nav-left {
@@ -700,11 +701,19 @@ a {
 
 /* ── EDIT PANEL ───────────────────────────────────────────────────── */
 .edit-panel {
-  margin-top: 18px;
+  margin-top: 0;
+  margin-bottom: 16px;
   padding: 18px;
   border-radius: var(--radius);
   border: 1.5px solid var(--purple-300);
   background: var(--purple-100);
+}
+
+.customize-preview-note {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--text-muted, #5c5c7a);
+  text-align: center;
 }
 
 .edit-header {
