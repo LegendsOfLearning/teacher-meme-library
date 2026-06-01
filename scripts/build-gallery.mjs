@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// Watermarks every curated gallery PNG with the Legends of Learning
-// logo + subtle footer signature and writes to public/gallery/.
+// Builds every curated gallery PNG:
+//
+// 1. gallerySourceMap entries → AI-generated assets get logo + footer.
+// 2. Remixable items (with remixFormatId + captions) → rendered fresh
+//    from the clean template using the current rendering engine.
 
 import path from "node:path";
 import { promises as fs } from "node:fs";
@@ -10,6 +13,7 @@ import { getFormatById } from "../app/lib/meme-formats.js";
 import {
   buildMemeLoopFooterSvg,
   padPngToSquare,
+  renderMeme,
   resolveWatermarkPlacement,
 } from "../app/lib/render.js";
 
@@ -37,6 +41,7 @@ function galleryItemForOutput(outName) {
   return galleryItems.find((g) => g.file === `/gallery/${outName}`) || null;
 }
 
+/** Process an AI-generated source asset: add logo watermark + footer. */
 async function processOne(srcName, outName) {
   const srcPath = path.join(sourceDir, srcName);
   const outPath = path.join(outDir, outName);
@@ -95,35 +100,17 @@ async function processOne(srcName, outName) {
   };
 }
 
-/** Refresh footer on an existing gallery PNG without re-rendering captions. */
-async function overlayFooterOnly(outName) {
+/** Render a gallery item from its clean template with proper text. */
+async function renderFromTemplate(item) {
+  const outName = item.file.replace(/^\/gallery\//, "");
   const outPath = path.join(outDir, outName);
-  let baseBuf = await fs.readFile(outPath);
-  const meta = await sharp(baseBuf).metadata();
+  const format = getFormatById(item.remixFormatId);
+  if (!format) throw new Error(`No format: ${item.remixFormatId}`);
 
-  // Clear old footer area (covers previous purple banner) before placing new one.
-  const clearH = Math.max(60, Math.round(meta.width * 0.055));
-  const clearTop = meta.height - clearH;
-  const clearSvg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${meta.width}" height="${meta.height}"><rect x="0" y="${clearTop}" width="${meta.width}" height="${clearH}" fill="#000000"/></svg>`
-  );
-  baseBuf = await sharp(baseBuf)
-    .composite([{ input: clearSvg, top: 0, left: 0 }])
-    .toBuffer();
+  const png = await renderMeme(format, item.captions, {});
 
-  const composed = await sharp(baseBuf)
-    .composite([
-      {
-        input: buildMemeLoopFooterSvg(meta.width, meta.height),
-        top: 0,
-        left: 0,
-        blend: "over",
-      },
-    ])
-    .png({ compressionLevel: 9, quality: 92 })
-    .toBuffer();
-  await fs.writeFile(outPath, composed);
-  return { outName, bytes: composed.length };
+  await fs.writeFile(outPath, png);
+  return { outName, bytes: png.length };
 }
 
 async function main() {
@@ -132,6 +119,7 @@ async function main() {
   const results = [];
   const sourceOutNames = new Set(Object.values(gallerySourceMap));
 
+  // Pass 1: AI-generated source assets (logo + footer only).
   for (const [srcName, outName] of Object.entries(gallerySourceMap)) {
     try {
       const r = await processOne(srcName, outName);
@@ -145,16 +133,21 @@ async function main() {
     }
   }
 
+  // Pass 2: Remixable items rendered from clean templates.
   for (const item of galleryItems) {
     const outName = item.file.replace(/^\/gallery\//, "");
     if (sourceOutNames.has(outName)) continue;
+    if (!item.remixFormatId || !item.captions) {
+      console.log(`[skip] ${outName} (no remixFormatId/captions)`);
+      continue;
+    }
     try {
-      const r = await overlayFooterOnly(outName);
-      results.push({ ok: true, ...r, footerOnly: true });
-      console.log(`[footer] public/gallery/${outName} (${r.bytes} B)`);
+      const r = await renderFromTemplate(item);
+      results.push({ ok: true, ...r, rendered: true });
+      console.log(`[render] public/gallery/${outName} (${r.bytes} B)`);
     } catch (err) {
       results.push({ ok: false, outName, error: err.message });
-      console.error(`[fail] footer ${outName}: ${err.message}`);
+      console.error(`[fail] render ${outName}: ${err.message}`);
     }
   }
 

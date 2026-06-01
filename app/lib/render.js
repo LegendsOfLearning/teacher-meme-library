@@ -806,6 +806,14 @@ function resolveZoneStyle(zone) {
         stroke: "none",
         strokeRatio: 0,
       };
+    case "caption-inverted":
+      return {
+        family: IMPACT_FAMILY,
+        transform: (s) => s.toUpperCase(),
+        fill: "#000000",
+        stroke: "#ffffff",
+        strokeRatio: 0.38,
+      };
     case "caption":
     default:
       // Impact white-fill + heavy black stroke on photo / black bands.

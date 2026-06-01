@@ -47,7 +47,7 @@ export const memeFormats = [
         key: "boyfriend",
         label: "Boyfriend (\"me\")",
         x: 0.36, y: 0.50, w: 0.22, h: 0.14,
-        align: "center", style: "caption", maxLines: 1, minFontSize: 52,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 36,
       },
       {
         key: "girlfriend",
@@ -319,13 +319,13 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the predictable cause",
-        x: 0.04, y: 0.02, w: 0.92, h: 0.20,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 52,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.28,
+        align: "center", style: "caption-inverted", maxLines: 2, minFontSize: 52,
       },
       {
         key: "bottom",
         label: "Bottom: the \"shocking\" effect",
-        x: 0.04, y: 0.78, w: 0.92, h: 0.20,
+        x: 0.04, y: 0.72, w: 0.92, h: 0.26,
         align: "center", style: "caption", maxLines: 2, minFontSize: 52,
       },
     ],
