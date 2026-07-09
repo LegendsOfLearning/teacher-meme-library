@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getFormatById, maxCharsForZone } from "../lib/meme-formats";
 import { fetchAndDownloadSquare } from "../lib/download-square";
-import { getGalleryItemById, galleryImg } from "../lib/gallery";
+import { getGalleryItemById } from "../lib/gallery";
 import SharePanel from "../components/SharePanel";
 import MemeQuickActions from "../components/MemeQuickActions";
 import LolSignupCta from "../components/LolSignupCta";
@@ -300,7 +300,7 @@ export default function CustomizePage() {
             <div className="meme-canvas-wrap">
               <img
                 key={meme.id}
-                src={galleryImg(meme.pngUrl)}
+                src={meme.pngUrl}
                 alt={`${meme.formatName} teacher meme`}
                 className="meme-image"
               />
