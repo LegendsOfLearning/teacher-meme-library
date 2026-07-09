@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LOL_ABOUT_URL, LOL_SIGNUP_URL } from "../lib/share-links";
-import { trackEvent } from "../lib/analytics";
+import { LOL_ABOUT_URL, lolSignupUrl } from "../lib/share-links";
+import { trackEvent, trackSignupClick } from "../lib/analytics";
 import {
   LOL_FOOTER_LINE,
   LOL_HOME_BOTTOM_BODY,
@@ -21,13 +21,11 @@ export default function HomePageBottom() {
           <p className="home-bottom-body">{LOL_HOME_BOTTOM_BODY}</p>
           <div className="home-bottom-actions">
             <Link
-              href={LOL_SIGNUP_URL}
+              href={lolSignupUrl("home_bottom")}
               className="cta-button"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
-                trackEvent("lol_signup_click", { location: "home_bottom" })
-              }
+              onClick={() => trackSignupClick("home_bottom")}
             >
               Explore free games for teachers
             </Link>

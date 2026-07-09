@@ -1,4 +1,5 @@
 import { Montserrat } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { serverShareOrigin } from "./lib/share-links";
 
@@ -30,7 +31,8 @@ export const metadata = {
   },
 };
 
-const GTM_ID = "GTM-WCMKBMHT";
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "GTM-WCMKBMHT";
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID?.trim();
 
 export default function RootLayout({ children }) {
   return (
@@ -47,6 +49,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body>
+        {GA4_ID ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA4_ID}', { send_page_view: true });
+              `}
+            </Script>
+          </>
+        ) : null}
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}

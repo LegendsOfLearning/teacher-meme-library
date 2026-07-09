@@ -1,10 +1,23 @@
 // Share URL helpers — Imgflip-style deep links + copyable fields.
 
-export const LOL_SIGNUP_URL =
-  "https://app.legendsoflearning.com/login?admin=f";
+const LOL_SIGNUP_BASE = "https://app.legendsoflearning.com/login";
+
+/** Signup URL with UTMs for hub attribution (utm_source=meme). */
+export function lolSignupUrl(content = "signup_cta") {
+  const params = new URLSearchParams({
+    admin: "f",
+    utm_source: "meme",
+    utm_medium: "web",
+    utm_campaign: "meme_library",
+    utm_content: content,
+  });
+  return `${LOL_SIGNUP_BASE}?${params.toString()}`;
+}
+
+export const LOL_SIGNUP_URL = lolSignupUrl("signup_cta");
 
 export const LOL_ABOUT_URL =
-  "https://www.legendsoflearning.com?utm_source=teacher_meme_generator&utm_medium=referral&utm_campaign=meme_awareness";
+  "https://www.legendsoflearning.com?utm_source=meme&utm_medium=web&utm_campaign=meme_library&utm_content=about";
 
 // Awards, certifications, and 3rd-party impact evidence — used to back
 // the research claim on the Why Memes page without pushing sign-up.

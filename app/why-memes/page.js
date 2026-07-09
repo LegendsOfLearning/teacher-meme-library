@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LolNavBrand from "../components/LolNavBrand";
-import { LOL_AWARDS_URL, LOL_SIGNUP_URL } from "../lib/share-links";
+import TrackedSignupLink from "../components/TrackedSignupLink";
+import { LOL_AWARDS_URL } from "../lib/share-links";
 
 export const metadata = {
   title: "Why Memes? | Legends of Learning",
@@ -91,14 +92,9 @@ export default function WhyMemesPage() {
             learning.
           </p>
           <div className="why-cta-actions">
-            <a
-              href={LOL_SIGNUP_URL}
-              className="cta-button"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <TrackedSignupLink location="why_memes_cta" className="cta-button" asButton>
               Sign up free
-            </a>
+            </TrackedSignupLink>
             <Link href="/" className="why-cta-secondary">
               Browse memes
             </Link>

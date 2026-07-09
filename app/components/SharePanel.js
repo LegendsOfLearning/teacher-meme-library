@@ -6,7 +6,7 @@ import {
   resolveShareContext,
 } from "../lib/share-links";
 import { LOL_SHARE_PANEL_INTRO } from "../lib/lol-copy";
-import { trackEvent } from "../lib/analytics";
+import { trackEvent, trackMemeShared } from "../lib/analytics";
 import { shareMemeAsFile } from "../lib/share-image";
 
 function SocialIcon({ id }) {
@@ -129,6 +129,12 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
 
   const shareImageSocial = useCallback(
     async (s) => {
+      trackMemeShared({
+        method: "social",
+        platform: s.id,
+        page_path:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
+      });
       trackEvent("meme_share_social", {
         platform: s.id,
         page_path:
@@ -165,6 +171,11 @@ export default function SharePanel({ item, share, imageUrl, onToast }) {
       onToast?.("Use the social buttons or copy a link below");
       return;
     }
+    trackMemeShared({
+      method: "native",
+      page_path:
+        typeof window !== "undefined" ? window.location.pathname : undefined,
+    });
     try {
       const result = await shareMemeAsFile({
         imageUrl: ctx.imageUrl,

@@ -6,12 +6,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { getFormatById, maxCharsForZone } from "../lib/meme-formats";
 import { fetchAndDownloadSquare } from "../lib/download-square";
-import { getGalleryItemById } from "../lib/gallery";
+import { getGalleryItemById, galleryImg } from "../lib/gallery";
 import SharePanel from "../components/SharePanel";
 import MemeQuickActions from "../components/MemeQuickActions";
 import LolSignupCta from "../components/LolSignupCta";
 import LolNavBrand from "../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../lib/lol-copy";
+import { trackEvent } from "../lib/analytics";
 
 // ─── Inline icon set ─────────────────────────────────────────────────────
 function Icon({ name }) {
@@ -171,8 +172,7 @@ export default function CustomizePage() {
         body: JSON.stringify({
           formatId: format.id,
           captions: editValues,
-          // Render from the gallery image the user clicked so the same
-          // meme art is preserved; only the caption text changes.
+          // Gallery item id for validation; render uses cleanBase + zones.
           galleryFile: item?.file ?? null,
           situationId: item?.situations?.[0] || "lesson-planning",
           toneId: "relatable",
@@ -182,6 +182,13 @@ export default function CustomizePage() {
       if (!res.ok) throw new Error(data.error || "Edit failed");
       setMeme(data);
       setEditing(false);
+      trackEvent("meme_created", {
+        meme_id: data.id,
+        format_id: data.formatId,
+        format_name: data.formatName,
+        source_gallery_id: item?.id,
+        ephemeral: Boolean(data.ephemeral),
+      });
       if (data.ephemeral) {
         showToast("Ready to download. Ask your admin to enable Blob storage for share links");
       }
@@ -293,7 +300,7 @@ export default function CustomizePage() {
             <div className="meme-canvas-wrap">
               <img
                 key={meme.id}
-                src={meme.pngUrl}
+                src={galleryImg(meme.pngUrl)}
                 alt={`${meme.formatName} teacher meme`}
                 className="meme-image"
               />

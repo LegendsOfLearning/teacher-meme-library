@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LOL_ABOUT_URL, LOL_SIGNUP_URL } from "../lib/share-links";
-import { trackEvent } from "../lib/analytics";
+import { LOL_ABOUT_URL, lolSignupUrl } from "../lib/share-links";
+import { trackEvent, trackSignupClick } from "../lib/analytics";
 import {
   LOL_HOME_BOTTOM_BODY,
   LOL_HOME_BOTTOM_KICKER,
@@ -25,13 +25,11 @@ export default function LolSignupCta({ variant = "card" }) {
           <p className="home-bottom-body">{LOL_HOME_BOTTOM_BODY}</p>
           <div className="home-bottom-actions">
             <Link
-              href={LOL_SIGNUP_URL}
+              href={lolSignupUrl("share_landing")}
               className="cta-button"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
-                trackEvent("lol_signup_click", { location: "share_landing" })
-              }
+              onClick={() => trackSignupClick("share_landing")}
             >
               Explore free games for teachers
             </Link>
@@ -67,10 +65,11 @@ export default function LolSignupCta({ variant = "card" }) {
         <p>{LOL_PITCH_BANNER_BODY}</p>
         <div className="lol-signup-banner-actions">
           <Link
-            href={LOL_SIGNUP_URL}
+            href={lolSignupUrl("banner")}
             className="cta-button"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackSignupClick("banner")}
           >
             Explore free games for teachers
           </Link>
@@ -93,10 +92,11 @@ export default function LolSignupCta({ variant = "card" }) {
       <p>{LOL_PITCH_CARD}</p>
       <div className="lol-signup-card-actions">
         <Link
-          href={LOL_SIGNUP_URL}
+          href={lolSignupUrl("customize_card")}
           className="cta-button"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackSignupClick("customize_card")}
         >
           Explore free games
         </Link>

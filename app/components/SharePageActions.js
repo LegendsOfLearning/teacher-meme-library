@@ -10,7 +10,7 @@ import {
 } from "../lib/download-square";
 import { shareMemeAsFile } from "../lib/share-image";
 import { resolveShareContext } from "../lib/share-links";
-import { trackEvent } from "../lib/analytics";
+import { trackEvent, trackMemeShared } from "../lib/analytics";
 
 /** Download / copy / edit / social share for shared meme landing pages. */
 export default function SharePageActions({ item, meme, share, onToast }) {
@@ -68,6 +68,12 @@ export default function SharePageActions({ item, meme, share, onToast }) {
         title: shareContext.shareTitle,
         text: shareContext.shareText,
         pageUrl: shareContext.pageUrl,
+      });
+      trackMemeShared({
+        method: "native",
+        page_path:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
+        share_method: result.method,
       });
       trackEvent("meme_share_image", {
         page_path:
