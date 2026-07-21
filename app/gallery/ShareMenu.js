@@ -123,6 +123,7 @@ export default function ShareMenu({
     pageUrl: ctx.pageUrl,
     shareText: ctx.shareText,
     shareTitle: ctx.shareTitle,
+    imageUrl: ctx.imageUrl,
   });
 
   useEffect(() => {

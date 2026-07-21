@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { getFormatById, maxCharsForZone } from "../lib/meme-formats";
 import { fetchAndDownloadSquare } from "../lib/download-square";
@@ -144,25 +143,33 @@ export default function CustomizePage() {
           body: JSON.stringify({ text: flat }),
         });
         const data = await res.json();
-        if (!res.ok || data.blocked) {
+        // Only hard-block on local blocklist hits. Moderation API false
+        // positives must not freeze the Save button — /api/edit is source of truth.
+        if (data.blocked && data.category === "blocklist") {
           setSafetyError(
-            data.message ||
-              "Please use school-safe language."
+            data.message || "Please use school-safe language."
           );
         } else {
           setSafetyError("");
         }
       } catch {
-        setSafetyError(
-          "Couldn't check safety right now, try again before saving."
-        );
+        // Network blip: allow save; server still validates.
+        setSafetyError("");
       }
     }, 450);
     return () => clearTimeout(timer);
   }, [editValues]);
 
   const saveEdit = useCallback(async () => {
-    if (!format || safetyError) return;
+    if (!format) return;
+    const hasCaption = Object.values(editValues || {}).some(
+      (v) => typeof v === "string" && v.trim()
+    );
+    if (!hasCaption) {
+      setError("Add at least one caption.");
+      return;
+    }
+    if (safetyError) return;
     setError("");
     setLoading(true);
     try {

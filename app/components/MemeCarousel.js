@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import ShareModal from "./ShareModal";
 import MemeQuickActions from "./MemeQuickActions";
 import { fetchAndDownloadSquare } from "../lib/download-square";
+import { galleryImg } from "../lib/gallery";
 
 function itemHref(item) {
   if (item.pagePath) return item.pagePath;
@@ -61,7 +62,7 @@ function CarouselCard({ item, onShare, onToast }) {
   return (
     <article className="carousel-card">
       <Link href={itemHref(item)} className="carousel-thumb">
-        <img src={item.file} alt={item.captionPreview} loading="lazy" />
+        <img src={galleryImg(item.file)} alt={item.captionPreview} loading="lazy" />
       </Link>
       <div className="carousel-card-body">
         <div className="carousel-format">{item.formatName}</div>
@@ -111,7 +112,7 @@ export default function MemeCarousel({
         </header>
         <div className="meme-of-day-card">
           <Link href={itemHref(item)} className="meme-of-day-thumb">
-            <img src={item.file} alt={item.captionPreview} />
+            <img src={galleryImg(item.file)} alt={item.captionPreview} />
           </Link>
           <div className="meme-of-day-side">
             <span className="meme-meta-pill">{item.formatName}</span>

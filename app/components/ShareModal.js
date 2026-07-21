@@ -54,6 +54,10 @@ export default function ShareModal({ open, onClose, item, share, imageUrl, onToa
           imageUrl={imageUrl}
           onToast={onToast}
           compact
+          onShareMore={() => {
+            /* Panel is already visible in this modal */
+            onToast?.("Pick Facebook, X, WhatsApp, or another option below");
+          }}
         />
         <SharePanel
           item={item}

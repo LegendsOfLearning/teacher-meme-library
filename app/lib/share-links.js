@@ -24,7 +24,8 @@ export const LOL_ABOUT_URL =
 export const LOL_AWARDS_URL =
   "https://www.legendsoflearning.com/awards/?_gl=1*15atf83*_gcl_au*MTgwNzIzMjg2Ni4xNzc5OTc1OTE5LjIxMDA1NjY0NjIuMTc3OTk5MTMxNC4xNzc5OTkxMzE1*_ga*MzcwNjAxMzY3LjE3Nzk5NzU5MTk.*_ga_W4ZPPVZLYR*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw*_ga_0BH5L68SXQ*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw";
 
-export const PRODUCTION_SITE_URL = "https://teacher-meme-library.vercel.app";
+export const PRODUCTION_SITE_URL =
+  "https://classroom-memes.legendsoflearning.com";
 
 /** Canonical origin for SSR metadata (OG / WhatsApp previews). */
 export function serverShareOrigin() {
@@ -41,7 +42,12 @@ export function shareOrigin() {
   if (fromEnv) return fromEnv;
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "teacher-meme-library.vercel.app") return PRODUCTION_SITE_URL;
+    if (
+      host === "classroom-memes.legendsoflearning.com" ||
+      host === "teacher-meme-library.vercel.app"
+    ) {
+      return PRODUCTION_SITE_URL;
+    }
     return window.location.origin;
   }
   if (process.env.VERCEL_ENV === "production") return PRODUCTION_SITE_URL;
@@ -97,19 +103,19 @@ function escapeHtmlAttr(s) {
     .replace(/</g, "&lt;");
 }
 
-/** Social share deep links (open in new tab — no redirect through our app). */
-export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
+/** Social share deep links (open in new tab — no Web Share API hijack). */
+export function buildSocialShareLinks({ pageUrl, shareText, shareTitle, imageUrl }) {
   const url = encodeURIComponent(pageUrl);
   const text = encodeURIComponent(shareText);
   const title = encodeURIComponent(shareTitle);
   const combined = encodeURIComponent(`${shareText} ${pageUrl}`);
+  const media = imageUrl ? encodeURIComponent(imageUrl) : "";
 
-  // Order tuned for US teachers: iMessage/SMS and email first; WhatsApp last.
+  // Direct platform URLs only. Native device share is a separate control.
   return [
     {
       id: "sms",
       label: "SMS",
-      action: "share_image",
       href: `sms:?&body=${combined}`,
       className: "sms",
     },
@@ -131,12 +137,14 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
       className: "instagram",
       action: "copy",
       copyValue: `${shareText} ${pageUrl}`,
-      copyMessage: "Link copied, paste in Instagram",
+      copyMessage: "Link copied — paste it in Instagram",
     },
     {
       id: "pinterest",
       label: "Pinterest",
-      href: `https://pinterest.com/pin/create/button/?url=${url}&description=${text}`,
+      href: media
+        ? `https://pinterest.com/pin/create/button/?url=${url}&media=${media}&description=${text}`
+        : `https://pinterest.com/pin/create/button/?url=${url}&description=${text}`,
       className: "pinterest",
     },
     {
@@ -154,7 +162,6 @@ export function buildSocialShareLinks({ pageUrl, shareText, shareTitle }) {
     {
       id: "whatsapp",
       label: "WhatsApp",
-      action: "share_image",
       href: `https://wa.me/?text=${combined}`,
       className: "whatsapp",
     },

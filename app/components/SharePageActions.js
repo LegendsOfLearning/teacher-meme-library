@@ -8,9 +8,7 @@ import {
   copyImageToClipboard,
   fetchAndDownloadSquare,
 } from "../lib/download-square";
-import { shareMemeAsFile } from "../lib/share-image";
-import { resolveShareContext } from "../lib/share-links";
-import { trackEvent, trackMemeShared } from "../lib/analytics";
+import { trackEvent } from "../lib/analytics";
 
 /** Download / copy / edit / social share for shared meme landing pages. */
 export default function SharePageActions({ item, meme, share, onToast }) {
@@ -25,12 +23,6 @@ export default function SharePageActions({ item, meme, share, onToast }) {
     item?.file?.split("?")[0]?.split("/").pop() ||
     meme?.id ||
     "teacher-meme.png";
-
-  const shareContext = resolveShareContext({
-    item,
-    share,
-    imageUrl: meme?.pngUrl,
-  });
 
   const download = useCallback(async () => {
     if (!imgSrc) return;
@@ -60,36 +52,13 @@ export default function SharePageActions({ item, meme, share, onToast }) {
     }
   }, [imgSrc, onToast]);
 
-  const shareImage = useCallback(async () => {
-    if (!imgSrc) return;
-    try {
-      const result = await shareMemeAsFile({
-        imageUrl: imgSrc,
-        title: shareContext.shareTitle,
-        text: shareContext.shareText,
-        pageUrl: shareContext.pageUrl,
-      });
-      trackMemeShared({
-        method: "native",
-        page_path:
-          typeof window !== "undefined" ? window.location.pathname : undefined,
-        share_method: result.method,
-      });
-      trackEvent("meme_share_image", {
-        page_path:
-          typeof window !== "undefined" ? window.location.pathname : undefined,
-        method: result.method,
-      });
-      if (result.ok) {
-        onToast?.("Choose WhatsApp, Messages, or another app");
-        return;
-      }
-      setShowSocial(true);
-      onToast?.("Pick an app below, or download the image");
-    } catch {
-      onToast?.("Couldn't share, try Download");
-    }
-  }, [imgSrc, shareContext, onToast]);
+  const shareImage = useCallback(() => {
+    setShowSocial(true);
+    trackEvent("meme_share_open", {
+      page_path:
+        typeof window !== "undefined" ? window.location.pathname : undefined,
+    });
+  }, []);
 
   const shareProps = item ? { item, onToast } : { share, imageUrl: meme?.pngUrl, onToast };
 

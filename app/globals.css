@@ -823,9 +823,11 @@ a {
 /* ── FOOTER ───────────────────────────────────────────────────────── */
 .footer {
   text-align: center;
-  padding: 32px 20px 40px;
+  padding: 36px 20px 44px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.55;
   border-top: 1px solid var(--border);
 }
 
@@ -2252,7 +2254,10 @@ a {
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid rgba(93, 53, 153, 0.12);
-  font-size: 0.78rem;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  text-align: center;
   color: var(--text-muted);
 }
 

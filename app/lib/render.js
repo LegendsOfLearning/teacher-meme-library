@@ -1,17 +1,16 @@
 // Server-side meme renderer using sharp + SVG overlays.
 //
 // Fonts: see font-setup.js — must load BEFORE sharp so librsvg/fontconfig
-// can find Impact + Comic Neue on Vercel (FONTCONFIG_FILE → /tmp).
+// can find Anton + Comic Neue on Vercel (FONTCONFIG_FILE → /tmp).
 //
 // Internal font family names (TTF name table):
-//   Impact.ttf          -> "Impact"
-//   Anton-Regular.ttf   -> "Anton" (legacy fallback)
+//   Anton-Regular.ttf   -> "Anton" (weight 400)
 //   ComicNeue-Bold.ttf  -> "Comic Neue" (weight 700)
 //
 // ── Style keys ──
-//   "caption": Impact, ALL CAPS, white fill, heavy black stroke.
-//   "mocking": Impact + alternating mIxEd cAsE.
-//   "sign":    Impact on the cardboard "Change my mind" sign.
+//   "caption": Anton, ALL CAPS, white fill, heavy black stroke.
+//   "mocking": Anton + alternating mIxEd cAsE.
+//   "sign":    Anton, ALL CAPS, dark fill on cream sign.
 //   "doge":    Comic Neue Bold, lowercase, colored fill + black stroke.
 
 import "./font-setup.js";
@@ -22,8 +21,9 @@ import { ensureFontsInstalled } from "./font-setup.js";
 
 export { ensureFontsInstalled };
 
-// Must match internal TTF family names — librsvg/pango look up via fontconfig.
-const IMPACT_FAMILY = "Impact";
+// Must match fontconfig binding in font-setup.js.
+const ANTON_FAMILY = "Anton";
+const ANTON_WEIGHT = 400;
 const COMIC_FAMILY = "Comic Neue";
 
 // Kept for back-compat with the rest of the renderer; now returns an
@@ -42,12 +42,12 @@ async function getFontStyle() {
 // caption. Erring slightly wide here prevents Anton wide-glyph
 // lines like "SMOOTH MORNING" from clipping past the zone's right
 // edge at the chosen font size.
-// Default corner; renderer picks br → bl → tr → tl based on caption collision.
+// Prefer bottom-right; collision logic may move the logo to keep captions clear.
 export const BRAND_WATERMARK_CORNER = "br";
 export const MEME_LOOP_FOOTER_TEXT =
-  "Create your own teacher meme at teacher-memes.com";
+  "Create your own teacher meme at classroom-memes.legendsoflearning.com";
 
-/** Clean UI font stack for the footer signature line. */
+/** Clean UI font stack for the footer signature line (Montserrat bundled). */
 const FOOTER_FONT =
   "Montserrat, 'Segoe UI', system-ui, -apple-system, sans-serif";
 
@@ -93,7 +93,7 @@ function zoneToObstacleRect(zone, imgW, imgH, padPx = 16) {
   const isBottom = zone.y + zone.h > 0.68;
   const isTop = zone.y + zone.h < 0.28;
 
-  // Impact-style top/bottom bands span the full width on real memes.
+  // Top/bottom caption bands span the full width on real memes.
   if (isBottom) {
     return {
       left: 0,
@@ -199,11 +199,18 @@ function cornersAllowedForObstacles(obstacles, imgW, imgH, preferredOrder) {
     allowed = allowed.filter((c) => c !== "tr" && c !== "tl");
   }
   if (allowed.length === 0) {
-    allowed = bottomBand
-      ? ["tr", "tl"]
-      : topBand
-        ? ["br", "bl"]
-        : [...WATERMARK_CORNER_PRIORITY];
+    // Both top + bottom caption bands: no safe image corner. Prefer top
+    // corners only when there is NO top band; otherwise bottom. When both
+    // exist, return empty so the caller can fall back to letterbox / mid-edge.
+    if (topBand && bottomBand) {
+      allowed = [];
+    } else if (bottomBand) {
+      allowed = ["tr", "tl"];
+    } else if (topBand) {
+      allowed = ["br", "bl"];
+    } else {
+      allowed = [...WATERMARK_CORNER_PRIORITY];
+    }
   }
   return allowed;
 }
@@ -416,10 +423,9 @@ function fitCaptionAwayFromReserve({
     const refit = fitText(text, w, h, zone.maxLines || 3, family, curFs);
     curLines = refit.lines;
     curLh = refit.lineHeight;
-    curStroke =
-      strokeRatio > 0
-        ? Math.min(40, Math.max(5, curFs * strokeRatio))
-        : 0;
+    curStroke = strokeRatio > 0
+      ? Math.min(40, Math.max(5, curFs * strokeRatio))
+      : 0;
     blockTop = y + (h - curLines.length * curLh) / 2;
     if (isBottomBand && (corner === "br" || corner === "bl")) {
       blockTop = y + Math.max(4, curFs * 0.12);
@@ -519,10 +525,9 @@ function enforceCaptionClearOfReserve(ctx) {
     const refit = fitText(text, w, h, zone.maxLines || 3, family, fs);
     lines = refit.lines;
     lineHeight = refit.lineHeight;
-    strokeWidth =
-      strokeRatio > 0
-        ? Math.min(40, Math.max(5, fs * strokeRatio))
-        : 0;
+    strokeWidth = strokeRatio > 0
+      ? Math.min(40, Math.max(5, fs * strokeRatio))
+      : 0;
     const isBottomBand = zone.y + zone.h > 0.68;
     blockTop = y + (h - lines.length * lineHeight) / 2;
     if (isBottomBand && (corner === "br" || corner === "bl")) {
@@ -579,10 +584,42 @@ export function measureCaptionBBox({
   };
 }
 
-/** Pad PNG to 1:1 with centered letterbox (black bars). */
+const FOOTER_BAND_MIN_FRAC = 0.08;
+
+/** Pad PNG to 1:1 with black letterbox bars and room for the footer. */
 export async function padPngToSquare(pngBuf) {
   const meta = await sharp(pngBuf).metadata();
   const side = Math.max(meta.width, meta.height);
+  let buf = await sharp(pngBuf)
+    .resize(side, side, {
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 1 },
+      kernel: "lanczos3",
+    })
+    .png({ compressionLevel: 9, quality: 92 })
+    .toBuffer();
+
+  const fitted = await sharp(buf).metadata();
+  const bounds = await detectLetterboxBandBounds(buf);
+  const bottomStart = bounds?.bottomStartFrac
+    ? Math.round(fitted.height * bounds.bottomStartFrac)
+    : fitted.height;
+  const bottomBandPx = fitted.height - bottomStart;
+  const minFooterPx = Math.max(52, Math.round(fitted.width * FOOTER_BAND_MIN_FRAC));
+
+  if (bottomBandPx >= minFooterPx) return buf;
+
+  // Full-bleed squares get a dedicated footer bar by shrinking content upward.
+  const contentH = Math.max(1, fitted.height - minFooterPx);
+  const content = await sharp(buf)
+    .resize(fitted.width, contentH, {
+      fit: "inside",
+      background: { r: 0, g: 0, b: 0, alpha: 1 },
+      kernel: "lanczos3",
+    })
+    .png()
+    .toBuffer();
+  const contentMeta = await sharp(content).metadata();
   return sharp({
     create: {
       width: side,
@@ -593,9 +630,9 @@ export async function padPngToSquare(pngBuf) {
   })
     .composite([
       {
-        input: pngBuf,
-        top: Math.floor((side - meta.height) / 2),
-        left: Math.floor((side - meta.width) / 2),
+        input: content,
+        top: 0,
+        left: Math.floor((side - contentMeta.width) / 2),
       },
     ])
     .png({ compressionLevel: 9, quality: 92 })
@@ -604,7 +641,7 @@ export async function padPngToSquare(pngBuf) {
 
 function avgCharWidth(family) {
   if (family === COMIC_FAMILY) return 0.55;
-  if (family === IMPACT_FAMILY) return 0.62;
+  if (family === ANTON_FAMILY) return 0.62;
   return 0.55;
 }
 
@@ -712,10 +749,9 @@ function balancedSplit(words, k) {
   return { lines, maxChars: dp[n][k].maxC };
 }
 
-// Classic meme captions rarely fill the entire zone height — they sit
-// around 40–50% of the band with breathing room. Without this cap,
-// short custom text ("TESTTT") balloons to ~95% of zone height and
-// the heavy stroke reads as a solid black slab covering the photo.
+// Classic meme captions should dominate the zone — err oversized rather
+// than subtitle-thin. Short punchlines still get a ceiling so they do
+// not become a solid black slab.
 const MAX_LINE_FS_RATIO = 0.92;
 
 // Choose font size + line layout. Tries every `k` in [1..maxLines],
@@ -775,7 +811,8 @@ function resolveZoneStyle(zone) {
   switch (zone.style) {
     case "mocking":
       return {
-        family: IMPACT_FAMILY,
+        family: ANTON_FAMILY,
+        weight: ANTON_WEIGHT,
         transform: toMockingCase,
         fill: "#ffffff",
         stroke: "#000000",
@@ -783,7 +820,8 @@ function resolveZoneStyle(zone) {
       };
     case "sign":
       return {
-        family: IMPACT_FAMILY,
+        family: ANTON_FAMILY,
+        weight: ANTON_WEIGHT,
         transform: (s) => s.toUpperCase(),
         fill: "#1a1a1a",
         stroke: "none",
@@ -800,7 +838,8 @@ function resolveZoneStyle(zone) {
       };
     case "dark-on-light":
       return {
-        family: IMPACT_FAMILY,
+        family: ANTON_FAMILY,
+        weight: ANTON_WEIGHT,
         transform: (s) => s.toUpperCase(),
         fill: "#000000",
         stroke: "none",
@@ -808,7 +847,8 @@ function resolveZoneStyle(zone) {
       };
     case "caption-inverted":
       return {
-        family: IMPACT_FAMILY,
+        family: ANTON_FAMILY,
+        weight: ANTON_WEIGHT,
         transform: (s) => s.toUpperCase(),
         fill: "#000000",
         stroke: "#ffffff",
@@ -816,12 +856,9 @@ function resolveZoneStyle(zone) {
       };
     case "caption":
     default:
-      // Impact white-fill + heavy black stroke on photo / black bands.
-      //
-      // Heavy stroke so programmatic captions match classic meme /
-      // AI-baked gallery typography after social downscaling.
       return {
-        family: IMPACT_FAMILY,
+        family: ANTON_FAMILY,
+        weight: ANTON_WEIGHT,
         transform: (s) => s.toUpperCase(),
         fill: "#ffffff",
         stroke: "#000000",
@@ -833,7 +870,7 @@ function resolveZoneStyle(zone) {
 // Minimum render width. Templates ship at varying native resolutions
 // (Crying Cat is 300×300, Drake is 1200×1200). Rendering each at its
 // native size makes the small ones look thin and amateurish compared
-// to the curated gallery — Impact font weight reads better with more
+// to the curated gallery — Anton reads better with more
 // pixels. We always upscale to at least OUTPUT_MIN_WIDTH so every
 // finished meme has the same chunky, heavy-stroke look you see in
 // viral teacher memes regardless of source template size.
@@ -1079,10 +1116,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   }
   if (coverBaked && strokeWidthFinal > 0) {
     const knockoutPasses = galleryEdit
-      ? [
-          { fill: "#ffffff", stroke: "#ffffff", mult: 5.5 },
-          { fill: "#000000", stroke: "#000000", mult: 4.5 },
-        ]
+      ? [{ fill: "#000000", stroke: "#000000", mult: 2.2 }]
       : [{ fill: "#000000", stroke: "#000000", mult: 3.5 }];
     const knockout = knockoutPasses
       .flatMap(({ fill, stroke, mult }) =>
@@ -1198,7 +1232,79 @@ ${parts.join("\n")}
 </svg>`;
 }
 
+/** Place logo inside the top black letterbox bar when one exists. */
+async function tryLetterboxWatermarkPlacement(size, letterboxBounds, opts = {}) {
+  if (!letterboxBounds?.topEndFrac) return null;
+  const topBarH = Math.round(size.height * letterboxBounds.topEndFrac);
+  const minBarPx = opts.minBarPx ?? 32;
+  if (topBarH < minBarPx) return null;
+
+  // Shrink logo to fit inside a tight letterbox bar when needed.
+  let logoScale = opts.allowTight ? 0.55 : 0.7;
+  let logoTargetW = computeLogoTargetWidth(size.width, logoScale);
+  let logoBuf = await loadLogoBuffer(logoTargetW);
+  let logoMeta = await sharp(logoBuf).metadata();
+  const margin = Math.max(8, Math.round(size.width * 0.016));
+  let pillPadX = Math.round(logoMeta.width * 0.14);
+  let pillPadY = Math.round(logoMeta.height * 0.28);
+  let pillH = logoMeta.height + pillPadY * 2;
+
+  while (pillH > topBarH - 4 && logoScale > 0.28) {
+    logoScale *= 0.85;
+    logoTargetW = computeLogoTargetWidth(size.width, logoScale);
+    logoBuf = await loadLogoBuffer(logoTargetW);
+    logoMeta = await sharp(logoBuf).metadata();
+    pillPadX = Math.round(logoMeta.width * 0.12);
+    pillPadY = Math.round(logoMeta.height * 0.22);
+    pillH = logoMeta.height + pillPadY * 2;
+  }
+
+  const pillW = logoMeta.width + pillPadX * 2;
+  const pillLeft = size.width - pillW - margin;
+  const pillTop = Math.max(0, Math.round((topBarH - pillH) / 2));
+  const reservePx = {
+    left: Math.max(0, pillLeft - WATERMARK_CLEARANCE_PX),
+    top: Math.max(0, pillTop - WATERMARK_CLEARANCE_PX),
+    right: size.width,
+    bottom: Math.min(size.height, pillTop + pillH + WATERMARK_CLEARANCE_PX),
+  };
+
+  return attachWatermarkPixelCoords(
+    {
+      corner: "tr",
+      logoScale,
+      logoBuf,
+      logoMeta,
+      margin,
+      pillPadX,
+      pillPadY,
+      pillW,
+      pillH,
+      reservePx,
+      score: 0,
+      violations: 0,
+      letterbox: true,
+      pillLeft,
+      pillTop,
+    },
+    size
+  );
+}
+
 function attachWatermarkPixelCoords(plan, size) {
+  if (plan.letterbox && plan.pillLeft != null && plan.pillTop != null) {
+    const { logoMeta, pillPadX, pillPadY, pillW, pillH, pillLeft, pillTop } =
+      plan;
+    return {
+      ...plan,
+      pillW,
+      pillH,
+      pillLeft,
+      pillTop,
+      logoLeftPx: pillLeft + pillPadX,
+      logoTopPx: pillTop + pillPadY,
+    };
+  }
   const { corner, logoMeta, margin, pillPadX, pillPadY } = plan;
   const pillW = logoMeta.width + pillPadX * 2;
   const pillH = logoMeta.height + pillPadY * 2;
@@ -1229,14 +1335,55 @@ function attachWatermarkPixelCoords(plan, size) {
 }
 
 /**
- * Pick watermark corner + scale so the logo never overlaps caption ink,
- * zone boxes, or format `bakedObstacles` (AI-baked punchlines on templates).
+ * Place the Legends logo so it never covers caption ink.
+ * Prefers the top letterbox bar when present and clear; otherwise picks
+ * the lowest-collision corner (br → bl → tr → tl) and scales the logo down.
+ * When top+bottom caption bands block every corner, force letterbox placement
+ * (shrinking the logo to fit the top bar) instead of overlapping text.
  */
-export async function resolveWatermarkPlacement(format, captions, size) {
+export async function resolveWatermarkPlacement(
+  format,
+  captions,
+  size,
+  opts = {}
+) {
+  const letterboxBounds = opts.letterboxBounds || null;
+  const letterboxPlan = await tryLetterboxWatermarkPlacement(
+    size,
+    letterboxBounds
+  );
+  if (letterboxPlan) {
+    const captionBboxes = layoutCaptionBboxes(format, captions, size, {
+      corner: letterboxPlan.corner,
+      reservePx: letterboxPlan.reservePx,
+    });
+    const hits = captionBboxes.some((bbox) =>
+      captionInkOverlapsBrandReserve(bbox, letterboxPlan.reservePx)
+    );
+    if (!hits) return letterboxPlan;
+  }
+
   const W = size.width;
   const H = size.height;
   const staticObstacles = collectStaticObstacles(format, W, H);
   const preferred = cornerPriority(format);
+  const corners = cornersAllowedForObstacles(
+    staticObstacles,
+    W,
+    H,
+    preferred
+  );
+
+  // No safe image corner (typical top+bottom caption formats): keep the logo
+  // in the top letterbox even if the bar is tight, rather than covering text.
+  if (corners.length === 0) {
+    const forced = await tryLetterboxWatermarkPlacement(size, letterboxBounds, {
+      minBarPx: 24,
+      allowTight: true,
+    });
+    if (forced) return forced;
+  }
+
   let best = null;
 
   for (const logoScale of LOGO_SCALE_STEPS) {
@@ -1246,13 +1393,6 @@ export async function resolveWatermarkPlacement(format, captions, size) {
     const margin = Math.max(12, Math.round(W * 0.02));
     const pillPadX = Math.round(logoMeta.width * 0.16);
     const pillPadY = Math.round(logoMeta.height * 0.32);
-
-    const corners = cornersAllowedForObstacles(
-      staticObstacles,
-      W,
-      H,
-      preferred
-    );
 
     for (const corner of corners) {
       const reservePx = computeBrandReservePx(
@@ -1308,20 +1448,23 @@ export async function resolveWatermarkPlacement(format, captions, size) {
     }
   }
 
-  if (best && best.violations === 0 && best.score === 0) {
+  if (best && best.violations === 0) {
     return attachWatermarkPixelCoords(best, size);
   }
 
-  // Hard fallback: top corner, smallest logo — never stack on bottom captions.
-  const fallbackCorner = cornersAllowedForObstacles(
-    staticObstacles,
-    W,
-    H,
-    preferred
-  ).includes("tr")
-    ? "tr"
-    : cornersAllowedForObstacles(staticObstacles, W, H, preferred)[0] ||
-      "tr";
+  // Last resort: letterbox (even tight), never stack on caption ink.
+  const forcedLetterbox = await tryLetterboxWatermarkPlacement(
+    size,
+    letterboxBounds,
+    { minBarPx: 20, allowTight: true }
+  );
+  if (forcedLetterbox) return forcedLetterbox;
+
+  if (best) {
+    return attachWatermarkPixelCoords(best, size);
+  }
+
+  const fallbackCorner = corners[0] || "tr";
   const logoTargetW = computeLogoTargetWidth(W, 0.48);
   const logoBuf = await loadLogoBuffer(logoTargetW);
   const logoMeta = await sharp(logoBuf).metadata();
@@ -1438,9 +1581,11 @@ export const GALLERY_ON_PHOTO_CAPTIONS = new Set([
   "/gallery/boromir-backup.png",
 ]);
 
-// Gallery thumbnail → blank customize template. Keeps the curated
-// gallery cat/art instead of swapping in a different imgflip JPEG.
+// Gallery thumbnail → caption-free template for edits. Keeps curated
+// gallery art without baking captions into the edit base.
 export const GALLERY_RENDER_SOURCES = {
+  "/gallery/boromir-backup.png":
+    "/templates-meme/one-does-not-simply-gallery.png",
   "/gallery/disaster-girl-admin.png":
     "/templates-meme/disaster-girl.jpg",
   "/gallery/grumpy-cat-plans.png":
@@ -1590,15 +1735,39 @@ export async function detectLetterboxBandBounds(imageBuf) {
   };
 }
 
+/** Footer band metrics — vertically centered in the bottom letterbox when present. */
+export function footerBandMetrics(width, height, letterboxBounds = null, text = MEME_LOOP_FOOTER_TEXT) {
+  // Size to fit the full signature on narrow gallery cards (~600px).
+  const maxTextWidth = width * 0.94;
+  const charEm = 0.52;
+  let fontSize = Math.max(11, Math.min(28, Math.round(width * 0.022)));
+  while (fontSize > 11 && String(text).length * fontSize * charEm > maxTextWidth) {
+    fontSize -= 1;
+  }
+  let bandTop = letterboxBounds?.bottomStartFrac
+    ? Math.round(height * letterboxBounds.bottomStartFrac)
+    : Math.round(height * (1 - FOOTER_BAND_MIN_FRAC));
+  let bandHeight = Math.max(1, height - bandTop);
+  const minBand = Math.max(
+    Math.round(fontSize * 2.2),
+    Math.round(height * FOOTER_BAND_MIN_FRAC)
+  );
+  if (bandHeight < minBand) {
+    bandTop = Math.max(0, height - minBand);
+    bandHeight = height - bandTop;
+  }
+  const textY = bandTop + Math.round(bandHeight / 2);
+  return { fontSize, bandTop, bandHeight, textY };
+}
+
 /** Height of the footer signature area for strip-clearing on edits. */
-function footerSignatureHeight(width) {
-  const fs = Math.max(13, Math.min(18, Math.round(width * 0.014)));
-  return Math.round(fs * 3);
+function footerSignatureHeight(width, height, letterboxBounds = null) {
+  return footerBandMetrics(width, height, letterboxBounds).bandHeight;
 }
 
 /** Clear the baked footer area so new bottom captions do not compete. */
-async function stripGalleryFooterBand(baseBuf, width, height) {
-  const sigH = footerSignatureHeight(width);
+async function stripGalleryFooterBand(baseBuf, width, height, letterboxBounds) {
+  const sigH = footerSignatureHeight(width, height, letterboxBounds);
   const top = height - sigH;
   const svg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="0" y="${top}" width="${width}" height="${sigH}" fill="#000000"/></svg>`
@@ -1606,12 +1775,38 @@ async function stripGalleryFooterBand(baseBuf, width, height) {
   return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
 }
 
-/** Pixelate baked caption areas to local color so replacement text reads cleanly. */
-async function smudgeGalleryCaptionZones(baseBuf, format, size) {
+/** Remove a legacy corner logo baked into the photo before letterbox branding. */
+async function smudgeLegacyBrandCorner(baseBuf, size, letterboxBounds) {
+  if (!letterboxBounds?.topEndFrac) return baseBuf;
+  const bandTop = Math.round(size.height * letterboxBounds.topEndFrac);
+  const top = Math.max(0, bandTop - Math.round(size.height * 0.01));
+  const height = Math.round(size.height * 0.13);
+  const width = Math.round(size.width * 0.34);
+  const left = size.width - width;
+  if (height < 8 || width < 8) return baseBuf;
+
+  const factor = Math.max(10, Math.round(Math.min(width, height) / 6));
+  const patch = await sharp(baseBuf)
+    .extract({ left, top, width, height })
+    .resize(
+      Math.max(1, Math.round(width / factor)),
+      Math.max(1, Math.round(height / factor)),
+      { kernel: sharp.kernel.cubic }
+    )
+    .resize(width, height, { kernel: sharp.kernel.cubic })
+    .blur(Math.max(4, Math.round(height * 0.08)))
+    .toBuffer();
+  return sharp(baseBuf)
+    .composite([{ input: patch, top, left }])
+    .toBuffer();
+}
+
+/** Blur baked caption areas once at template-build time. */
+export async function smudgeCaptionZones(baseBuf, zones, size) {
   const W = size.width;
   const H = size.height;
   let out = baseBuf;
-  for (const zone of format.zones) {
+  for (const zone of zones) {
     if (zone.decorative) continue;
     const rect = zoneEraseRect(zone, W, H, {
       letterbox: false,
@@ -1622,13 +1817,17 @@ async function smudgeGalleryCaptionZones(baseBuf, format, size) {
     const width = Math.round(Math.min(W - left, rect.w));
     const height = Math.round(Math.min(H - top, rect.h));
     if (width < 8 || height < 8) continue;
-    const factor = Math.max(6, Math.round(Math.min(width, height) / 24));
+    // Aggressive downscale destroys text structure, then blur smooths
+    // the mosaic artifacts so the knockout blends naturally.
+    const factor = Math.max(12, Math.round(Math.min(width, height) / 6));
     const sw = Math.max(1, Math.round(width / factor));
     const sh = Math.max(1, Math.round(height / factor));
+    const blurSigma = Math.max(2, Math.round(Math.min(width, height) * 0.04));
     const patch = await sharp(out)
       .extract({ left, top, width, height })
       .resize(sw, sh, { kernel: sharp.kernel.cubic })
-      .resize(width, height, { kernel: sharp.kernel.nearest })
+      .resize(width, height, { kernel: sharp.kernel.cubic })
+      .blur(blurSigma)
       .toBuffer();
     out = await sharp(out)
       .composite([{ input: patch, top, left }])
@@ -1638,7 +1837,54 @@ async function smudgeGalleryCaptionZones(baseBuf, format, size) {
 }
 
 function isGalleryEditSource(sourceFile) {
-  return isGalleryPath(sourceFile) && !usesBlankGalleryTemplate(sourceFile);
+  return isGalleryPath(sourceFile);
+}
+
+export function resolveGalleryEditTemplate(format, galleryFile, { forEdit = false } = {}) {
+  if (format.galleryTemplate && galleryFile) {
+    return format.galleryTemplate;
+  }
+  if (galleryFile && GALLERY_RENDER_SOURCES[galleryFile]) {
+    return GALLERY_RENDER_SOURCES[galleryFile];
+  }
+  const stock = format.renderFile || format.file;
+  // Prefer a blank stock template for edits whenever one exists — erasing
+  // baked captions from dark gallery art (e.g. Surprised Pikachu) can wipe
+  // the whole photo. Fall back to gallery PNG erase only when needed.
+  if (
+    forEdit &&
+    typeof stock === "string" &&
+    stock.includes("/templates-meme/")
+  ) {
+    return stock;
+  }
+  if (forEdit && galleryFile && isGalleryPath(galleryFile)) {
+    return galleryFile;
+  }
+  return stock;
+}
+
+/** Format + zones to use when rendering a gallery edit. */
+export function resolveGalleryEditFormat(format, galleryFile) {
+  if (!galleryFile || !isGalleryPath(galleryFile)) return format;
+  const template = resolveGalleryEditTemplate(format, galleryFile);
+  const usesGalleryTemplate =
+    (format.galleryTemplate && template === format.galleryTemplate) ||
+    GALLERY_RENDER_SOURCES[galleryFile] === template;
+  if (usesGalleryTemplate && format.galleryZones?.length) {
+    return { ...format, zones: format.galleryZones };
+  }
+  return format;
+}
+
+function resolveRenderSource(format, sourceFile) {
+  // Gallery edits render from a clean template — never the captioned
+  // gallery card PNG (avoids blur/smudge artifacts on baked text).
+  if (sourceFile && isGalleryPath(sourceFile)) {
+    return resolveGalleryEditTemplate(format, sourceFile);
+  }
+  if (sourceFile) return sourceFile;
+  return format.renderFile || format.file;
 }
 
 async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
@@ -1660,53 +1906,120 @@ async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
   return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
 }
 
-function resolveRenderSource(format, sourceFile) {
-  // Gallery edits always render from the clean template — no baked text
-  // to erase, clean canvas, same base photo.
-  if (sourceFile && isGalleryPath(sourceFile)) {
-    if (GALLERY_RENDER_SOURCES[sourceFile]) {
-      return GALLERY_RENDER_SOURCES[sourceFile];
+/** Wipe AI-baked caption strips from gallery PNG letterbox bars. */
+async function eraseGalleryLetterboxBands(baseBuf, size) {
+  const W = size.width;
+  const H = size.height;
+  const bounds = await detectLetterboxBandBounds(baseBuf);
+  const parts = [];
+  if (bounds?.topEndFrac) {
+    const topH = Math.round(H * bounds.topEndFrac);
+    if (topH > 0) {
+      parts.push(
+        `<rect x="0" y="0" width="${W}" height="${topH}" fill="#000000"/>`
+      );
     }
-    return format.renderFile || format.file;
   }
-  if (sourceFile) return sourceFile;
-  return format.renderFile || format.file;
+  if (bounds?.bottomStartFrac) {
+    const y = Math.round(H * bounds.bottomStartFrac);
+    const h = H - y;
+    if (h > 0) {
+      parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="#000000"/>`);
+    }
+  }
+  if (!parts.length) return baseBuf;
+  const svg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join("")}</svg>`
+  );
+  return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
+}
+
+/** Map template zone fractions onto the photo area inside letterbox bars. */
+function mapFormatZonesToContent(format, letterboxBounds) {
+  const topFrac = letterboxBounds?.topEndFrac ?? 0;
+  const bottomFrac = letterboxBounds?.bottomStartFrac ?? 1;
+  const span = Math.max(0.01, bottomFrac - topFrac);
+  return {
+    ...format,
+    zones: (format.zones || []).map((zone) => ({
+      ...zone,
+      y: topFrac + zone.y * span,
+      h: zone.h * span,
+    })),
+  };
 }
 
 export async function renderMeme(format, captions, options = {}) {
   await ensureFontsInstalled();
 
-  // Gallery edits always resolve to the clean template (no baked text).
-  const sourcePath = resolveRenderSource(format, options.sourceFile);
+  const cleanBase = options.cleanBase || format.renderFile || format.file;
   const templatePath = path.join(
     process.cwd(),
     "public",
-    sourcePath.replace(/^\//, "")
+    cleanBase.replace(/^\//, "")
   );
 
   const meta = await sharp(templatePath).metadata();
-  const size =
+  const contentSize =
     meta.width >= 1000
       ? { width: meta.width, height: meta.height }
       : getRenderSize(format);
 
   let baseBuf = await sharp(templatePath)
-    .resize(size.width, size.height, { fit: "fill", kernel: "lanczos3" })
+    .resize(contentSize.width, contentSize.height, { fit: "fill", kernel: "lanczos3" })
     .toBuffer();
 
-  const placement = format.skipWatermark
-    ? null
-    : await resolveWatermarkPlacement(format, captions, size);
+  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
+    let bounds = await detectLetterboxBandBounds(baseBuf);
+    const usesLetterbox = await galleryUsesLetterboxBands(baseBuf);
+    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, contentSize, {
+      letterbox: usesLetterbox,
+      bandBounds: bounds,
+      onPhoto: !usesLetterbox,
+    });
+  }
+
+  // Square canvas + footer band BEFORE captions so text stays on the photo.
+  baseBuf = await padPngToSquare(baseBuf);
+  const paddedMeta = await sharp(baseBuf).metadata();
+  const renderSize = { width: paddedMeta.width, height: paddedMeta.height };
+  let letterboxBounds = await detectLetterboxBandBounds(baseBuf);
+
+  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
+    baseBuf = await eraseGalleryLetterboxBands(baseBuf, renderSize);
+    letterboxBounds = await detectLetterboxBandBounds(baseBuf);
+  }
+
+  const renderFormat = mapFormatZonesToContent(format, letterboxBounds);
+
+  if (
+    cleanBase.includes("/gallery/") &&
+    !options.preserveBakedCaptions &&
+    renderFormat.zones?.some((z) => z.maskTight)
+  ) {
+    baseBuf = await smudgeCaptionZones(
+      baseBuf,
+      renderFormat.zones,
+      renderSize
+    );
+  }
+
+  const placement = await resolveWatermarkPlacement(
+    renderFormat,
+    captions,
+    renderSize,
+    { letterboxBounds }
+  );
 
   const watermark = placement
     ? { corner: placement.corner, reservePx: placement.reservePx }
     : null;
 
   const svg = await buildSvgOverlay(
-    format,
+    renderFormat,
     captions,
     watermark,
-    size,
+    renderSize,
     false,
     false
   );
@@ -1737,15 +2050,15 @@ export async function renderMeme(format, captions, options = {}) {
     .png({ compressionLevel: 9, quality: 92 })
     .toBuffer();
 
-  const sqMeta = await sharp(composed).metadata();
-  if (sqMeta.width !== sqMeta.height) {
-    composed = await padPngToSquare(composed);
-  }
-  const finalMeta = await sharp(composed).metadata();
   composed = await sharp(composed)
     .composite([
       {
-        input: buildMemeLoopFooterSvg(finalMeta.width, finalMeta.height),
+        input: buildMemeLoopFooterSvg(
+          renderSize.width,
+          renderSize.height,
+          MEME_LOOP_FOOTER_TEXT,
+          letterboxBounds
+        ),
         top: 0,
         left: 0,
         blend: "over",
@@ -1763,24 +2076,27 @@ export function captionInkOverlapsBrandReserve(bbox, reserve) {
 }
 
 /**
- * Subtle signature line at the very bottom of every meme.
- * Sits in the existing black letterbox bar — no colored banner,
- * no gradient, just clean white text on black like imgflip / Kapwing.
+ * Attribution line centered in the bottom black letterbox bar.
  */
 export function buildMemeLoopFooterSvg(
   width,
   height,
-  text = MEME_LOOP_FOOTER_TEXT
+  text = MEME_LOOP_FOOTER_TEXT,
+  letterboxBounds = null
 ) {
-  const fontSize = Math.max(13, Math.min(18, Math.round(width * 0.014)));
-  const bottomPad = Math.round(fontSize * 0.65);
-  const textY = height - bottomPad;
+  const { fontSize, bandTop, bandHeight, textY } = footerBandMetrics(
+    width,
+    height,
+    letterboxBounds,
+    text
+  );
 
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+      <rect x="0" y="${bandTop}" width="${width}" height="${bandHeight}" fill="#000000"/>
       <text x="${Math.round(
         width / 2
-      )}" y="${textY}" text-anchor="middle" font-family="${FOOTER_FONT}" font-size="${fontSize}" font-weight="500" fill="#ffffff" fill-opacity="0.82" letter-spacing="0.02em">${escXml(
+      )}" y="${textY}" text-anchor="middle" dominant-baseline="middle" font-family="${FOOTER_FONT}" font-size="${fontSize}" font-weight="600" fill="#ffffff" fill-opacity="0.78" letter-spacing="0.03em">${escXml(
       text
     )}</text>
     </svg>`

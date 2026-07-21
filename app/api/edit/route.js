@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getFormatById } from "../../lib/meme-formats";
+import { getGalleryItemByFile } from "../../lib/gallery";
+import { renderGalleryMeme } from "../../lib/gallery-meme";
 import {
   generateMeme,
   validateUserCaptions,
@@ -31,12 +33,20 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    // Trim + restrict to known zones — discard anything else the
-    // client tried to sneak in.
+    // Trim + keep known zone keys. Empty strings are allowed for optional
+    // panels (e.g. Anakin p3) — validation only requires one non-empty zone.
     const cleanCaptions = {};
     for (const z of format.zones) {
+      if (z.decorative) continue;
       const v = captions[z.key];
       if (typeof v === "string") cleanCaptions[z.key] = v.trim();
+    }
+    // Also accept gallery caption keys that match zones (defensive).
+    for (const [key, value] of Object.entries(captions)) {
+      if (typeof value !== "string") continue;
+      if (cleanCaptions[key] !== undefined) continue;
+      const zone = format.zones.find((z) => z.key === key && !z.decorative);
+      if (zone) cleanCaptions[key] = value.trim();
     }
 
     const safe = await validateUserCaptions(format, cleanCaptions);
@@ -47,12 +57,36 @@ export async function POST(request) {
       );
     }
 
+    if (galleryFile) {
+      const galleryItem = getGalleryItemByFile(galleryFile);
+      if (!galleryItem) {
+        return NextResponse.json(
+          { error: "That gallery meme could not be found." },
+          { status: 400 }
+        );
+      }
+      if (galleryItem.remixFormatId !== formatId) {
+        return NextResponse.json(
+          { error: "Gallery meme and format do not match." },
+          { status: 400 }
+        );
+      }
+
+      const record = await generateMeme({
+        situationId: situationId || "lesson-planning",
+        toneId: toneId || "relatable",
+        formatId,
+        userCaptions: cleanCaptions,
+        galleryItem,
+      });
+      return NextResponse.json(record);
+    }
+
     const record = await generateMeme({
       situationId: situationId || "lesson-planning",
       toneId: toneId || "relatable",
       formatId,
       userCaptions: cleanCaptions,
-      sourceFile: galleryFile || null,
     });
 
     return NextResponse.json(record);

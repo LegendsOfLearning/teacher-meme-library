@@ -11,13 +11,13 @@
 //     few-shot examples for the prompt.
 //
 // Style keys recognized by the renderer:
-//   - "caption":     Impact, ALL CAPS, white fill + heavy black stroke.
+//   - "caption":     Anton Regular 400, ALL CAPS, white fill + heavy black stroke.
 //                    Sits on top of photography (default).
-//   - "dark-on-light": Impact, original case, black fill, no stroke.
+//   - "dark-on-light": Anton, original case, black fill, no stroke.
 //                    Used for Drake / Expanding Brain panels where the
 //                    background is already a flat cream color.
-//   - "mocking":     Impact, mIxEd cAsE, black fill, no stroke.
-//   - "sign":        Impact, ALL CAPS, dark fill on cream sign.
+//   - "mocking":     Anton, mIxEd cAsE, black fill, no stroke.
+//   - "sign":        Anton, ALL CAPS, dark fill on cream sign.
 //   - "doge":        Comic Sans MS, lowercase, colored fill, thin black stroke.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -121,6 +121,21 @@ export const memeFormats = [
         key: "bottom",
         label: "Bottom: the impossible teaching task",
         x: 0.03, y: 0.66, w: 0.94, h: 0.18,
+        align: "center", style: "caption", maxLines: 3, strokeRatio: 0.42,
+      },
+    ],
+    galleryTemplate: `${FILE_BASE}/one-does-not-simply-gallery.png`,
+    galleryZones: [
+      {
+        key: "top",
+        label: "Top: usually \"One does not simply\"",
+        x: 0.03, y: 0.26, w: 0.94, h: 0.085,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
+      },
+      {
+        key: "bottom",
+        label: "Bottom: the impossible teaching task",
+        x: 0.03, y: 0.68, w: 0.94, h: 0.13,
         align: "center", style: "caption", maxLines: 3, strokeRatio: 0.42,
       },
     ],

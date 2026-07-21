@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useCallback } from "react";
 import ShareModal from "./ShareModal";
 import MemeCardActions from "./MemeCardActions";
+import { galleryImg } from "../lib/gallery";
 
 function itemHref(item) {
   if (item.pagePath) return item.pagePath;
@@ -30,7 +31,7 @@ export default function HomeFeaturedStrip({ memeOfTheDay, trendingMemes }) {
             <p className="featured-day-label">Meme of the day</p>
             <Link href={itemHref(memeOfTheDay)} className="featured-day-thumb">
               <img
-                src={memeOfTheDay.file}
+                src={galleryImg(memeOfTheDay.file)}
                 alt={memeOfTheDay.captionPreview}
               />
             </Link>
@@ -50,7 +51,7 @@ export default function HomeFeaturedStrip({ memeOfTheDay, trendingMemes }) {
               {trendingMemes.map((item) => (
                 <article key={item.id} className="featured-trending-card">
                   <Link href={itemHref(item)} className="featured-trending-thumb">
-                    <img src={item.file} alt="" loading="lazy" />
+                    <img src={galleryImg(item.file)} alt="" loading="lazy" />
                   </Link>
                   <p className="featured-trending-format">{item.formatName}</p>
                   <MemeCardActions

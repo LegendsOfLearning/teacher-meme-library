@@ -43,6 +43,7 @@ import {
   MODERATION_UNAVAILABLE_MESSAGE,
 } from "./moderation-policy";
 import { renderMeme } from "./render";
+import { renderGalleryMeme } from "./gallery-meme";
 import { newMemeId, saveMeme } from "./storage";
 
 // Minimum aggregate score (0-10) we accept from the picker.
@@ -378,8 +379,10 @@ function step6_pickBest({ candidates, scores, excludeIndexes = [] }) {
 }
 
 // ─── Step 7: render meme ─────────────────────────────────────────────────
-async function step7_render({ format, captions, sourceFile }) {
-  const png = await renderMeme(format, captions, { sourceFile });
+async function step7_render({ format, captions, galleryItem, cleanBase }) {
+  const png = galleryItem
+    ? await renderGalleryMeme(galleryItem, captions, { forEdit: true })
+    : await renderMeme(format, captions, cleanBase ? { cleanBase } : {});
   return {
     png,
     event: { step: 7, name: "render", bytes: png.length },
@@ -397,15 +400,32 @@ async function step7_render({ format, captions, sourceFile }) {
 //   - brand risk
 //   - copyright risk
 //   - anything inappropriate for a K-8 education brand
-async function step8_adversarialReview({ candidates, idx }) {
+async function step8_adversarialReview({ candidates, idx, userSupplied = false }) {
   const event = { step: 8, name: "adversarial_review", idx };
   const c = candidates[idx];
-  const flat = Object.values(c).filter(Boolean).join("\n");
+  const flat = Object.values(c || {})
+    .filter((v) => typeof v === "string" && v.trim())
+    .join("\n");
+
+  if (!flat.trim()) {
+    return {
+      ok: false,
+      reason: "empty",
+      message: "Add at least one caption.",
+      event: { ...event, ok: false, reason: "empty" },
+    };
+  }
 
   // Layer A: blocklist (cheap, catches the obvious bypasses).
   const blocked = findBlockedTerm(flat);
   if (blocked) {
-    return { ok: false, reason: "blocklist", term: blocked, event: { ...event, ok: false, blocked } };
+    return {
+      ok: false,
+      reason: "blocklist",
+      term: blocked,
+      message: BLOCKLIST_USER_MESSAGE,
+      event: { ...event, ok: false, blocked },
+    };
   }
 
   // Layer B: OpenAI moderation (if configured).
@@ -426,6 +446,13 @@ async function step8_adversarialReview({ candidates, idx }) {
       message: mod.message || MODERATION_UNAVAILABLE_MESSAGE,
       event: { ...event, ok: false, skipped: mod.reason },
     };
+  }
+
+  // Edit / manual captions already passed validateUserCaptions (blocklist +
+  // OpenAI). Skip the LLM brand reviewer — it false-positives on innocent
+  // text like "hello" / "test" with hallucinated reasons.
+  if (userSupplied) {
+    return { ok: true, event: { ...event, ok: true, source: "user-validated" } };
   }
 
   // Layer C: stricter LLM-based brand review (skipped if no API key).
@@ -452,6 +479,8 @@ Reject if ANY of the following is true (even mild):
 - Mockery of children or learners themselves (we punch UP at the system, not at kids)
 - Brand or copyright risk (real product names, brands the teacher is "endorsing", etc.)
 - Anything a K-8 principal would flinch at sharing in a staff newsletter
+
+Approve ordinary classroom humor, including mild sarcasm about grading, emails, or admin. Innocent test phrases like "hello" or "test" MUST be approved.
 
 Output STRICT JSON: { "ok": true } if the caption is safe to ship. { "ok": false, "reason": "<one short reason>" } otherwise.`;
 
@@ -499,7 +528,7 @@ export async function validateUserCaptions(format, captions) {
   }
 
   const flat = Object.values(captions || {})
-    .filter(Boolean)
+    .filter((v) => typeof v === "string" && v.trim())
     .join("\n");
   if (!flat.trim()) {
     return { ok: false, reason: "empty", message: "Add at least one caption." };
@@ -567,7 +596,7 @@ export async function generateMeme({
   formatId,
   userCaptions,
   excludeFormatIds = [],
-  sourceFile,
+  galleryItem,
 }) {
   const trace = [];
   const situation =
@@ -649,12 +678,16 @@ export async function generateMeme({
     attempts++;
     triedIdx.add(chosenIdx);
 
-    const s7 = await step7_render({ format, captions: chosen, sourceFile });
+    const s7 = await step7_render({ format, captions: chosen, galleryItem });
     png = s7.png;
     trace.push(s7.event);
 
     // ── Step 8
-    const s8 = await step8_adversarialReview({ candidates, idx: chosenIdx });
+    const s8 = await step8_adversarialReview({
+      candidates,
+      idx: chosenIdx,
+      userSupplied: Boolean(userCaptions),
+    });
     trace.push(s8.event);
 
     if (s8.ok) break;
@@ -709,6 +742,9 @@ export async function generateMeme({
       trace,
       candidatesCount: candidates.length,
       attempts,
+      galleryId: galleryItem?.id || null,
+      galleryFile: galleryItem?.file || null,
+      cleanBase: galleryItem?.cleanBase || null,
     },
   });
   trace.push({ step: 9, name: "save", id });

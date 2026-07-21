@@ -50,6 +50,12 @@ export default function MemeQuickActions({
   };
 
   const deviceShare = async () => {
+    // Prefer the full social panel over the OS sheet so Facebook/X/etc.
+    // get their dedicated share dialogs.
+    if (onShareMore) {
+      onShareMore();
+      return;
+    }
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
@@ -62,7 +68,7 @@ export default function MemeQuickActions({
         if (err?.name === "AbortError") return;
       }
     }
-    onShareMore?.();
+    toast("Use Download or Copy, or open Share for social links");
   };
 
   return (

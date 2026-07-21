@@ -8,6 +8,7 @@ import {
   buildSearchSuggestions,
   itemMatchesQuery,
 } from "../lib/gallery-search";
+import { galleryImg } from "../lib/gallery";
 
 function itemHref(item) {
   if (item.pagePath) return item.pagePath;
@@ -135,7 +136,7 @@ export default function GalleryGrid({ items, filters }) {
           {visible.map((item) => (
             <article key={item.id} className="gallery-card">
               <Link href={itemHref(item)} className="gallery-thumb">
-                <img src={item.file} alt={item.captionPreview} loading="lazy" />
+                <img src={galleryImg(item.file)} alt={item.captionPreview} loading="lazy" />
               </Link>
               <div className="gallery-card-body">
                 <div className="gallery-format" title={item.formatName}>

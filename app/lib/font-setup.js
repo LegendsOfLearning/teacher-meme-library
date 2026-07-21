@@ -16,9 +16,9 @@ import {
 } from "node:fs";
 
 export const BUNDLED_FONTS = [
-  "Impact.ttf",
   "Anton-Regular.ttf",
   "ComicNeue-Bold.ttf",
+  "Montserrat-SemiBold.ttf",
 ];
 
 function isServerless() {
@@ -44,13 +44,12 @@ function shouldRecopy(src, dst) {
   }
 }
 
-function configureFontconfig(fontDir) {
+function configureFontconfig(fontDir, antonPath) {
   const confPath = path.join(os.tmpdir(), "meme-generator-fonts.conf");
   const cacheDir = path.join(os.tmpdir(), "meme-generator-fontconfig-cache");
   mkdirSync(cacheDir, { recursive: true });
-  const impactPath = path.join(fontDir, "Impact.ttf");
-  const antonPath = path.join(fontDir, "Anton-Regular.ttf");
   const comicPath = path.join(fontDir, "ComicNeue-Bold.ttf");
+  const montserratPath = path.join(fontDir, "Montserrat-SemiBold.ttf");
   writeFileSync(
     confPath,
     `<?xml version="1.0"?>
@@ -59,17 +58,20 @@ function configureFontconfig(fontDir) {
   <dir>${fontDir}</dir>
   <cachedir>${cacheDir}</cachedir>
   <match target="pattern">
-    <test qual="any" name="family"><string>Impact</string></test>
-    <edit name="file" mode="assign" binding="strong"><string>${impactPath}</string></edit>
-    <edit name="family" mode="assign" binding="strong"><string>Impact</string></edit>
-  </match>
-  <match target="pattern">
     <test qual="any" name="family"><string>Anton</string></test>
     <edit name="file" mode="assign" binding="strong"><string>${antonPath}</string></edit>
+    <edit name="family" mode="assign" binding="strong"><string>Anton</string></edit>
+    <edit name="weight" mode="assign"><int>400</int></edit>
   </match>
   <match target="pattern">
     <test qual="any" name="family"><string>Comic Neue</string></test>
     <edit name="file" mode="assign" binding="strong"><string>${comicPath}</string></edit>
+  </match>
+  <match target="pattern">
+    <test qual="any" name="family"><string>Montserrat</string></test>
+    <edit name="file" mode="assign" binding="strong"><string>${montserratPath}</string></edit>
+    <edit name="family" mode="assign" binding="strong"><string>Montserrat</string></edit>
+    <edit name="weight" mode="assign"><int>600</int></edit>
   </match>
 </fontconfig>`
   );
@@ -109,9 +111,9 @@ function installFontsSync() {
     return;
   }
 
-  if (isServerless()) {
-    configureFontconfig(dstDir);
-  }
+  const fontDir = isServerless() ? dstDir : srcDir;
+  const antonPath = path.join(fontDir, "Anton-Regular.ttf");
+  configureFontconfig(fontDir, antonPath);
 }
 
 installFontsSync();

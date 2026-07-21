@@ -30,6 +30,7 @@ export const galleryItems = [
   {
     id: "v01",
     file: "/gallery/boromir-backup.png",
+    cleanBase: "/templates-meme/one-does-not-simply-blank.jpg",
     formatName: "One Does Not Simply",
     captionPreview:
       "ONE DOES NOT SIMPLY TEACH ALL DAY WITHOUT A LITTLE FUN AND A LOT OF BACKUP",
@@ -1251,6 +1252,25 @@ export const gallerySourceMap = {
 
 export function getGalleryItemById(id) {
   return galleryItems.find((g) => g.id === id) || null;
+}
+
+export function getGalleryItemByFile(file) {
+  if (!file || typeof file !== "string") return null;
+  const clean = file.split("?")[0];
+  return galleryItems.find((g) => g.file === clean) || null;
+}
+
+// Bump whenever gallery PNGs are regenerated so browsers fetch the new
+// pixels instead of reusing a stale cached copy (filenames don't change).
+export const GALLERY_ASSET_VERSION = "20260721-logo-clearance";
+
+/** Append a cache-busting version to a gallery/static image path. */
+export function galleryImg(file) {
+  if (!file || typeof file !== "string") return file;
+  // Only version local static paths; leave data:/blob:/absolute URLs alone.
+  if (!file.startsWith("/")) return file;
+  if (file.includes("?")) return file;
+  return `${file}?v=${GALLERY_ASSET_VERSION}`;
 }
 
 export const gallerySituationFilters = [

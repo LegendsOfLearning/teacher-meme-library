@@ -16,6 +16,10 @@ export const metadata = {
   description:
     "Free classroom memes from Legends of Learning. Share or customize classroom-safe memes, plus free game-based learning when you're ready.",
   metadataBase: new URL(serverShareOrigin()),
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
   openGraph: {
     title: "Teacher Meme Generator",
     description:
