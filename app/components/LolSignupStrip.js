@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LOL_ABOUT_URL, lolSignupUrl } from "../lib/share-links";
 import { trackSignupClick } from "../lib/analytics";
+import { CTA_LEARN_MORE_SHORT, CTA_SIGNUP_PRIMARY_SHORT } from "../lib/cta-copy";
 
 /** Soft brand touchpoint — no aggressive signup push. */
 export default function LolSignupStrip({ className = "" }) {
@@ -16,11 +17,11 @@ export default function LolSignupStrip({ className = "" }) {
         rel="noopener noreferrer"
         onClick={() => trackSignupClick("share_modal_strip")}
       >
-        Explore free games
+        {CTA_SIGNUP_PRIMARY_SHORT}
       </Link>
       {" · "}
       <Link href={LOL_ABOUT_URL} target="_blank" rel="noopener noreferrer">
-        About us
+        {CTA_LEARN_MORE_SHORT}
       </Link>
     </p>
   );

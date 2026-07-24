@@ -4,6 +4,12 @@ import Link from "next/link";
 import { LOL_ABOUT_URL, lolSignupUrl } from "../lib/share-links";
 import { trackEvent, trackSignupClick } from "../lib/analytics";
 import {
+  CTA_LEARN_MORE,
+  CTA_LEARN_MORE_SHORT,
+  CTA_SIGNUP_PRIMARY,
+  CTA_SIGNUP_PRIMARY_SHORT,
+} from "../lib/cta-copy";
+import {
   LOL_HOME_BOTTOM_BODY,
   LOL_HOME_BOTTOM_KICKER,
   LOL_PITCH_BANNER_BODY,
@@ -31,7 +37,7 @@ export default function LolSignupCta({ variant = "card" }) {
               rel="noopener noreferrer"
               onClick={() => trackSignupClick("share_landing")}
             >
-              Explore free games for teachers
+              {CTA_SIGNUP_PRIMARY}
             </Link>
             <Link
               href={LOL_ABOUT_URL}
@@ -42,19 +48,10 @@ export default function LolSignupCta({ variant = "card" }) {
                 trackEvent("lol_about_click", { location: "share_landing" })
               }
             >
-              About Legends of Learning
+              {CTA_LEARN_MORE}
             </Link>
           </div>
         </div>
-        <p className="home-bottom-safety">
-          <span className="home-bottom-safety-icon" aria-hidden>
-            🛡️
-          </span>
-          <span>
-            <strong>Edit the captions</strong>: same image, your words.
-            Every save runs through a K-8 safety check before download.
-          </span>
-        </p>
       </section>
     );
   }
@@ -71,7 +68,7 @@ export default function LolSignupCta({ variant = "card" }) {
             rel="noopener noreferrer"
             onClick={() => trackSignupClick("banner")}
           >
-            Explore free games for teachers
+            {CTA_SIGNUP_PRIMARY}
           </Link>
           <Link
             href={LOL_ABOUT_URL}
@@ -79,7 +76,7 @@ export default function LolSignupCta({ variant = "card" }) {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Learn more
+            {CTA_LEARN_MORE_SHORT}
           </Link>
         </div>
       </aside>
@@ -98,7 +95,7 @@ export default function LolSignupCta({ variant = "card" }) {
           rel="noopener noreferrer"
           onClick={() => trackSignupClick("customize_card")}
         >
-          Explore free games
+          {CTA_SIGNUP_PRIMARY_SHORT}
         </Link>
         <Link
           href={LOL_ABOUT_URL}
@@ -106,7 +103,7 @@ export default function LolSignupCta({ variant = "card" }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          More about Legends of Learning
+          {CTA_LEARN_MORE}
         </Link>
       </div>
     </aside>

@@ -9,12 +9,14 @@ import {
   fetchAndDownloadSquare,
 } from "../lib/download-square";
 import { trackEvent } from "../lib/analytics";
+import { trackEngagement } from "../lib/engagement-client";
 
 /** Download / copy / edit / social share for shared meme landing pages. */
 export default function SharePageActions({ item, meme, share, onToast }) {
   const [showSocial, setShowSocial] = useState(false);
   const imgSrc =
     item?.file || meme?.pngUrl || share?.imageUrl || "";
+  const memeId = item?.id || meme?.id;
   const editable = item ? canCustomizeItem(item) : false;
   const editHref = editable
     ? `/customize?id=${encodeURIComponent(item.id)}`
@@ -32,11 +34,12 @@ export default function SharePageActions({ item, meme, share, onToast }) {
         page_path:
           typeof window !== "undefined" ? window.location.pathname : undefined,
       });
+      if (memeId) trackEngagement(memeId, "download");
       onToast?.("Saved: square PNG downloaded");
     } catch {
       onToast?.("Download failed, try again");
     }
-  }, [imgSrc, downloadName, onToast]);
+  }, [imgSrc, downloadName, memeId, onToast]);
 
   const copyImage = useCallback(async () => {
     if (!imgSrc) return;
@@ -46,11 +49,12 @@ export default function SharePageActions({ item, meme, share, onToast }) {
         page_path:
           typeof window !== "undefined" ? window.location.pathname : undefined,
       });
+      if (memeId) trackEngagement(memeId, "download");
       onToast?.("Copied: paste into chat or email");
     } catch {
       onToast?.("Couldn't copy image, try Download");
     }
-  }, [imgSrc, onToast]);
+  }, [imgSrc, memeId, onToast]);
 
   const shareImage = useCallback(() => {
     setShowSocial(true);
@@ -58,7 +62,8 @@ export default function SharePageActions({ item, meme, share, onToast }) {
       page_path:
         typeof window !== "undefined" ? window.location.pathname : undefined,
     });
-  }, []);
+    if (memeId) trackEngagement(memeId, "share");
+  }, [memeId]);
 
   const shareProps = item ? { item, onToast } : { share, imageUrl: meme?.pngUrl, onToast };
 
@@ -98,6 +103,9 @@ export default function SharePageActions({ item, meme, share, onToast }) {
               className="meme-icon-btn meme-icon-btn--edit"
               aria-label="Customize"
               title="Customize"
+              onClick={() => {
+                if (memeId) trackEngagement(memeId, "customize");
+              }}
             >
               <MemeActionIcon name="edit" size={18} />
             </Link>

@@ -3,16 +3,39 @@
 import Link from "next/link";
 import { useState, useCallback } from "react";
 import ShareModal from "./ShareModal";
-import MemeCardActions from "./MemeCardActions";
+import MemeCardActions, { canCustomizeItem } from "./MemeCardActions";
 import { galleryImg } from "../lib/gallery";
 
 function itemHref(item) {
+  if (canCustomizeItem(item)) {
+    return `/customize?id=${encodeURIComponent(item.id)}`;
+  }
   if (item.pagePath) return item.pagePath;
   return `/gallery/${item.id}`;
 }
 
-/** One featured section: Meme of the Day + trending row. */
-export default function HomeFeaturedStrip({ memeOfTheDay, trendingMemes }) {
+function CompactCard({ item, onShare, onToast }) {
+  return (
+    <article className="home-rail-card">
+      <Link href={itemHref(item)} className="home-rail-thumb" title={item.formatName}>
+        <img
+          src={galleryImg(item.file)}
+          alt={item.captionPreview || item.formatName}
+          loading="lazy"
+        />
+      </Link>
+      <MemeCardActions
+        item={item}
+        onShare={onShare}
+        onToast={onToast}
+        compact
+      />
+    </article>
+  );
+}
+
+/** Compact Trending now rail ranked by real engagement. */
+export default function HomeFeaturedStrip({ trendingMemes }) {
   const [toast, setToast] = useState("");
   const [shareItem, setShareItem] = useState(null);
 
@@ -21,50 +44,22 @@ export default function HomeFeaturedStrip({ memeOfTheDay, trendingMemes }) {
     setTimeout(() => setToast(""), 2000);
   }, []);
 
-  if (!memeOfTheDay && !trendingMemes?.length) return null;
+  if (!trendingMemes?.length) return null;
 
   return (
-    <section className="featured-memes" aria-label="Featured teacher memes">
-      <div className="featured-memes-layout">
-        {memeOfTheDay ? (
-          <article className="featured-day-card">
-            <p className="featured-day-label">Meme of the day</p>
-            <Link href={itemHref(memeOfTheDay)} className="featured-day-thumb">
-              <img
-                src={galleryImg(memeOfTheDay.file)}
-                alt={memeOfTheDay.captionPreview}
-              />
-            </Link>
-            <p className="featured-day-format">{memeOfTheDay.formatName}</p>
-            <MemeCardActions
-              item={memeOfTheDay}
+    <section className="home-rail" aria-label="Trending teacher memes">
+      <div className="home-rail-block home-rail-block--trending">
+        <p className="home-rail-label">Trending now</p>
+        <div className="home-rail-track home-rail-track--trending">
+          {trendingMemes.map((item) => (
+            <CompactCard
+              key={item.id}
+              item={item}
               onShare={setShareItem}
               onToast={showToast}
             />
-          </article>
-        ) : null}
-
-        {trendingMemes?.length > 0 ? (
-          <div className="featured-trending">
-            <p className="featured-trending-label">Trending teacher memes</p>
-            <div className="featured-trending-grid">
-              {trendingMemes.map((item) => (
-                <article key={item.id} className="featured-trending-card">
-                  <Link href={itemHref(item)} className="featured-trending-thumb">
-                    <img src={galleryImg(item.file)} alt="" loading="lazy" />
-                  </Link>
-                  <p className="featured-trending-format">{item.formatName}</p>
-                  <MemeCardActions
-                    item={item}
-                    onShare={setShareItem}
-                    onToast={showToast}
-                    compact
-                  />
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : null}
+          ))}
+        </div>
       </div>
 
       <ShareModal

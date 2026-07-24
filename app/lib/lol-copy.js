@@ -9,12 +9,18 @@ export const LOL_HERO_TITLE = "Free Classroom Memes";
 export const LOL_HERO_TAGLINE =
   "Bringing joy to classrooms, one teacher meme at a time!";
 
-export const LOL_HERO_BODY = "Funny, shareable memes made for teachers.";
+/** @deprecated Removed from home hero per product feedback. */
+export const LOL_HERO_BODY = "";
 
 export const LOL_LIBRARY_HEADING = "Full library";
 
-export const LOL_LIBRARY_LEAD =
-  "Browse every meme: download, copy, share, or customize in a click.";
+export const LOL_TODAYS_PICKS_LABEL = "Trending now";
+
+export const LOL_TEACHER_CREATED_HEADING = "Teacher created";
+
+export const LOL_TEACHER_CREATED_LEAD = "";
+
+export const LOL_LIBRARY_LEAD = "";
 
 export const LOL_SHARE_PANEL_INTRO =
   "Paste the image into a group chat, email, or post, or share a link to this page.";

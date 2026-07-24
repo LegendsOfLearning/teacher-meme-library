@@ -22,6 +22,11 @@ const CROPS = [
     topPx: 762,
     out: "surprised-pikachu.jpg",
   },
+  {
+    src: "monkey-puppet.jpg",
+    topPx: 281,
+    out: "monkey-puppet-clean.jpg",
+  },
 ];
 
 async function cropTopBand(srcName, topPx, outName) {

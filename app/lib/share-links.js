@@ -17,15 +17,18 @@ export function lolSignupUrl(content = "signup_cta") {
 export const LOL_SIGNUP_URL = lolSignupUrl("signup_cta");
 
 export const LOL_ABOUT_URL =
-  "https://www.legendsoflearning.com?utm_source=meme&utm_medium=web&utm_campaign=meme_library&utm_content=about";
+  "https://www.legendsoflearning.com/?utm_source=meme&utm_medium=web&utm_campaign=meme_library&utm_content=about";
+
+/** Marketing homepage — used for the nav logo click. */
+export const LOL_HOME_URL =
+  "https://www.legendsoflearning.com/?utm_source=meme&utm_medium=web&utm_campaign=meme_library&utm_content=nav_logo";
 
 // Awards, certifications, and 3rd-party impact evidence — used to back
 // the research claim on the Why Memes page without pushing sign-up.
 export const LOL_AWARDS_URL =
   "https://www.legendsoflearning.com/awards/?_gl=1*15atf83*_gcl_au*MTgwNzIzMjg2Ni4xNzc5OTc1OTE5LjIxMDA1NjY0NjIuMTc3OTk5MTMxNC4xNzc5OTkxMzE1*_ga*MzcwNjAxMzY3LjE3Nzk5NzU5MTk.*_ga_W4ZPPVZLYR*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw*_ga_0BH5L68SXQ*czE3ODAwODU5NzAkbzYkZzAkdDE3ODAwODU5NzAkajYwJGwwJGgw";
 
-export const PRODUCTION_SITE_URL =
-  "https://classroom-memes.legendsoflearning.com";
+export const PRODUCTION_SITE_URL = "https://www.teacher-memes.com";
 
 /** Canonical origin for SSR metadata (OG / WhatsApp previews). */
 export function serverShareOrigin() {
@@ -43,6 +46,8 @@ export function shareOrigin() {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (
+      host === "www.teacher-memes.com" ||
+      host === "teacher-memes.com" ||
       host === "classroom-memes.legendsoflearning.com" ||
       host === "teacher-meme-library.vercel.app"
     ) {

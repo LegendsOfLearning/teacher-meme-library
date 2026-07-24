@@ -7,6 +7,8 @@ import {
   fetchAndDownloadSquare,
 } from "../lib/download-square";
 import { trackEvent } from "../lib/analytics";
+import { trackEngagement } from "../lib/engagement-client";
+import { MemeUpvoteButton } from "./MemeStatsBar";
 
 export function MemeActionIcon({ name, size = 16 }) {
   const common = {
@@ -64,7 +66,7 @@ export function canCustomizeItem(item) {
   );
 }
 
-/** Icon CTAs: download, copy, share, and edit (customize). */
+/** Icon CTAs: download, copy, share — plus a labeled Customize button below. */
 export default function MemeCardActions({
   item,
   onShare,
@@ -73,7 +75,6 @@ export default function MemeCardActions({
 }) {
   const customizable = canCustomizeItem(item);
   const iconSize = compact ? 14 : 16;
-  const actionCount = customizable ? 4 : 3;
 
   const download = useCallback(async () => {
     try {
@@ -81,6 +82,7 @@ export default function MemeCardActions({
         item.file.split("?")[0].split("/").pop() || "teacher-meme.png";
       await fetchAndDownloadSquare(item.file, name);
       trackEvent("meme_download", { meme_id: item.id });
+      trackEngagement(item.id, "download");
       onToast?.("Downloaded");
     } catch {
       onToast?.("Download failed");
@@ -90,6 +92,7 @@ export default function MemeCardActions({
   const copyImage = useCallback(async () => {
     try {
       await copyImageToClipboard(item.file);
+      trackEngagement(item.id, "download");
       onToast?.("Copied: paste into chat or email");
     } catch {
       onToast?.("Couldn't copy, try Download");
@@ -98,47 +101,56 @@ export default function MemeCardActions({
 
   return (
     <div
-      className={`meme-card-actions${compact ? " meme-card-actions--compact" : ""}`}
-      data-action-count={actionCount}
+      className={`meme-card-actions-wrap${compact ? " meme-card-actions-wrap--compact" : ""}`}
     >
-      <button
-        type="button"
-        className="meme-icon-btn"
-        aria-label="Download"
-        title="Download"
-        onClick={download}
+      <div
+        className={`meme-card-actions${compact ? " meme-card-actions--compact" : ""}`}
+        data-action-count={4}
       >
-        <MemeActionIcon name="download" size={iconSize} />
-      </button>
-      <button
-        type="button"
-        className="meme-icon-btn"
-        aria-label="Copy image"
-        title="Copy image"
-        onClick={copyImage}
-      >
-        <MemeActionIcon name="copy" size={iconSize} />
-      </button>
-      <button
-        type="button"
-        className="meme-icon-btn"
-        aria-label="Share"
-        title="Share"
-        onClick={() => {
-          trackEvent("meme_share_open", { meme_id: item.id, source: "gallery_card" });
-          onShare?.(item);
-        }}
-      >
-        <MemeActionIcon name="share" size={iconSize} />
-      </button>
+        <button
+          type="button"
+          className="meme-icon-btn"
+          aria-label="Download"
+          title="Download"
+          onClick={download}
+        >
+          <MemeActionIcon name="download" size={iconSize} />
+        </button>
+        <button
+          type="button"
+          className="meme-icon-btn"
+          aria-label="Copy image"
+          title="Copy image"
+          onClick={copyImage}
+        >
+          <MemeActionIcon name="copy" size={iconSize} />
+        </button>
+        <button
+          type="button"
+          className="meme-icon-btn"
+          aria-label="Share"
+          title="Share"
+          onClick={() => {
+            trackEvent("meme_share_open", {
+              meme_id: item.id,
+              source: "gallery_card",
+            });
+            trackEngagement(item.id, "share");
+            onShare?.(item);
+          }}
+        >
+          <MemeActionIcon name="share" size={iconSize} />
+        </button>
+        <MemeUpvoteButton item={item} compact={compact} onToast={onToast} />
+      </div>
       {customizable ? (
         <Link
           href={`/customize?id=${encodeURIComponent(item.id)}`}
-          className="meme-icon-btn meme-icon-btn--edit"
-          aria-label="Customize"
-          title="Customize"
+          className={`meme-customize-btn${compact ? " meme-customize-btn--compact" : ""}`}
+          onClick={() => trackEngagement(item.id, "customize")}
         >
-          <MemeActionIcon name="edit" size={iconSize} />
+          <MemeActionIcon name="edit" size={compact ? 13 : 15} />
+          Customize
         </Link>
       ) : null}
     </div>

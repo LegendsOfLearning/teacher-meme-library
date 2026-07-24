@@ -12,6 +12,7 @@ import LolSignupCta from "../components/LolSignupCta";
 import LolNavBrand from "../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../lib/lol-copy";
 import { trackEvent } from "../lib/analytics";
+import MemeViewTracker from "../components/MemeViewTracker";
 
 // ─── Inline icon set ─────────────────────────────────────────────────────
 function Icon({ name }) {
@@ -259,6 +260,7 @@ export default function CustomizePage() {
 
   return (
     <>
+      {item?.id ? <MemeViewTracker memeId={item.id} /> : null}
       <nav className="nav">
         <Link href="/" className="nav-link">
           ← Back to memes
@@ -270,13 +272,9 @@ export default function CustomizePage() {
         <h1>
           Customize this <span className="gradient-text">template</span>
         </h1>
-        <p>
-          Edit the captions: same image, your words. Every save runs
-          through a K-8 safety check before download.
-        </p>
       </section>
 
-      <main className="container">
+      <main className="container customize-page">
         {error && <div className="error-message">{error}</div>}
 
         {loading && (
@@ -289,36 +287,72 @@ export default function CustomizePage() {
         {!loading && (
           <div className="meme-result" ref={memeAnchorRef}>
             {editing ? (
+              <div className="customize-workspace">
+                <div className="customize-preview-col">
+                  <div className="meme-canvas-wrap">
+                    <img
+                      key={meme.id}
+                      src={meme.pngUrl}
+                      alt={`${meme.formatName} teacher meme`}
+                      className="meme-image"
+                    />
+                  </div>
+                  <div className="meme-meta">
+                    <span className="meme-meta-pill">{meme.formatName}</span>
+                  </div>
+                  <MemeQuickActions
+                    meme={meme}
+                    item={item}
+                    imageUrl={meme.pngUrl}
+                    share={{
+                      path: item?.pagePath || `/gallery/${item?.id}`,
+                      title: `${meme.formatName} · Teacher meme`,
+                      text: `Found my new favorite teacher meme: "${shareTextLine}"`,
+                      imageUrl: meme.pngUrl,
+                    }}
+                    onToast={showToast}
+                    onShareMore={() => setShowSocialShare(true)}
+                    compact
+                  />
+                  {showSocialShare ? (
+                    <SharePanel
+                      item={item}
+                      share={{
+                        path: item?.pagePath || `/gallery/${item?.id}`,
+                        title: `${meme.formatName} · Teacher meme`,
+                        text: `Found my new favorite teacher meme: "${shareTextLine}"`,
+                        imageUrl: meme.pngUrl,
+                      }}
+                      onToast={showToast}
+                    />
+                  ) : null}
+                </div>
+                <div className="customize-editor-col">
+                  <EditPanel
+                    format={format}
+                    values={editValues}
+                    onChange={setEditValues}
+                    onSave={saveEdit}
+                    safetyError={safetyError}
+                    loading={loading}
+                  />
+                </div>
+              </div>
+            ) : (
               <>
-                <EditPanel
-                  format={format}
-                  values={editValues}
-                  onChange={setEditValues}
-                  onSave={saveEdit}
-                  safetyError={safetyError}
-                  loading={loading}
-                />
-                <p className="customize-preview-note">
-                  Same meme image, your words. The preview below updates when you save.
-                </p>
-              </>
-            ) : null}
+                <div className="meme-canvas-wrap">
+                  <img
+                    key={meme.id}
+                    src={meme.pngUrl}
+                    alt={`${meme.formatName} teacher meme`}
+                    className="meme-image"
+                  />
+                </div>
 
-            <div className="meme-canvas-wrap">
-              <img
-                key={meme.id}
-                src={meme.pngUrl}
-                alt={`${meme.formatName} teacher meme`}
-                className="meme-image"
-              />
-            </div>
+                <div className="meme-meta">
+                  <span className="meme-meta-pill">{meme.formatName}</span>
+                </div>
 
-            <div className="meme-meta">
-              <span className="meme-meta-pill">{meme.formatName}</span>
-            </div>
-
-            {!editing ? (
-              <>
                 <MemeQuickActions
                   meme={meme}
                   share={{
@@ -349,7 +383,7 @@ export default function CustomizePage() {
                 ) : null}
                 <LolSignupCta />
               </>
-            ) : null}
+            )}
           </div>
         )}
       </main>
@@ -401,8 +435,7 @@ function EditPanel({ format, values, onChange, onSave, safetyError, loading }) {
         </button>
       </div>
       <p className="edit-hint">
-        Edits run through the same K-8 safety review as everything else
-        on the site.
+        Every save runs through a K-8 safety check before download.
       </p>
     </div>
   );

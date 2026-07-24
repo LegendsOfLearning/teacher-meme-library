@@ -1,11 +1,19 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getGalleryItemById } from "../../lib/gallery";
+import {
+  getGalleryEngagementStats,
+  mergeEngagementOntoItem,
+} from "../../lib/engagement";
 import ShareGalleryActions from "./ShareGalleryActions";
+import MemeViewTracker from "../../components/MemeViewTracker";
+import MemeStatsBar from "../../components/MemeStatsBar";
 import LolSignupCta from "../../components/LolSignupCta";
 import LolNavBrand from "../../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
 import { serverShareOrigin } from "../../lib/share-links";
+
+export const dynamic = "force-dynamic";
 
 // Permanent, shareable, social-preview-ready URL for a single
 // gallery item. Mirrors /meme/[id] but reads from the curated
@@ -56,11 +64,20 @@ export async function generateMetadata({ params }) {
 
 export default async function GalleryItemPage({ params }) {
   const { id } = await params;
-  const item = getGalleryItemById(id);
-  if (!item) notFound();
+  const base = getGalleryItemById(id);
+  if (!base) notFound();
+
+  let statsMap = {};
+  try {
+    statsMap = await getGalleryEngagementStats();
+  } catch {
+    statsMap = {};
+  }
+  const item = mergeEngagementOntoItem(base, statsMap);
 
   return (
     <>
+      <MemeViewTracker memeId={item.id} />
       <nav className="nav">
         <div className="nav-left">
           <Link href="/" className="nav-link">
@@ -80,6 +97,10 @@ export default async function GalleryItemPage({ params }) {
 
         <div className="share-page-meta">
           <span className="meme-meta-pill">{item.formatName}</span>
+        </div>
+
+        <div className="share-page-stats">
+          <MemeStatsBar item={item} variant="share" />
         </div>
 
         <ShareGalleryActions item={item} />

@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getMeme } from "../../lib/storage";
+import {
+  getGalleryEngagementStats,
+  mergeEngagementOntoItem,
+} from "../../lib/engagement";
 import ShareActions from "./ShareActions";
 import MemeViewTracker from "../../components/MemeViewTracker";
+import MemeStatsBar from "../../components/MemeStatsBar";
 import LolSignupCta from "../../components/LolSignupCta";
 import LolNavBrand from "../../components/LolNavBrand";
 import { LOL_FOOTER_LINE } from "../../lib/lol-copy";
@@ -64,9 +69,24 @@ export default async function MemePage({ params }) {
   const meme = await getMeme(id);
   if (!meme) notFound();
 
+  let statsMap = {};
+  try {
+    statsMap = await getGalleryEngagementStats();
+  } catch {
+    statsMap = {};
+  }
+  const statsItem = mergeEngagementOntoItem(
+    {
+      id: meme.id,
+      isCommunity: true,
+      views: meme.views || 0,
+    },
+    statsMap
+  );
+
   return (
     <>
-      <MemeViewTracker memeId={meme.id} />
+      <MemeViewTracker memeId={meme.id} community />
       <nav className="nav">
         <Link href="/why-memes" className="nav-link nav-link--why">
           Why memes?
@@ -91,6 +111,10 @@ export default async function MemePage({ params }) {
           {meme.situationLabel && (
             <span className="meme-meta-pill subtle">{meme.situationLabel}</span>
           )}
+        </div>
+
+        <div className="share-page-stats">
+          <MemeStatsBar item={statsItem} variant="share" />
         </div>
 
         <ShareActions meme={meme} />

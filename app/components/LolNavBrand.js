@@ -1,34 +1,27 @@
 import Image from "next/image";
-import Link from "next/link";
+import { LOL_HOME_URL } from "../lib/share-links";
 import { LOL_NAV_LEAD } from "../lib/lol-copy";
 
-export default function LolNavBrand({ href = "/" }) {
-  const inner = (
-    <>
+/** Nav brand: lead copy + Legends logo linking to legendsoflearning.com */
+export default function LolNavBrand() {
+  return (
+    <a
+      href={LOL_HOME_URL}
+      className="nav-brand"
+      style={{ textDecoration: "none", color: "inherit" }}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Legends of Learning — visit legendsoflearning.com"
+    >
       <span className="nav-brand-text">{LOL_NAV_LEAD}</span>
       <Image
         src="/legends-logo-white.png"
         alt="Legends of Learning"
-        width={110}
-        height={40}
+        width={160}
+        height={48}
         className="nav-brand-logo"
         priority
       />
-    </>
+    </a>
   );
-
-  if (href) {
-    return (
-      <Link
-        href={href}
-        className="nav-brand"
-        style={{ textDecoration: "none", color: "inherit" }}
-        aria-label="Legends of Learning, a fun free resource"
-      >
-        {inner}
-      </Link>
-    );
-  }
-
-  return <div className="nav-brand">{inner}</div>;
 }

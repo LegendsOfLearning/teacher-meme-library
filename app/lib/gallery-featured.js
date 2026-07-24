@@ -28,19 +28,21 @@ export function getMemeOfTheDay(items) {
   return list[idx];
 }
 
-/** Rotating “hot” set — pinned featured picks first, then daily shuffle. */
-export function getHotMemes(items, count = 6) {
+/** Rotating “hot” set — real engagement first, then featured, then daily shuffle. */
+export function getHotMemes(items, count = 6, engagementScores = {}) {
   const pool = filterFeaturedPool(items);
   const list = pool.length > 0 ? pool : [...items];
   const seed = hashString(dailySeed() + "-hot");
-  const shuffled = [...list].sort(
-    (a, b) => hashString(a.id + seed) - hashString(b.id + seed)
-  );
-  // Vadim's featured picks always lead the trending strip.
-  const pinned = shuffled.filter((i) => i.featured);
-  const rest = shuffled.filter((i) => !i.featured);
-  const ordered = [...pinned, ...rest];
-  return ordered.slice(0, Math.min(count, ordered.length));
+  const scored = [...list].sort((a, b) => {
+    const scoreA = Number(engagementScores[a.id]) || 0;
+    const scoreB = Number(engagementScores[b.id]) || 0;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    if (Boolean(b.featured) !== Boolean(a.featured)) {
+      return Number(Boolean(b.featured)) - Number(Boolean(a.featured));
+    }
+    return hashString(a.id + seed) - hashString(b.id + seed);
+  });
+  return scored.slice(0, Math.min(count, scored.length));
 }
 
 /** User-saved memes that are not dev/placeholder drafts. */
@@ -59,6 +61,7 @@ export function isPlaceholderMeme(record) {
     /\btesting\s+this/i,
     /\bhol{2,}a+\b/i,
     /^test$/i,
+    /\btest\b/i,
     /placeholder/i,
   ];
   if (junkPatterns.some((p) => p.test(joined))) return true;
@@ -117,4 +120,19 @@ export function getFavoritesForHome(
   if (polished.length >= 2) return polished;
 
   return getCuratedStaffPicks(galleryItems, { excludeIds, count });
+}
+
+/**
+ * Teacher-created strip: only real customized saves (views + recency).
+ * Returns [] when the community pool is empty — no staff-pick fallback.
+ */
+export function getTeacherCreatedForHome(communityRecords, { count = 6 } = {}) {
+  return filterCommunityRecords(communityRecords || [])
+    .sort((a, b) => {
+      const viewDiff = (b.views || 0) - (a.views || 0);
+      if (viewDiff !== 0) return viewDiff;
+      return (b.createdAt || "").localeCompare(a.createdAt || "");
+    })
+    .slice(0, count)
+    .map(communityMemeToGalleryItem);
 }

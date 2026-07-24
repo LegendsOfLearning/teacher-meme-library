@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Replace the baked meme-loop footer on every public/gallery PNG with the
-// current MEME_LOOP_FOOTER_TEXT (classroom-memes.legendsoflearning.com).
+// current MEME_LOOP_FOOTER_TEXT (www.teacher-memes.com).
 //
-// Does NOT re-render captions or swap AI art for stock templates — only
-// clears the bottom footer band and redraws the signature line.
+// Always clears a fixed bottom band first so stacked/duplicate footers
+// cannot survive, then draws exactly one signature line.
 
 import path from "node:path";
 import { promises as fs } from "node:fs";
@@ -12,61 +12,17 @@ import { galleryItems } from "../app/lib/gallery.js";
 import {
   MEME_LOOP_FOOTER_TEXT,
   buildMemeLoopFooterSvg,
-  footerBandMetrics,
 } from "../app/lib/render.js";
 
 const projectRoot = path.resolve(import.meta.dirname || ".", "..");
 const outDir = path.join(projectRoot, "public", "gallery");
-
-/** Find where near-white footer glyphs start near the bottom of the canvas. */
-async function detectFooterTop(pngBuf, width, height) {
-  const { data, info } = await sharp(pngBuf)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const channels = info.channels;
-  // Only inspect the bottom strip — never reach into meme captions.
-  const scanFrom = Math.floor(height * 0.88);
-  let footerBottom = -1;
-  let footerTop = -1;
-  for (let y = height - 1; y >= scanFrom; y--) {
-    let white = 0;
-    for (let x = 0; x < width; x += 2) {
-      const i = (y * width + x) * channels;
-      if (data[i] > 200 && data[i + 1] > 200 && data[i + 2] > 200) white++;
-    }
-    const hasWhite = white > width * 0.015;
-    if (hasWhite) {
-      if (footerBottom < 0) footerBottom = y;
-      footerTop = y;
-    } else if (footerBottom >= 0) {
-      break;
-    }
-  }
-  // Always reserve enough room for the long classroom-memes URL.
-  const minBand = Math.max(36, Math.round(height * 0.07));
-  const fromGlyphs =
-    footerTop >= 0
-      ? Math.max(scanFrom, footerTop - Math.round(height * 0.01))
-      : height - minBand;
-  return Math.min(fromGlyphs, height - minBand);
-}
+const CLEAR_FRAC = 0.09; // only wipe the signature strip (not caption letterbox)
 
 async function restripeFooter(pngBuf) {
   const meta = await sharp(pngBuf).metadata();
   const width = meta.width;
   const height = meta.height;
-  const footerTop = await detectFooterTop(pngBuf, width, height);
-  const clearH = height - footerTop;
-  if (clearH < 8) return pngBuf;
-
-  // Force footer metrics into the cleared band.
-  const letterboxBounds = {
-    topEndFrac: 0,
-    bottomStartFrac: footerTop / height,
-  };
-  const { bandTop } = footerBandMetrics(width, height, letterboxBounds);
-  const clearTop = Math.min(footerTop, bandTop);
+  const clearTop = Math.max(0, Math.round(height * (1 - CLEAR_FRAC)));
 
   const clearSvg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
@@ -75,12 +31,10 @@ async function restripeFooter(pngBuf) {
     }" fill="#000000"/>
     </svg>`
   );
-  const footerSvg = buildMemeLoopFooterSvg(
-    width,
-    height,
-    MEME_LOOP_FOOTER_TEXT,
-    { topEndFrac: 0, bottomStartFrac: clearTop / height }
-  );
+  const footerSvg = buildMemeLoopFooterSvg(width, height, MEME_LOOP_FOOTER_TEXT, {
+    topEndFrac: 0,
+    bottomStartFrac: clearTop / height,
+  });
 
   return sharp(pngBuf)
     .composite([
@@ -113,7 +67,7 @@ async function main() {
       const next = await restripeFooter(existing);
       await fs.writeFile(outPath, next);
       ok++;
-      console.log(`[ok] ${outName} (${next.length} B)`);
+      console.log(`[ok] ${outName}`);
     } catch (err) {
       fail++;
       console.error(`[fail] ${outName}: ${err.message}`);

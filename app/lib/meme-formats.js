@@ -40,20 +40,20 @@ export const memeFormats = [
       {
         key: "newGirl",
         label: "Other woman (the distraction)",
-        x: 0.02, y: 0.28, w: 0.34, h: 0.18,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 44,
+        x: 0.01, y: 0.22, w: 0.36, h: 0.28,
+        align: "center", style: "caption", maxLines: 4, minFontSize: 28, maxFontSize: 64,
       },
       {
         key: "boyfriend",
         label: "Boyfriend (\"me\")",
-        x: 0.36, y: 0.50, w: 0.22, h: 0.14,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 36,
+        x: 0.34, y: 0.48, w: 0.28, h: 0.18,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 64,
       },
       {
         key: "girlfriend",
         label: "Girlfriend (what I should be focused on)",
-        x: 0.62, y: 0.38, w: 0.36, h: 0.18,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 44,
+        x: 0.58, y: 0.32, w: 0.40, h: 0.28,
+        align: "center", style: "caption", maxLines: 4, minFontSize: 28, maxFontSize: 64,
       },
     ],
     exampleCaptions: [
@@ -80,14 +80,16 @@ export const memeFormats = [
       {
         key: "no",
         label: "Top panel: what Drake REJECTS",
-        x: 0.50, y: 0.04, w: 0.46, h: 0.42,
-        align: "center", style: "dark-on-light", maxLines: 4,
+        x: 0.505, y: 0.02, w: 0.48, h: 0.46,
+        align: "center", style: "dark-on-light", maxLines: 5,
+        minFontSize: 48, maxFontSize: 180,
       },
       {
         key: "yes",
         label: "Bottom panel: what Drake APPROVES",
-        x: 0.50, y: 0.54, w: 0.46, h: 0.42,
-        align: "center", style: "dark-on-light", maxLines: 4,
+        x: 0.505, y: 0.52, w: 0.48, h: 0.46,
+        align: "center", style: "dark-on-light", maxLines: 5,
+        minFontSize: 48, maxFontSize: 180,
       },
     ],
     exampleCaptions: [
@@ -231,13 +233,15 @@ export const memeFormats = [
         key: "top",
         label: "Top: what's happening",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
+        placeInLetterbox: "top",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.38,
       },
       {
         key: "bottom",
         label: "Bottom: the chaos",
         x: 0.03, y: 0.75, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.38,
+        placeInLetterbox: "bottom",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.38,
       },
     ],
     exampleCaptions: [
@@ -300,14 +304,16 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the catastrophe",
-        x: 0.03, y: 0.04, w: 0.94, h: 0.30,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48, strokeRatio: 0.42,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        placeInLetterbox: "top",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.42,
       },
       {
         key: "bottom",
         label: "Bottom: usually \"This is fine.\"",
-        x: 0.03, y: 0.70, w: 0.94, h: 0.26,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 52, strokeRatio: 0.42,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.12,
+        placeInLetterbox: "bottom",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.42,
       },
     ],
     exampleCaptions: [
@@ -334,14 +340,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the predictable cause",
-        x: 0.04, y: 0.02, w: 0.92, h: 0.28,
-        align: "center", style: "caption-inverted", maxLines: 2, minFontSize: 52,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.13,
+        align: "center", style: "caption-inverted", maxLines: 2, minFontSize: 22, maxFontSize: 64,
       },
       {
         key: "bottom",
         label: "Bottom: the \"shocking\" effect",
-        x: 0.04, y: 0.72, w: 0.92, h: 0.26,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 52,
+        x: 0.04, y: 0.85, w: 0.92, h: 0.13,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 22, maxFontSize: 64,
       },
     ],
     exampleCaptions: [
@@ -368,14 +374,16 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: what they said (normal text)",
-        x: 0.03, y: 0.03, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 3,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.14,
+        placeInLetterbox: "top",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 20, maxFontSize: 64,
       },
       {
         key: "bottom",
         label: "Bottom: same thing in mOcKiNg cAsE (auto-applied)",
-        x: 0.03, y: 0.68, w: 0.94, h: 0.26,
-        align: "center", style: "mocking", maxLines: 2, minFontSize: 44,
+        x: 0.04, y: 0.84, w: 0.92, h: 0.14,
+        placeInLetterbox: "bottom",
+        align: "center", style: "mocking", maxLines: 2, minFontSize: 20, maxFontSize: 56,
       },
     ],
     exampleCaptions: [
@@ -402,14 +410,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the cheerful claim",
-        x: 0.03, y: 0.02, w: 0.94, h: 0.18,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 44,
+        x: 0.04, y: 0.015, w: 0.92, h: 0.12,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 22, maxFontSize: 56,
       },
       {
         key: "bottom",
         label: "Bottom: the painful truth",
-        x: 0.03, y: 0.80, w: 0.94, h: 0.18,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 40,
+        x: 0.04, y: 0.86, w: 0.92, h: 0.12,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 20, maxFontSize: 52,
       },
     ],
     exampleCaptions: [
@@ -470,8 +478,9 @@ export const memeFormats = [
       {
         key: "top",
         label: "Single line: who/what we're toasting",
-        x: 0.03, y: 0.02, w: 0.94, h: 0.22,
+        x: 0.03, y: 0.02, w: 0.94, h: 0.28,
         align: "center", style: "caption", maxLines: 3,
+        minFontSize: 32, maxFontSize: 72,
       },
     ],
     exampleCaptions: [
@@ -538,29 +547,29 @@ export const memeFormats = [
       {
         key: "level1",
         label: "Brain 1: the sensible take",
-        x: 0.03, y: 0.02, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.03, y: 0.02, w: 0.44, h: 0.22,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 72,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level2",
         label: "Brain 2: slightly bigger brain",
-        x: 0.03, y: 0.27, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.03, y: 0.27, w: 0.44, h: 0.22,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 72,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level3",
         label: "Brain 3: galaxy brain",
-        x: 0.03, y: 0.52, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.03, y: 0.52, w: 0.44, h: 0.22,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 72,
         maskFill: "rgba(0,0,0,0.94)",
       },
       {
         key: "level4",
         label: "Brain 4: cosmic brain",
-        x: 0.03, y: 0.77, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.03, y: 0.77, w: 0.44, h: 0.22,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 72,
         maskFill: "rgba(0,0,0,0.94)",
       },
     ],
@@ -836,9 +845,9 @@ export const memeFormats = [
     id: "crying-cat",
     name: "Crying Cat",
     file: "/gallery/crying-cat-papers.png",
-    renderFile: "/templates-meme/crying-cat-gallery-papers.png",
-    width: 1536,
-    height: 1536,
+    renderFile: "/templates-meme/crying-cat.jpg",
+    width: 1200,
+    height: 1200,
     skipWatermark: true,
     description:
       "Cat with tears in its eyes giving the camera the saddest brave face on the internet. Use it for 'I'm holding it together (I am not holding it together)' moments.",
@@ -848,8 +857,8 @@ export const memeFormats = [
       {
         key: "top",
         label: "What you say while crying inside",
-        x: 0.02, y: 0.02, w: 0.96, h: 0.20,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.04, w: 0.92, h: 0.2,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 36, maxFontSize: 64, strokeRatio: 0.42,
       },
     ],
     exampleCaptions: [
@@ -966,42 +975,55 @@ export const memeFormats = [
   },
 
   // ── 25. They're the Same Picture (Pam) ─────────────────────────────
-  // Gallery AI art is the render source (single Pam frame + papers +
-  // bottom punchline). Customize masks baked text and re-renders all
-  // three zones in classic Impact caption style — NOT the two-panel TV
-  // meme template with yellow subtitles.
+  // Classic two-panel Office still: blank papers get dark-on-light labels;
+  // bottom punchline sits on Pam's black subtitle bar.
   {
     id: "same-picture",
     name: "They're the Same Picture",
-    file: "/gallery/same-picture-group-work.png",
-    renderFile: "/templates-meme/pam-same-picture-gallery.png",
-    width: 1536,
-    height: 1536,
-    skipWatermark: true,
+    file: `${FILE_BASE}/pam-same-picture.jpg`,
+    renderFile: `${FILE_BASE}/pam-same-picture.jpg`,
+    width: 875,
+    height: 980,
     description:
       "Pam from The Office holding up two pieces of paper that are 'definitely different' but obviously identical. Use it for two classroom things that pretend to be different but absolutely are not.",
     jokeStructure:
       "LEFT = thing A. RIGHT = thing B that's officially different but is functionally identical. BOTTOM = the punchline ('They're the same picture'). Each paper line 1-5 words.",
+    // Cover the baked yellow TV subtitles so we redraw clean captions.
     zones: [
+      {
+        key: "topSubErase",
+        decorative: true,
+        maskFill: "#000000",
+        x: 0.0, y: 0.395, w: 1, h: 0.10,
+      },
       {
         key: "left",
         label: "Left paper (thing A)",
-        x: 0.15, y: 0.18, w: 0.30, h: 0.28,
-        align: "center", style: "caption", maxLines: 3,
+        x: 0.12, y: 0.05, w: 0.34, h: 0.28,
+        align: "center", style: "dark-on-light", maxLines: 4,
+        minFontSize: 32, maxFontSize: 86,
         syncSizeGroup: "papers",
       },
       {
         key: "right",
         label: "Right paper (thing B that's somehow the same)",
-        x: 0.56, y: 0.18, w: 0.30, h: 0.32,
-        align: "center", style: "caption", maxLines: 3,
+        x: 0.52, y: 0.08, w: 0.38, h: 0.30,
+        align: "center", style: "dark-on-light", maxLines: 4,
+        minFontSize: 32, maxFontSize: 86,
         syncSizeGroup: "papers",
+      },
+      {
+        key: "bottomBar",
+        decorative: true,
+        maskFill: "#000000",
+        x: 0.0, y: 0.875, w: 1, h: 0.125,
       },
       {
         key: "bottom",
         label: "Bottom line (the punchline)",
-        x: 0, y: 0.78, w: 1, h: 0.18,
+        x: 0.04, y: 0.88, w: 0.92, h: 0.10,
         align: "center", style: "caption", maxLines: 2,
+        minFontSize: 28, maxFontSize: 64,
       },
     ],
     exampleCaptions: [
@@ -1446,14 +1468,12 @@ export const memeFormats = [
         align: "center", style: "caption", maxLines: 2,
       },
       {
-        // Canonical p3 is Anakin staring silently — the AI gallery
-        // PNG correctly has NO baked text in this panel, so no mask.
-        // Leave the key/zone in place so the schema still lists it
-        // (the LLM can choose to leave it blank, or drop a soft echo).
+        // Canonical p3 is Anakin staring silently — leave blank on purpose.
         key: "p3",
         label: "Panel 3: leave blank (or repeat softly)",
         x: 0.02, y: 0.83, w: 0.46, h: 0.16,
         align: "center", style: "caption", maxLines: 2,
+        optional: true,
       },
       {
         key: "p4",
@@ -1476,9 +1496,9 @@ export const memeFormats = [
     id: "awkward-monkey",
     name: "Awkward Monkey Puppet",
     file: "/gallery/awkward-monkey-when-will-we-use.png",
-    renderFile: "/templates-meme/monkey-puppet.jpg",
+    renderFile: "/templates-meme/monkey-puppet-clean.jpg",
     width: 923,
-    height: 768,
+    height: 487,
     description:
       "Puppet monkey side-eyeing in awkward silence. For the moment a student asks a question you do not have an answer to.",
     jokeStructure:
@@ -1487,15 +1507,16 @@ export const memeFormats = [
       {
         key: "top",
         label: "The awkward question",
-        x: 0.02, y: 0.00, w: 0.96, h: 0.26,
-        align: "center", style: "caption", maxLines: 2,
-        maskTight: true,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        placeInLetterbox: "top",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 40, maxFontSize: 96,
       },
       {
         key: "bottom",
         label: "Your *looks away* reaction",
-        x: 0.02, y: 0.78, w: 0.96, h: 0.20,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.14,
+        placeInLetterbox: "bottom",
+        align: "center", style: "caption", maxLines: 2, minFontSize: 36, maxFontSize: 88,
       },
     ],
     exampleCaptions: [
@@ -1552,11 +1573,17 @@ export const memeFormats = [
       "ONE LINE describing the absurd thing you're piecing together. Usually 'Me trying to figure out [insanely complicated school thing]'. 5-12 words.",
     zones: [
       {
-        // The AI gallery PNG bakes the caption in BOTH top and bottom
-        // positions (artifact of how it was generated). Canonical
-        // imgflip conspiracy-board has only one caption — we keep it
-        // at the bottom and hide the baked top text with a decorative
-        // mask so it doesn't leak into customized memes.
+        key: "bottom",
+        label: "What you're trying to solve",
+        x: 0.03, y: 0.68, w: 0.94, h: 0.26,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 36, maxFontSize: 84,
+        maskFill: "rgba(0,0,0,0.88)",
+      },
+    ],
+    // When editing the AI gallery PNG, cover the duplicate baked top caption.
+    galleryZones: [
+      {
         key: "topMask",
         x: 0.02, y: 0.00, w: 0.96, h: 0.22,
         decorative: true,
@@ -1565,8 +1592,9 @@ export const memeFormats = [
       {
         key: "bottom",
         label: "What you're trying to solve",
-        x: 0.02, y: 0.80, w: 0.96, h: 0.19,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.02, y: 0.78, w: 0.96, h: 0.20,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 32, maxFontSize: 72,
       },
     ],
     exampleCaptions: [

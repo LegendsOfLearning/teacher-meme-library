@@ -4,12 +4,16 @@ import Link from "next/link";
 import { LOL_ABOUT_URL, lolSignupUrl } from "../lib/share-links";
 import { trackEvent, trackSignupClick } from "../lib/analytics";
 import {
+  CTA_LEARN_MORE,
+  CTA_SIGNUP_PRIMARY,
+} from "../lib/cta-copy";
+import {
   LOL_FOOTER_LINE,
   LOL_HOME_BOTTOM_BODY,
   LOL_HOME_BOTTOM_KICKER,
 } from "../lib/lol-copy";
 
-/** Integrated CTA + safety + footer for the home gallery page. */
+/** Integrated CTA + footer for the home gallery page. */
 export default function HomePageBottom() {
   return (
     <section className="home-bottom" aria-labelledby="home-bottom-heading">
@@ -27,7 +31,7 @@ export default function HomePageBottom() {
               rel="noopener noreferrer"
               onClick={() => trackSignupClick("home_bottom")}
             >
-              Explore free games for teachers
+              {CTA_SIGNUP_PRIMARY}
             </Link>
             <Link
               href={LOL_ABOUT_URL}
@@ -38,20 +42,10 @@ export default function HomePageBottom() {
                 trackEvent("lol_about_click", { location: "home_bottom" })
               }
             >
-              About Legends of Learning
+              {CTA_LEARN_MORE}
             </Link>
           </div>
         </div>
-
-        <p className="home-bottom-safety">
-          <span className="home-bottom-safety-icon" aria-hidden>
-            🛡️
-          </span>
-          <span>
-            <strong>Edit the captions</strong>: same image, your words.
-            Every save runs through a K-8 safety check before download.
-          </span>
-        </p>
 
         <footer className="home-bottom-footer">
           <span>{LOL_FOOTER_LINE}</span>

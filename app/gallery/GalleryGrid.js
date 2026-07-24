@@ -3,7 +3,8 @@
 import { Fragment, useState, useMemo, useCallback, useId } from "react";
 import Link from "next/link";
 import ShareModal from "../components/ShareModal";
-import MemeCardActions from "../components/MemeCardActions";
+import MemeCardActions, { canCustomizeItem } from "../components/MemeCardActions";
+import MemeStatsBar from "../components/MemeStatsBar";
 import {
   buildSearchSuggestions,
   itemMatchesQuery,
@@ -11,11 +12,26 @@ import {
 import { galleryImg } from "../lib/gallery";
 
 function itemHref(item) {
+  if (item?.isCommunity) {
+    return item.pagePath || `/meme/${item.id}`;
+  }
+  if (canCustomizeItem(item)) {
+    return `/customize?id=${encodeURIComponent(item.id)}`;
+  }
   if (item.pagePath) return item.pagePath;
   return `/gallery/${item.id}`;
 }
 
-export default function GalleryGrid({ items, filters }) {
+function thumbSrc(item) {
+  if (item?.isCommunity) return item.file;
+  return galleryImg(item.file);
+}
+
+export default function GalleryGrid({
+  items,
+  teacherCreatedItems = [],
+  filters,
+}) {
   const [filterId, setFilterId] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState("");
@@ -28,9 +44,10 @@ export default function GalleryGrid({ items, filters }) {
   }, []);
 
   const situationFiltered = useMemo(() => {
+    if (filterId === "teacher-created") return teacherCreatedItems;
     if (filterId === "all") return items;
-    return items.filter((g) => g.situations.includes(filterId));
-  }, [items, filterId]);
+    return items.filter((g) => g.situations?.includes(filterId));
+  }, [items, teacherCreatedItems, filterId]);
 
   const visible = useMemo(() => {
     if (!searchQuery.trim()) return situationFiltered;
@@ -40,13 +57,21 @@ export default function GalleryGrid({ items, filters }) {
   }, [situationFiltered, searchQuery]);
 
   const suggestions = useMemo(
-    () => buildSearchSuggestions(situationFiltered, searchQuery),
-    [situationFiltered, searchQuery]
+    () =>
+      filterId === "teacher-created"
+        ? []
+        : buildSearchSuggestions(situationFiltered, searchQuery),
+    [situationFiltered, searchQuery, filterId]
   );
 
   const applySuggestion = (query) => {
     setSearchQuery(query);
   };
+
+  const totalLabel =
+    filterId === "teacher-created"
+      ? teacherCreatedItems.length
+      : items.length;
 
   return (
     <>
@@ -58,7 +83,6 @@ export default function GalleryGrid({ items, filters }) {
               className={`chip ${filterId === f.id ? "active" : ""}`}
               onClick={() => setFilterId(f.id)}
             >
-              <span className="chip-emoji">{f.emoji}</span>
               <span className="chip-label">{f.label}</span>
             </button>
             {f.id === "all" ? (
@@ -117,7 +141,10 @@ export default function GalleryGrid({ items, filters }) {
       ) : null}
 
       <div className="gallery-meta">
-        Showing <strong>{visible.length}</strong> of {items.length} memes
+        Showing <strong>{visible.length}</strong> of {totalLabel} memes
+        {filterId === "teacher-created" ? (
+          <> · customized by teachers</>
+        ) : null}
         {searchQuery.trim() ? (
           <>
             {" "}
@@ -128,20 +155,29 @@ export default function GalleryGrid({ items, filters }) {
 
       {visible.length === 0 ? (
         <p className="gallery-empty">
-          No memes match that search. Try a format name like &ldquo;Drake&rdquo; or a
-          keyword like &ldquo;grading&rdquo;.
+          {filterId === "teacher-created"
+            ? "No teacher-created memes yet. Customize one and Save & Render to see it here."
+            : "No memes match that search. Try a format name like “Drake” or a keyword like “grading”."}
         </p>
       ) : (
         <div className="gallery-grid">
           {visible.map((item) => (
             <article key={item.id} className="gallery-card">
               <Link href={itemHref(item)} className="gallery-thumb">
-                <img src={galleryImg(item.file)} alt={item.captionPreview} loading="lazy" />
+                <img
+                  src={thumbSrc(item)}
+                  alt={item.captionPreview}
+                  loading="lazy"
+                />
               </Link>
               <div className="gallery-card-body">
                 <div className="gallery-format" title={item.formatName}>
                   {item.formatName}
+                  {item.isCommunity ? (
+                    <span className="gallery-format-badge">Teacher</span>
+                  ) : null}
                 </div>
+                <MemeStatsBar item={item} variant="inline" />
                 <MemeCardActions
                   item={item}
                   onShare={setShareItem}

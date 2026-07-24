@@ -229,7 +229,7 @@ export const galleryItems = [
       level1: "Give homework",
       level2: "Don't give homework",
       level3: "Assign it but don't collect it",
-      level4: "Call it a 'choice board' and let them assign it themselves",
+      level4: "Choice board — they assign it",
     },
     situations: ["lesson-planning"],
   },
@@ -1262,7 +1262,7 @@ export function getGalleryItemByFile(file) {
 
 // Bump whenever gallery PNGs are regenerated so browsers fetch the new
 // pixels instead of reusing a stale cached copy (filenames don't change).
-export const GALLERY_ASSET_VERSION = "20260721-logo-clearance";
+export const GALLERY_ASSET_VERSION = "20260724-no-logo";
 
 /** Append a cache-busting version to a gallery/static image path. */
 export function galleryImg(file) {
@@ -1274,14 +1274,15 @@ export function galleryImg(file) {
 }
 
 export const gallerySituationFilters = [
-  { id: "monday-chaos", label: "Monday Chaos", emoji: "😩" },
-  { id: "lesson-planning", label: "Lesson Planning", emoji: "📓" },
-  { id: "grading-pile", label: "Grading Pile", emoji: "📑" },
-  { id: "students-not-reading", label: "Directions, ignored", emoji: "🙃" },
-  { id: "admin-observation", label: "Admin Observation", emoji: "📋" },
-  { id: "group-work", label: "Group Work", emoji: "👥" },
-  { id: "differentiation", label: "Differentiation", emoji: "🧩" },
-  { id: "classroom-management", label: "Classroom Mgmt", emoji: "🚦" },
-  { id: "last-period-energy", label: "Last Period", emoji: "⏰" },
-  { id: "all", label: "All", emoji: "✨" },
+  { id: "teacher-created", label: "Teacher created" },
+  { id: "monday-chaos", label: "Monday Chaos" },
+  { id: "lesson-planning", label: "Lesson Planning" },
+  { id: "grading-pile", label: "Grading Pile" },
+  { id: "students-not-reading", label: "Directions, ignored" },
+  { id: "admin-observation", label: "Admin Observation" },
+  { id: "group-work", label: "Group Work" },
+  { id: "differentiation", label: "Differentiation" },
+  { id: "classroom-management", label: "Classroom Mgmt" },
+  { id: "last-period-energy", label: "Last Period" },
+  { id: "all", label: "All" },
 ];

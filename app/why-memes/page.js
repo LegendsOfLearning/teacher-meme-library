@@ -93,7 +93,7 @@ export default function WhyMemesPage() {
           </p>
           <div className="why-cta-actions">
             <TrackedSignupLink location="why_memes_cta" className="cta-button" asButton>
-              Sign up free
+              Sign up for free
             </TrackedSignupLink>
             <Link href="/" className="why-cta-secondary">
               Browse memes
