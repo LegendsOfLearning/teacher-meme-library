@@ -1,4 +1,16 @@
-import { incrementGalleryEngagement } from "../../lib/engagement";
+import { incrementGalleryEngagement, getGalleryEngagementStats } from "../../lib/engagement";
+
+export async function GET() {
+  try {
+    const stats = await getGalleryEngagementStats();
+    return Response.json({ ok: true, stats });
+  } catch (e) {
+    return Response.json(
+      { ok: false, error: e.message || "Failed", stats: {} },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request) {
   let body;
@@ -16,6 +28,7 @@ export async function POST(request) {
     "share",
     "customize",
     "upvote",
+    "unupvote",
   ]);
   if (!memeId || !allowed.has(event)) {
     return Response.json({ ok: false, error: "Bad request" }, { status: 400 });
@@ -38,7 +51,11 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    if (result.error === "already_upvoted" || result.error === "rate_limited") {
+    if (
+      result.error === "already_upvoted" ||
+      result.error === "not_upvoted" ||
+      result.error === "rate_limited"
+    ) {
       return Response.json(
         { ok: false, error: result.error, ...result.stats },
         { status: 409 }

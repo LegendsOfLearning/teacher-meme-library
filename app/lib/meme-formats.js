@@ -40,20 +40,31 @@ export const memeFormats = [
       {
         key: "newGirl",
         label: "Other woman (the distraction)",
-        x: 0.01, y: 0.22, w: 0.36, h: 0.28,
-        align: "center", style: "caption", maxLines: 4, minFontSize: 28, maxFontSize: 64,
+        // Wider torso band so multi-word distractions stay chunky.
+        x: 0.02, y: 0.42, w: 0.36, h: 0.38,
+        align: "center", style: "caption", maxLines: 4,
+        minFontSize: 38, maxFontSize: 92,
+        strokeRatio: 0.28,
+        syncSizeGroup: "labels",
       },
       {
         key: "boyfriend",
         label: "Boyfriend (\"me\")",
-        x: 0.34, y: 0.48, w: 0.28, h: 0.18,
-        align: "center", style: "caption", maxLines: 3, minFontSize: 28, maxFontSize: 64,
+        // Match sibling label size so "Me" is not giant vs long labels.
+        x: 0.34, y: 0.44, w: 0.30, h: 0.34,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 38, maxFontSize: 92,
+        strokeRatio: 0.28,
+        syncSizeGroup: "labels",
       },
       {
         key: "girlfriend",
         label: "Girlfriend (what I should be focused on)",
-        x: 0.58, y: 0.32, w: 0.40, h: 0.28,
-        align: "center", style: "caption", maxLines: 4, minFontSize: 28, maxFontSize: 64,
+        x: 0.60, y: 0.42, w: 0.37, h: 0.38,
+        align: "center", style: "caption", maxLines: 4,
+        minFontSize: 38, maxFontSize: 92,
+        strokeRatio: 0.28,
+        syncSizeGroup: "labels",
       },
     ],
     exampleCaptions: [
@@ -80,16 +91,18 @@ export const memeFormats = [
       {
         key: "no",
         label: "Top panel: what Drake REJECTS",
-        x: 0.505, y: 0.02, w: 0.48, h: 0.46,
+        // Inset from panel edges so fillPanel type never clips the white box.
+        x: 0.52, y: 0.05, w: 0.44, h: 0.40,
         align: "center", style: "dark-on-light", maxLines: 5,
-        minFontSize: 48, maxFontSize: 180,
+        minFontSize: 36, maxFontSize: 160,
       },
       {
         key: "yes",
         label: "Bottom panel: what Drake APPROVES",
-        x: 0.505, y: 0.52, w: 0.48, h: 0.46,
+        // Leave clearance above the footer band after square pad.
+        x: 0.52, y: 0.55, w: 0.44, h: 0.36,
         align: "center", style: "dark-on-light", maxLines: 5,
-        minFontSize: 48, maxFontSize: 180,
+        minFontSize: 36, maxFontSize: 160,
       },
     ],
     exampleCaptions: [
@@ -116,29 +129,19 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: usually \"One does not simply\"",
-        x: 0.03, y: 0.22, w: 0.94, h: 0.12,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
+        // Classic imgflip: on-photo, centered, clear side gutters.
+        x: 0.06, y: 0.04, w: 0.88, h: 0.16,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 40, maxFontSize: 78, strokeRatio: 0.34,
+        fillPanel: false,
       },
       {
         key: "bottom",
         label: "Bottom: the impossible teaching task",
-        x: 0.03, y: 0.66, w: 0.94, h: 0.18,
-        align: "center", style: "caption", maxLines: 3, strokeRatio: 0.42,
-      },
-    ],
-    galleryTemplate: `${FILE_BASE}/one-does-not-simply-gallery.png`,
-    galleryZones: [
-      {
-        key: "top",
-        label: "Top: usually \"One does not simply\"",
-        x: 0.03, y: 0.26, w: 0.94, h: 0.085,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
-      },
-      {
-        key: "bottom",
-        label: "Bottom: the impossible teaching task",
-        x: 0.03, y: 0.68, w: 0.94, h: 0.13,
-        align: "center", style: "caption", maxLines: 3, strokeRatio: 0.42,
+        x: 0.06, y: 0.72, w: 0.88, h: 0.20,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 36, maxFontSize: 72, strokeRatio: 0.34,
+        fillPanel: false,
       },
     ],
     exampleCaptions: [
@@ -164,14 +167,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the setup",
-        x: 0.03, y: 0.02, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
       {
         key: "bottom",
         label: "Bottom: the win",
-        x: 0.03, y: 0.78, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.42,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.14,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
     ],
     exampleCaptions: [
@@ -198,14 +201,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top",
-        x: 0.03, y: 0.03, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
       {
         key: "bottom",
         label: "Bottom",
-        x: 0.03, y: 0.75, w: 0.94, h: 0.22,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
     ],
     exampleCaptions: [
@@ -233,14 +236,12 @@ export const memeFormats = [
         key: "top",
         label: "Top: what's happening",
         x: 0.03, y: 0.03, w: 0.94, h: 0.22,
-        placeInLetterbox: "top",
         align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.38,
       },
       {
         key: "bottom",
         label: "Bottom: the chaos",
         x: 0.03, y: 0.75, w: 0.94, h: 0.22,
-        placeInLetterbox: "bottom",
         align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.38,
       },
     ],
@@ -268,16 +269,16 @@ export const memeFormats = [
       {
         key: "woman",
         label: "Yelling woman (left): the accusation",
-        x: 0.02, y: 0.68, w: 0.46, h: 0.28,
-        align: "center", style: "caption", maxLines: 2, maxFontSize: 88,
-        minFontSize: 44,
+        x: 0.02, y: 0.70, w: 0.46, h: 0.28,
+        align: "center", style: "caption", maxLines: 3, maxFontSize: 160,
+        minFontSize: 40, strokeRatio: 0.3,
       },
       {
         key: "cat",
         label: "Confused cat (right): the defense",
-        x: 0.52, y: 0.68, w: 0.46, h: 0.28,
-        align: "center", style: "caption", maxLines: 2, maxFontSize: 88,
-        minFontSize: 44,
+        x: 0.52, y: 0.70, w: 0.46, h: 0.28,
+        align: "center", style: "caption", maxLines: 3, maxFontSize: 160,
+        minFontSize: 40, strokeRatio: 0.3,
       },
     ],
     exampleCaptions: [
@@ -296,6 +297,8 @@ export const memeFormats = [
     file: `${FILE_BASE}/this-is-fine.jpg`,
     width: 580,
     height: 282,
+    // Wide comic — never cover-crop (cuts the speech bubble).
+    squareFit: "contain",
     description:
       "Cartoon dog in a burning room calmly drinking coffee. Use it for low-key catastrophic teacher moments.",
     jokeStructure:
@@ -304,16 +307,20 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the catastrophe",
-        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
-        placeInLetterbox: "top",
-        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.42,
+        // Sit inside the top pad / photo — avoid clipping large letters at the frame edge.
+        x: 0.05, y: 0.06, w: 0.90, h: 0.18,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 36, maxFontSize: 78, strokeRatio: 0.36,
+        fillPanel: false,
       },
       {
         key: "bottom",
         label: "Bottom: usually \"This is fine.\"",
-        x: 0.04, y: 0.82, w: 0.92, h: 0.12,
-        placeInLetterbox: "bottom",
-        align: "center", style: "caption", maxLines: 2, minFontSize: 32, maxFontSize: 72, strokeRatio: 0.42,
+        // Keep clear of speech bubble area in the right panel.
+        x: 0.05, y: 0.78, w: 0.90, h: 0.14,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 34, maxFontSize: 72, strokeRatio: 0.36,
+        fillPanel: false,
       },
     ],
     exampleCaptions: [
@@ -340,14 +347,16 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the predictable cause",
-        x: 0.04, y: 0.02, w: 0.92, h: 0.13,
-        align: "center", style: "caption-inverted", maxLines: 2, minFontSize: 22, maxFontSize: 64,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.18,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 44, maxFontSize: 130, strokeRatio: 0.34,
       },
       {
         key: "bottom",
         label: "Bottom: the \"shocking\" effect",
-        x: 0.04, y: 0.85, w: 0.92, h: 0.13,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 22, maxFontSize: 64,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 44, maxFontSize: 130, strokeRatio: 0.34,
       },
     ],
     exampleCaptions: [
@@ -375,15 +384,13 @@ export const memeFormats = [
         key: "top",
         label: "Top: what they said (normal text)",
         x: 0.04, y: 0.02, w: 0.92, h: 0.14,
-        placeInLetterbox: "top",
-        align: "center", style: "caption", maxLines: 2, minFontSize: 20, maxFontSize: 64,
+        align: "center", style: "caption", maxLines: 2, minFontSize: 28, maxFontSize: 84,
       },
       {
         key: "bottom",
         label: "Bottom: same thing in mOcKiNg cAsE (auto-applied)",
         x: 0.04, y: 0.84, w: 0.92, h: 0.14,
-        placeInLetterbox: "bottom",
-        align: "center", style: "mocking", maxLines: 2, minFontSize: 20, maxFontSize: 56,
+        align: "center", style: "mocking", maxLines: 2, minFontSize: 26, maxFontSize: 72,
       },
     ],
     exampleCaptions: [
@@ -410,14 +417,19 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the cheerful claim",
-        x: 0.04, y: 0.015, w: 0.92, h: 0.12,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 22, maxFontSize: 56,
+        // Upper band above eyes — room for Impact stroke.
+        x: 0.06, y: 0.03, w: 0.88, h: 0.14,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 44, maxFontSize: 88, strokeRatio: 0.32,
+        fillPanel: false,
       },
       {
         key: "bottom",
         label: "Bottom: the painful truth",
-        x: 0.04, y: 0.86, w: 0.92, h: 0.12,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 20, maxFontSize: 52,
+        x: 0.06, y: 0.80, w: 0.88, h: 0.14,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 42, maxFontSize: 84, strokeRatio: 0.32,
+        fillPanel: false,
       },
     ],
     exampleCaptions: [
@@ -444,14 +456,16 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top: the suspicious announcement",
-        x: 0.03, y: 0.02, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.18,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 44, maxFontSize: 130, strokeRatio: 0.34,
       },
       {
         key: "bottom",
         label: "Bottom: optional reaction",
-        x: 0.03, y: 0.78, w: 0.94, h: 0.20,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 48,
+        x: 0.04, y: 0.80, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 44, maxFontSize: 130, strokeRatio: 0.34,
       },
     ],
     exampleCaptions: [
@@ -507,20 +521,24 @@ export const memeFormats = [
       {
         key: "button1",
         label: "Left red button",
-        x: 0.03, y: 0.03, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 40,
+        // Labels sit in the white placards above the red buttons.
+        x: 0.05, y: 0.06, w: 0.38, h: 0.18,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 28, maxFontSize: 84, strokeRatio: 0.3,
       },
       {
         key: "button2",
         label: "Right red button",
-        x: 0.51, y: 0.03, w: 0.42, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 40,
+        x: 0.50, y: 0.06, w: 0.42, h: 0.18,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 28, maxFontSize: 84, strokeRatio: 0.3,
       },
       {
         key: "person",
         label: "Sweating person (the teacher)",
-        x: 0.05, y: 0.90, w: 0.78, h: 0.08,
-        align: "center", style: "caption", maxLines: 1, minFontSize: 48,
+        x: 0.06, y: 0.82, w: 0.88, h: 0.14,
+        align: "center", style: "caption", maxLines: 1,
+        minFontSize: 44, maxFontSize: 130, strokeRatio: 0.3,
       },
     ],
     exampleCaptions: [
@@ -621,12 +639,13 @@ export const memeFormats = [
       {
         key: "sign",
         label: "What's on the cardboard sign",
-        // The sign sits in the bottom-right of the image. We aim for
-        // the top half of the cardboard so it lands above the
-        // "Change my mind." text already printed there.
-        x: 0.52, y: 0.58, w: 0.44, h: 0.28,
-        align: "center", style: "sign", maxLines: 2, maxFontSize: 72,
-        minFontSize: 40,
+        // Pure white board (below table lip, above baked CMM rule).
+        // Slight left bias — the sign is trapezoid / perspective, not a rect.
+        // Pure white board (below table lip, above baked CMM rule).
+        // Slight left bias — the sign is trapezoid / perspective, not a rect.
+        x: 0.45, y: 0.60, w: 0.42, h: 0.25,
+        align: "center", style: "sign", maxLines: 4,
+        minFontSize: 28, maxFontSize: 80,
       },
     ],
     exampleCaptions: [
@@ -857,8 +876,8 @@ export const memeFormats = [
       {
         key: "top",
         label: "What you say while crying inside",
-        x: 0.04, y: 0.04, w: 0.92, h: 0.2,
-        align: "center", style: "caption", maxLines: 2, minFontSize: 36, maxFontSize: 64, strokeRatio: 0.42,
+        x: 0.03, y: 0.04, w: 0.94, h: 0.26,
+        align: "center", style: "caption", maxLines: 3, minFontSize: 48, maxFontSize: 160, strokeRatio: 0.3,
       },
     ],
     exampleCaptions: [
@@ -890,9 +909,9 @@ export const memeFormats = [
       {
         key: "top",
         label: "The thing you're trying to calculate",
-        x: 0.02, y: 0.01, w: 0.96, h: 0.22,
-        align: "center", style: "caption", maxLines: 2, maxFontSize: 72,
-        minFontSize: 36,
+        x: 0.03, y: 0.02, w: 0.94, h: 0.22,
+        align: "center", style: "caption", maxLines: 3,
+        maxFontSize: 130, minFontSize: 40, strokeRatio: 0.34,
       },
     ],
     exampleCaptions: [
@@ -943,19 +962,19 @@ export const memeFormats = [
     ],
   },
 
-  // ── 24. Sad Pablo Escobar ──────────────────────────────────────────
-  // The 4-panel "Pablo waiting" template. One caption at top names
-  // what's being waited on; the visual repetition is the joke.
+  // ── 24. Sad Pablo Escobar (removed from public library) ─────────────
+  // Kept for old deep-links only — too controversial for a K-12 tool.
   {
     id: "sad-pablo",
     name: "Sad Pablo Waiting",
     file: `${FILE_BASE}/sad-pablo.jpg`,
     width: 720,
     height: 709,
+    hiddenFromPicker: true,
     description:
-      "Pablo Escobar staring blankly into the distance, waiting forever. Use it for any teacher waiting situation: parent emails, IT tickets, the bell, snow days.",
+      "Removed from the public gallery. Kept so legacy customize links fail closed.",
     jokeStructure:
-      "TOP = a single line starting with 'Waiting for…' that names a teacher thing that takes FOREVER. The image's repeated panels of Pablo waiting do all the comedic work — keep the line short and dry. E.g. 'Waiting for IT to respond to my ticket'.",
+      "TOP = a single line starting with 'Waiting for…'.",
     zones: [
       {
         key: "top",
@@ -966,11 +985,6 @@ export const memeFormats = [
     ],
     exampleCaptions: [
       { top: "Waiting for IT to respond to my ticket" },
-      { top: "Waiting for that one kid to turn in any work" },
-      { top: "Waiting for parents to reply to a single email" },
-      { top: "Waiting for the laminator to warm up" },
-      { top: "Waiting for admin to restock the staff room coffee" },
-      { top: "Waiting for the copier to come back from the dead" },
     ],
   },
 
@@ -1088,14 +1102,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Top line (me waiting for...)",
-        x: 0.02, y: 0.01, w: 0.96, h: 0.18,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
       {
         key: "bottom",
         label: "Bottom line (the thing you're waiting on)",
-        x: 0.02, y: 0.82, w: 0.96, h: 0.17,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.14,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
     ],
     exampleCaptions: [
@@ -1327,10 +1341,9 @@ export const memeFormats = [
   {
     id: "first-world-problems",
     name: "First World Problems",
-    file: "/gallery/first-world-copier.png",
-    width: 1536,
-    height: 1024,
-    skipWatermark: true,
+    file: `${FILE_BASE}/first-world-problems.jpg`,
+    width: 552,
+    height: 367,
     description:
       "The crying woman wiping her eye. For the tiny, oddly specific teacher problems that should be no big deal but somehow are.",
     jokeStructure:
@@ -1338,21 +1351,17 @@ export const memeFormats = [
     zones: [
       {
         key: "top",
-        // Full-bleed mask — the original AI caption stroke ran almost
-        // edge-to-edge, so a 0.02 inset left visible letter fragments
-        // peeking out to the right of the masked band at thumbnail
-        // scale (saw "WORK" tails leaking past the band).
         label: "Top line (the lucky thing)",
-        x: 0, y: 0, w: 1, h: 0.22,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
         align: "center", style: "caption", maxLines: 2,
-        maskTight: true,
+        minFontSize: 40, maxFontSize: 110, strokeRatio: 0.36,
       },
       {
         key: "bottom",
         label: "Bottom line (the consequence)",
-        x: 0, y: 0.78, w: 1, h: 0.22,
+        x: 0.04, y: 0.80, w: 0.92, h: 0.16,
         align: "center", style: "caption", maxLines: 2,
-        maskTight: true,
+        minFontSize: 40, maxFontSize: 110, strokeRatio: 0.36,
       },
     ],
     exampleCaptions: [
@@ -1365,10 +1374,12 @@ export const memeFormats = [
   {
     id: "they-dont-know",
     name: "They Don't Know",
-    file: "/gallery/they-dont-know-tired.png",
-    renderFile: "/templates-meme/they-dont-know.png",
+    file: `${FILE_BASE}/they-dont-know.png`,
+    renderFile: `${FILE_BASE}/they-dont-know.png`,
     width: 671,
     height: 673,
+    // Removed from the public gallery — keep format for old customize links only.
+    hiddenFromPicker: true,
     description:
       "The sad guy at the party with a thought bubble. For the thing you wish the room understood about you.",
     jokeStructure:
@@ -1441,14 +1452,10 @@ export const memeFormats = [
   {
     id: "anakin-padme",
     name: "Anakin & Padmé",
-    file: "/gallery/anakin-padme-reinvent.png",
-    renderFile: "/templates-meme/anakin-padme.png",
+    file: `${FILE_BASE}/anakin-padme.png`,
+    renderFile: `${FILE_BASE}/anakin-padme.png`,
     width: 768,
     height: 768,
-    // The auto-corner picker scores by text-zone overlap, but the
-    // four-panel layout has zero text in the top-right corner, so
-    // the algorithm happily plops the logo on top of Padmé's face.
-    // Force bottom-right where the picnic field bg is unimportant.
     watermarkCorner: "br",
     description:
       "Four-panel Anakin and Padmé picnic conversation. The optimistic statement → the silent realization → the reckoning.",
@@ -1458,28 +1465,36 @@ export const memeFormats = [
       {
         key: "p1",
         label: "Panel 1: Anakin's optimistic line",
-        x: 0.00, y: 0.30, w: 0.50, h: 0.24,
-        align: "center", style: "caption", maxLines: 2,
+        // Top strip of each panel — chunky enough to read, faces still clear.
+        x: 0.02, y: 0.01, w: 0.46, h: 0.20,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 30, maxFontSize: 68,
+        syncSizeGroup: "anakin-row",
       },
       {
         key: "p2",
         label: "Panel 2: Padmé's hopeful follow-up",
-        x: 0.50, y: 0.30, w: 0.50, h: 0.24,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.52, y: 0.01, w: 0.46, h: 0.20,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 30, maxFontSize: 68,
+        syncSizeGroup: "anakin-row",
       },
       {
         // Canonical p3 is Anakin staring silently — leave blank on purpose.
         key: "p3",
         label: "Panel 3: leave blank (or repeat softly)",
-        x: 0.02, y: 0.83, w: 0.46, h: 0.16,
+        x: 0.02, y: 0.51, w: 0.46, h: 0.18,
         align: "center", style: "caption", maxLines: 2,
+        minFontSize: 30, maxFontSize: 68,
         optional: true,
       },
       {
         key: "p4",
         label: "Panel 4: Padmé panicked",
-        x: 0.50, y: 0.78, w: 0.50, h: 0.22,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.52, y: 0.51, w: 0.46, h: 0.20,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 30, maxFontSize: 68,
+        syncSizeGroup: "anakin-row",
       },
     ],
     exampleCaptions: [
@@ -1508,14 +1523,12 @@ export const memeFormats = [
         key: "top",
         label: "The awkward question",
         x: 0.04, y: 0.02, w: 0.92, h: 0.16,
-        placeInLetterbox: "top",
         align: "center", style: "caption", maxLines: 2, minFontSize: 40, maxFontSize: 96,
       },
       {
         key: "bottom",
         label: "Your *looks away* reaction",
         x: 0.04, y: 0.82, w: 0.92, h: 0.14,
-        placeInLetterbox: "bottom",
         align: "center", style: "caption", maxLines: 2, minFontSize: 36, maxFontSize: 88,
       },
     ],
@@ -1542,14 +1555,14 @@ export const memeFormats = [
       {
         key: "top",
         label: "Me watching ___",
-        x: 0.02, y: 0.01, w: 0.96, h: 0.18,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.02, w: 0.92, h: 0.16,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
       {
         key: "bottom",
         label: "...the thing they still have",
-        x: 0.02, y: 0.82, w: 0.96, h: 0.17,
-        align: "center", style: "caption", maxLines: 2,
+        x: 0.04, y: 0.82, w: 0.92, h: 0.14,
+        align: "center", style: "caption", maxLines: 2, strokeRatio: 0.36,
       },
     ],
     exampleCaptions: [
@@ -1607,10 +1620,13 @@ export const memeFormats = [
   {
     id: "hard-to-swallow-pills",
     name: "Hard to Swallow Pills",
+    // Display card is the curated gallery PNG; edits should stay on that
+    // layout until a true caption-free blank is sourced.
     file: "/gallery/hard-to-swallow-homework.png",
     width: 1536,
-    height: 1024,
+    height: 1536,
     skipWatermark: true,
+    squareFit: "contain",
     description:
       "Bottle labeled 'Pills that are hard to swallow'. For the uncomfortable teaching truths your colleagues mostly tiptoe around.",
     jokeStructure:
@@ -1619,29 +1635,101 @@ export const memeFormats = [
       {
         key: "top",
         label: "Pills that are hard to swallow:",
-        x: 0, y: 0, w: 1, h: 0.20,
+        x: 0.05, y: 0.04, w: 0.90, h: 0.14,
         align: "center", style: "caption", maxLines: 2,
-        maskTight: true,
+        minFontSize: 34, maxFontSize: 72, strokeRatio: 0.32,
+        fillPanel: false,
       },
       {
         key: "bottom",
-        // The AI bake puts 3 lines of caption in the lower third
-        // (roughly y:0.66 → y:0.99). We MUST cover all of that or
-        // the upper line leaks above our new caption (saw this
-        // happen with h:0.24 — "CHANGING MY HOMEWORK" floated free
-        // above the band). h:0.36 covers the full baked text region
-        // with a small safety margin, while still feeling tighter
-        // than the original h:0.41.
         label: "The uncomfortable truth",
-        x: 0, y: 0.64, w: 1, h: 0.36,
+        x: 0.05, y: 0.72, w: 0.90, h: 0.18,
         align: "center", style: "caption", maxLines: 3,
-        maskTight: true,
+        minFontSize: 30, maxFontSize: 62, strokeRatio: 0.32,
+        fillPanel: false,
       },
     ],
     exampleCaptions: [
       {
         top: "Pills that are hard to swallow:",
         bottom: "Changing my homework policy hasn't fixed anything",
+      },
+    ],
+  },
+
+  {
+    id: "oprah-you-get",
+    name: "Oprah You Get",
+    file: `${FILE_BASE}/oprah-you-get.jpg`,
+    width: 620,
+    height: 464,
+    squareFit: "contain",
+    description:
+      "Oprah giving everyone a car energy. For the rare teaching resource that actually delivers.",
+    jokeStructure:
+      "HEADER = the situation (Teachers when…). Then short 'YOU GET …!' callouts. Keep each callout punchy, 3-7 words.",
+    zones: [
+      {
+        key: "headerBar",
+        decorative: true,
+        maskFill: "#ffffff",
+        x: 0.0, y: 0.0, w: 1, h: 0.16,
+      },
+      {
+        key: "header",
+        label: "Top header",
+        x: 0.03, y: 0.01, w: 0.94, h: 0.14,
+        align: "center", style: "dark-on-light", maxLines: 2,
+        minFontSize: 28, maxFontSize: 64,
+        fillPanel: true,
+      },
+      {
+        key: "leftTop",
+        label: "Left callout",
+        x: 0.03, y: 0.30, w: 0.40, h: 0.18,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 26, maxFontSize: 56, strokeRatio: 0.32,
+        fillPanel: false,
+      },
+      {
+        key: "rightTop",
+        label: "Right callout",
+        x: 0.57, y: 0.30, w: 0.40, h: 0.18,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 26, maxFontSize: 56, strokeRatio: 0.32,
+        fillPanel: false,
+      },
+      {
+        key: "leftBottom",
+        label: "Lower-left callout",
+        x: 0.03, y: 0.62, w: 0.40, h: 0.18,
+        align: "center", style: "caption", maxLines: 3,
+        minFontSize: 26, maxFontSize: 56, strokeRatio: 0.32,
+        fillPanel: false,
+      },
+      {
+        key: "everyone",
+        label: "Bottom punchline",
+        x: 0.18, y: 0.80, w: 0.64, h: 0.14,
+        align: "center", style: "caption", maxLines: 2,
+        minFontSize: 28, maxFontSize: 60, strokeRatio: 0.32,
+        fillPanel: false,
+      },
+    ],
+    exampleCaptions: [
+      {
+        header: "Teachers when they find a resource that actually works",
+        leftTop: "You get engaged students!",
+        rightTop: "You get less prep time!",
+        leftBottom: "You get real results!",
+        everyone: "Everyone wins!",
+      },
+      {
+        header: "Teachers when admin cancels after-school duty",
+        leftTop: "You get your evening!",
+        rightTop: "You get a nap!",
+        leftBottom: "You get a life!",
+        everyone: "Everyone wins!",
       },
     ],
   },
@@ -1726,24 +1814,27 @@ export function getFormatById(id) {
 // Maps a teacher situation to formats that historically work well for it.
 // Used by the "surprise me" / Step 1 of the agentic workflow.
 export const SITUATION_TO_FORMATS = {
-  "monday-chaos": ["this-is-fine", "grumpy-cat", "hide-the-pain-harold", "pepe", "crying-cat", "sad-pablo"],
-  "lesson-planning": ["distracted-boyfriend", "two-buttons", "expanding-brain", "drake", "rickroll", "math-lady"],
-  "grading-pile": ["this-is-fine", "doge", "pepe", "hide-the-pain-harold", "success-kid", "crying-cat", "sad-pablo"],
+  "monday-chaos": ["this-is-fine", "grumpy-cat", "hide-the-pain-harold", "pepe", "crying-cat", "waiting-skeleton"],
+  "lesson-planning": ["distracted-boyfriend", "two-buttons", "expanding-brain", "drake", "rickroll", "math-lady", "oprah-you-get"],
+  "grading-pile": ["this-is-fine", "doge", "pepe", "hide-the-pain-harold", "success-kid", "crying-cat", "waiting-skeleton"],
   "students-not-reading": ["drake", "woman-yelling-at-cat", "mocking-spongebob", "surprised-pikachu", "ancient-aliens", "spider-pointing"],
   "admin-observation": ["disaster-girl", "hide-the-pain-harold", "side-eye-chloe", "this-is-fine", "two-buttons", "same-picture"],
   "group-work": ["change-my-mind", "is-this-a-pigeon", "drake", "expanding-brain", "two-buttons", "same-picture", "spider-pointing"],
   "testing-day": ["surprised-pikachu", "drake", "this-is-fine", "grumpy-cat", "mocking-spongebob", "math-lady"],
   "differentiation": ["expanding-brain", "two-buttons", "mocking-spongebob", "is-this-a-pigeon", "change-my-mind", "math-lady"],
   "classroom-management": ["disaster-girl", "grumpy-cat", "this-is-fine", "two-buttons", "hide-the-pain-harold", "spider-pointing"],
-  "last-period-energy": ["disaster-girl", "this-is-fine", "doge", "pepe", "crying-cat", "sad-pablo"],
+  "last-period-energy": ["disaster-girl", "this-is-fine", "doge", "pepe", "crying-cat", "waiting-skeleton"],
 };
 
 export function pickFormatForSituation(situationId, excludeIds = []) {
   const candidates = (SITUATION_TO_FORMATS[situationId] || memeFormats.map((f) => f.id))
     .filter((id) => !excludeIds.includes(id))
     .map(getFormatById)
-    .filter(Boolean);
-  const pool = candidates.length > 0 ? candidates : memeFormats.filter((f) => !excludeIds.includes(f.id));
+    .filter((f) => f && !f.hiddenFromPicker);
+  const pool =
+    candidates.length > 0
+      ? candidates
+      : memeFormats.filter((f) => !excludeIds.includes(f.id) && !f.hiddenFromPicker);
   return pool[Math.floor(Math.random() * pool.length)] || memeFormats[0];
 }
 

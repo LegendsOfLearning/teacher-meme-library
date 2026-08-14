@@ -43,7 +43,8 @@ For a production deployment of this app you should:
 | `crying-cat-gallery-copier.png` | Blank gallery-layout Crying Cat (copier variant) |
 | `math-lady.jpg` | Math Lady / Confused Lady |
 | `spider-pointing.jpg` | Spider-Man Pointing (3-Spideys variant) |
-| `sad-pablo.jpg` | Sad Pablo Escobar (waiting) |
+| `first-world-problems.jpg` | First World Problems |
+| `oprah-you-get.jpg` | Oprah You Get A (imgflip id `28251713`) |
 | `pam-same-picture.jpg` | They're the Same Picture (Pam, The Office) |
 | `pam-same-picture-gallery.png` | Blank gallery-layout Pam template (text erased for customize) |
 | `disaster-girl-gallery-blank.png` | Blank gallery-layout Disaster Girl (text erased for customize) |

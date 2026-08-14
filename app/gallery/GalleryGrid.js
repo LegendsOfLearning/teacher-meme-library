@@ -9,7 +9,7 @@ import {
   buildSearchSuggestions,
   itemMatchesQuery,
 } from "../lib/gallery-search";
-import { galleryImg } from "../lib/gallery";
+import { galleryImg, groupGalleryItemsByTemplate } from "../lib/gallery";
 
 function itemHref(item) {
   if (item?.isCommunity) {
@@ -27,6 +27,78 @@ function thumbSrc(item) {
   return galleryImg(item.file);
 }
 
+function TemplateCard({
+  group,
+  expanded,
+  onToggle,
+  onShare,
+  onToast,
+}) {
+  const cover = group.cover;
+  const variantCount = group.variants.length;
+  const showVariants = expanded && variantCount > 1;
+
+  return (
+    <article className={`gallery-card gallery-card--template${expanded ? " is-expanded" : ""}`}>
+      <Link href={itemHref(cover)} className="gallery-thumb">
+        <img
+          src={thumbSrc(cover)}
+          alt={cover.captionPreview || group.formatName}
+          loading="lazy"
+        />
+      </Link>
+      <div className="gallery-card-body">
+        <div className="gallery-format" title={group.formatName}>
+          {group.formatName}
+          {cover.isCommunity ? (
+            <span className="gallery-format-badge">Teacher</span>
+          ) : null}
+        </div>
+        <p className="gallery-template-meta">
+          {variantCount === 1
+            ? "1 caption"
+            : `${variantCount} captions`}
+        </p>
+        <MemeStatsBar item={cover} variant="inline" />
+        <MemeCardActions
+          item={cover}
+          onShare={onShare}
+          onToast={onToast}
+        />
+        {variantCount > 1 ? (
+          <button
+            type="button"
+            className="gallery-see-variants"
+            aria-expanded={expanded}
+            onClick={onToggle}
+          >
+            {expanded ? "Hide captions" : "See all captions"}
+          </button>
+        ) : null}
+      </div>
+
+      {showVariants ? (
+        <div className="gallery-variant-strip" aria-label={`${group.formatName} captions`}>
+          {group.variants.map((item) => (
+            <Link
+              key={item.id}
+              href={itemHref(item)}
+              className="gallery-variant-thumb"
+              title={item.captionPreview}
+            >
+              <img
+                src={thumbSrc(item)}
+                alt={item.captionPreview || group.formatName}
+                loading="lazy"
+              />
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 export default function GalleryGrid({
   items,
   teacherCreatedItems = [],
@@ -36,6 +108,7 @@ export default function GalleryGrid({
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState("");
   const [shareItem, setShareItem] = useState(null);
+  const [expandedKey, setExpandedKey] = useState(null);
   const searchId = useId();
 
   const showToast = useCallback((msg) => {
@@ -56,6 +129,13 @@ export default function GalleryGrid({
     );
   }, [situationFiltered, searchQuery]);
 
+  // Search keeps flat results so caption text remains findable.
+  const searching = Boolean(searchQuery.trim());
+  const templateGroups = useMemo(
+    () => (searching ? null : groupGalleryItemsByTemplate(visible)),
+    [visible, searching]
+  );
+
   const suggestions = useMemo(
     () =>
       filterId === "teacher-created"
@@ -72,6 +152,15 @@ export default function GalleryGrid({
     filterId === "teacher-created"
       ? teacherCreatedItems.length
       : items.length;
+
+  const shownCount = searching
+    ? visible.length
+    : templateGroups?.length ?? 0;
+  const totalDisplay = searching
+    ? totalLabel
+    : groupGalleryItemsByTemplate(
+        filterId === "teacher-created" ? teacherCreatedItems : items
+      ).length;
 
   return (
     <>
@@ -141,7 +230,8 @@ export default function GalleryGrid({
       ) : null}
 
       <div className="gallery-meta">
-        Showing <strong>{visible.length}</strong> of {totalLabel} memes
+        Showing <strong>{shownCount}</strong> of {totalDisplay}{" "}
+        {searching ? "memes" : "templates"}
         {filterId === "teacher-created" ? (
           <> · customized by teachers</>
         ) : null}
@@ -153,13 +243,13 @@ export default function GalleryGrid({
         ) : null}
       </div>
 
-      {visible.length === 0 ? (
+      {shownCount === 0 ? (
         <p className="gallery-empty">
           {filterId === "teacher-created"
             ? "No teacher-created memes yet. Customize one and Save & Render to see it here."
             : "No memes match that search. Try a format name like “Drake” or a keyword like “grading”."}
         </p>
-      ) : (
+      ) : searching ? (
         <div className="gallery-grid">
           {visible.map((item) => (
             <article key={item.id} className="gallery-card">
@@ -185,6 +275,23 @@ export default function GalleryGrid({
                 />
               </div>
             </article>
+          ))}
+        </div>
+      ) : (
+        <div className="gallery-grid">
+          {templateGroups.map((group) => (
+            <TemplateCard
+              key={group.key}
+              group={group}
+              expanded={expandedKey === group.key}
+              onToggle={() =>
+                setExpandedKey((cur) =>
+                  cur === group.key ? null : group.key
+                )
+              }
+              onShare={setShareItem}
+              onToast={showToast}
+            />
           ))}
         </div>
       )}

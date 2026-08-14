@@ -24,7 +24,7 @@ export function saveBlockedWithoutApi() {
 }
 
 export const MODERATION_UNAVAILABLE_MESSAGE =
-  "Safety review is temporarily unavailable. Please try again in a few minutes.";
+  "Our safety check hiccuped for a second — nothing wrong with your captions. Tap Save & Render again and it should go through.";
 
 export const MODERATION_NOT_CONFIGURED_MESSAGE =
   "Safety review isn't set up on this site yet. The team needs to add an OpenAI API key in Vercel.";

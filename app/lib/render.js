@@ -16,10 +16,18 @@
 import "./font-setup.js";
 import sharp from "sharp";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { promises as fs } from "node:fs";
 import { ensureFontsInstalled } from "./font-setup.js";
 
 export { ensureFontsInstalled };
+
+const PUBLIC_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "public"
+);
 
 // Must match fontconfig binding in font-setup.js.
 const ANTON_FAMILY = "Anton";
@@ -383,7 +391,7 @@ function fitCaptionAwayFromReserve({
         lineHeight: curLh,
         strokeWidth: curStroke,
         blockTop,
-        firstBaseline: blockTop + curFs * 0.92,
+        firstBaseline: blockTop + curFs * BASELINE_FROM_TOP,
       };
     }
 
@@ -415,7 +423,7 @@ function fitCaptionAwayFromReserve({
         lineHeight: curLh,
         strokeWidth: curStroke,
         blockTop,
-        firstBaseline: blockTop + curFs * 0.92,
+        firstBaseline: blockTop + curFs * BASELINE_FROM_TOP,
       };
     }
     curFs = Math.max(shrinkFloor, Math.floor(curFs * 0.92));
@@ -451,7 +459,7 @@ function fitCaptionAwayFromReserve({
     strokeRatio,
     family,
     blockTop,
-    firstBaseline: blockTop + curFs * 0.92,
+    firstBaseline: blockTop + curFs * BASELINE_FROM_TOP,
   });
 }
 
@@ -501,7 +509,7 @@ function enforceCaptionClearOfReserve(ctx) {
         lineHeight,
         strokeWidth,
         blockTop,
-        firstBaseline: blockTop + fs * 0.92,
+        firstBaseline: blockTop + fs * BASELINE_FROM_TOP,
       };
     }
     if (corner === "br") {
@@ -542,7 +550,7 @@ function enforceCaptionClearOfReserve(ctx) {
     lineHeight,
     strokeWidth,
     blockTop,
-    firstBaseline: blockTop + fs * 0.92,
+    firstBaseline: blockTop + fs * BASELINE_FROM_TOP,
   };
 }
 
@@ -585,8 +593,12 @@ export function measureCaptionBBox({
 }
 
 const FOOTER_BAND_MIN_FRAC = 0.085;
-/** Minimum letterbox height for a top/bottom caption band (above footer). */
-const CAPTION_LETTERBOX_FRAC = 0.145;
+/** Top letterbox — room for 2-line tops without looking subtitle-thin. */
+const CAPTION_LETTERBOX_FRAC_TOP = 0.14;
+/** Bottom letterbox — taller so wrapped punchlines can size up above the footer. */
+const CAPTION_LETTERBOX_FRAC_BOTTOM = 0.185;
+/** Formats author maxFontSize for ~this canvas height; scale up on larger renders. */
+const MAX_FS_REF_HEIGHT = 700;
 
 /**
  * Shrink photo content so top/bottom caption letterboxes always exist when
@@ -613,14 +625,22 @@ async function ensureCaptionLetterboxBands(baseBuf, format, captions = {}) {
       captions?.[z.key] != null &&
       String(captions[z.key]).trim()
   );
-  const topNeed = needsTop ? CAPTION_LETTERBOX_FRAC : 0;
+  const topNeed = needsTop ? CAPTION_LETTERBOX_FRAC_TOP : 0;
   const bottomNeed =
-    (needsBottom ? CAPTION_LETTERBOX_FRAC : 0) + FOOTER_BAND_MIN_FRAC;
+    (needsBottom ? CAPTION_LETTERBOX_FRAC_BOTTOM : 0) + FOOTER_BAND_MIN_FRAC;
 
   const bounds = await detectLetterboxBandBounds(baseBuf);
   const topHave = bounds?.topEndFrac ?? 0;
   const bottomHave = bounds ? 1 - bounds.bottomStartFrac : 0;
-  if (topHave + 0.005 >= topNeed && bottomHave + 0.005 >= bottomNeed) {
+  const topTooSmall = topHave + 0.005 < topNeed;
+  const bottomTooSmall = bottomHave + 0.005 < bottomNeed;
+  // Square-pad on landscape templates leaves huge empty bars; shrink them so
+  // captions fill the band instead of looking like tiny subtitles.
+  const topTooBig = needsTop && topHave > topNeed + 0.025;
+  const bottomTooBig =
+    (needsBottom || bottomNeed > FOOTER_BAND_MIN_FRAC + 0.01) &&
+    bottomHave > bottomNeed + 0.025;
+  if (!topTooSmall && !bottomTooSmall && !topTooBig && !bottomTooBig) {
     return baseBuf;
   }
 
@@ -634,10 +654,13 @@ async function ensureCaptionLetterboxBands(baseBuf, format, captions = {}) {
 
   const contentTop = Math.round(H * topNeed);
   const contentH = Math.max(32, Math.round(H * (1 - topNeed - bottomNeed)));
+  // Contain (never cover): cover was clipping side text on wide comics
+  // like This Is Fine ("FINE" in the speech bubble).
   const fitted = await sharp(photo)
     .resize(W, contentH, {
-      fit: "cover",
+      fit: "contain",
       position: "centre",
+      background: { r: 0, g: 0, b: 0, alpha: 1 },
       kernel: "lanczos3",
     })
     .png()
@@ -656,13 +679,19 @@ async function ensureCaptionLetterboxBands(baseBuf, format, captions = {}) {
     .toBuffer();
 }
 
-/** Pad PNG to 1:1 with black letterbox bars and room for the footer. */
-export async function padPngToSquare(pngBuf) {
+/** Pad PNG to 1:1. Landscape → cover (classic full-bleed meme) unless
+ *  format.squareFit === "contain" (wide comics like This Is Fine).
+ *  Portrait/square → contain (preserve tall comics / stacked panels).
+ *  Always leave a thin footer strip for the product loop line. */
+export async function padPngToSquare(pngBuf, format = null) {
   const meta = await sharp(pngBuf).metadata();
   const side = Math.max(meta.width, meta.height);
+  const forceContain = format?.squareFit === "contain";
+  const isLandscape = meta.width > meta.height * 1.05;
   let buf = await sharp(pngBuf)
     .resize(side, side, {
-      fit: "contain",
+      fit: forceContain || !isLandscape ? "contain" : "cover",
+      position: "centre",
       background: { r: 0, g: 0, b: 0, alpha: 1 },
       kernel: "lanczos3",
     })
@@ -713,8 +742,8 @@ export async function padPngToSquare(pngBuf) {
 
 function avgCharWidth(family) {
   if (family === COMIC_FAMILY) return 0.55;
-  // Measured ~0.47 on Anton caps; slight cushion so wraps don't overflow.
-  if (family === ANTON_FAMILY) return 0.48;
+  // Measured ~0.47; slight cushion without forcing subtitle-thin type.
+  if (family === ANTON_FAMILY) return 0.465;
   return 0.55;
 }
 
@@ -732,6 +761,24 @@ function normalizeCaptionText(s) {
     .replace(/[\u2018\u2019\u2032]/g, "'")
     .replace(/[\u201C\u201D\u2033]/g, '"')
     .replace(/[\u2013\u2014]/g, "-");
+}
+
+/**
+ * Split runaway tokens (e.g. "HELOOOOOOOOOOOOOOOOOOOO") so fitText can
+ * wrap instead of shrinking to subtitle size. Spaces stay as word breaks.
+ */
+function softBreakLongTokens(words, maxChunk = 12) {
+  const out = [];
+  for (const word of words) {
+    if (word.length <= maxChunk) {
+      out.push(word);
+      continue;
+    }
+    for (let i = 0; i < word.length; i += maxChunk) {
+      out.push(word.slice(i, i + maxChunk));
+    }
+  }
+  return out;
 }
 
 // Alternate caps starting lowercase, leaving non-letters alone.
@@ -826,42 +873,42 @@ function balancedSplit(words, k) {
 // than subtitle-thin. Short punchlines still get a ceiling so they do
 // not become a solid black slab.
 const MAX_LINE_FS_RATIO = 0.92;
+/** Cap height used as ink-top → SVG baseline (Anton ascenders need <0.92). */
+const BASELINE_FROM_TOP = 0.72;
 
 // Choose font size + line layout. Tries every `k` in [2..maxLines],
-// picks the largest font, then among sizes within 85% of that best,
-// prefers fewer lines (avoids tiny 2-line wraps and amateurish pyramids).
+// picks the largest font that still fits, then among near-best sizes
+// prefers fewer lines.
 function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = {}) {
-  const words = String(text).trim().split(/\s+/).filter(Boolean);
+  const rawWords = String(text).trim().split(/\s+/).filter(Boolean);
+  const words = softBreakLongTokens(rawWords, opts.maxTokenChars ?? 12);
   if (words.length === 0) {
     return { fs: 12, lines: [""], lineHeight: 12 };
   }
 
   const fillPanel = Boolean(opts.fillPanel);
-  const lineFsRatio = fillPanel ? 0.98 : MAX_LINE_FS_RATIO;
-  // Panel text (Drake): underestimate width slightly so we fill the box;
-  // overflow cushion is handled by the widthOk tolerances below.
-  const charPerFs = avgCharWidth(family) * (fillPanel ? 0.9 : 1);
+  const lineFsRatio = fillPanel ? 0.94 : MAX_LINE_FS_RATIO;
+  const charPerFs = avgCharWidth(family);
   const cap = Math.max(14, Math.floor(startSize));
   const charCount = words.join(" ").length;
-  const MIN_FS = 16;
-  // Shrink on one line first, but wrap before captions go subtitle-thin
-  // in tall letterbox / edge bands (was flooring all the way to 20px).
+  // Never drop below a readable Impact floor — long labels wrap instead.
+  const MIN_FS = Math.max(22, opts.minFs ?? 22);
+  const widthSlack = 0.99;
   const SINGLE_LINE_FLOOR = Math.max(
-    20,
-    Math.min(56, Math.floor(maxHeight * 0.4))
+    MIN_FS,
+    Math.min(56, Math.floor(maxHeight * 0.42))
   );
 
   // 1) Try a single line, shrinking until it fits.
   {
     let fs = Math.min(cap, Math.floor(maxHeight * lineFsRatio));
     while (fs >= SINGLE_LINE_FLOOR) {
-      const widthOk = charCount * charPerFs * fs <= maxWidth * 1.02;
-      const heightOk = fs <= maxHeight * 1.02;
+      const widthOk = charCount * charPerFs * fs <= maxWidth * widthSlack;
+      const heightOk = fs <= maxHeight * 0.98;
       if (widthOk && heightOk) {
-        // Drake-style panels: a short single line can "fit" while looking
-        // tiny in a tall white box — fall through to multi-line if the
-        // one-liner doesn't dominate the zone.
-        if (fillPanel && fs < maxHeight * 0.32) break;
+        // Long captions that "fit" as a short one-liner should wrap so they
+        // fill the band — but don't force-wrap punchy medium lines in tall zones.
+        if (fillPanel && charCount >= 28 && fs < maxHeight * 0.52) break;
         return { fs, lines: [words.join(" ")], lineHeight: fs };
       }
       fs -= 1;
@@ -869,7 +916,10 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
   }
 
   if (maxLines <= 1) {
-    let fs = Math.max(MIN_FS, Math.min(cap, Math.floor(maxWidth / (charCount * charPerFs))));
+    let fs = Math.max(
+      MIN_FS,
+      Math.min(cap, Math.floor((maxWidth * widthSlack) / (charCount * charPerFs)))
+    );
     fs = Math.min(fs, Math.floor(maxHeight * lineFsRatio));
     return { fs, lines: [words.join(" ")], lineHeight: fs };
   }
@@ -881,12 +931,9 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
     if (!split) continue;
 
     const lineSlot = maxHeight / k;
-    const widthFs = maxWidth / (split.maxChars * charPerFs);
+    const widthFs = (maxWidth * widthSlack) / (split.maxChars * charPerFs);
     const heightFs = lineSlot * lineFsRatio;
     let fs = Math.floor(Math.min(widthFs, heightFs, cap));
-    if (charCount <= 6 && k === 1) {
-      fs = Math.floor(Math.min(fs, lineSlot * 0.38, widthFs * 0.55));
-    }
     if (fs < MIN_FS) continue;
     candidates.push({ fs, lines: split.lines, k });
   }
@@ -897,10 +944,10 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
     let lines = wrapText(text, maxWidth, fs, family);
     while (fs > MIN_FS) {
       lines = wrapText(text, maxWidth, fs, family);
-      const tallOk = lines.length * fs <= maxHeight + 1;
+      const tallOk = lines.length * fs <= maxHeight * 0.98;
       const lineOk = lines.length <= maxLines;
       const widest = Math.max(...lines.map((l) => l.length), 1);
-      const wideOk = widest * charPerFs * fs <= maxWidth * 1.04;
+      const wideOk = widest * charPerFs * fs <= maxWidth * widthSlack;
       if (tallOk && lineOk && wideOk) break;
       fs -= 1;
     }
@@ -908,11 +955,11 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
     return { fs, lines, lineHeight: fs };
   }
 
-  // Prefer the largest readable size; among near-best sizes, fewer lines.
   const bestFs = Math.max(...candidates.map((c) => c.fs));
-  const nearRatio = fillPanel ? 0.95 : 0.85;
+  const nearRatio = fillPanel ? 0.9 : 0.85;
   const nearBest = candidates.filter((c) => c.fs >= bestFs * nearRatio);
-  nearBest.sort((a, b) => a.k - b.k || b.fs - a.fs);
+  // Prefer larger size; among near-ties prefer fewer lines.
+  nearBest.sort((a, b) => b.fs - a.fs || a.k - b.k);
   const chosen = nearBest[0];
   return { fs: chosen.fs, lines: chosen.lines, lineHeight: chosen.fs };
 }
@@ -1017,20 +1064,37 @@ function measureZoneFs(zone, rawText, imgW, imgH) {
   const startSize = Math.max(zoneMinFs || 0, Math.min(naturalStart, zoneMaxFs));
   let { fs } = fitText(
     text,
-    w,
-    h,
+    w * 0.88,
+    h * 0.85,
     zone.maxLines ?? 2,
     style.family,
-    startSize
+    startSize,
+    {
+      // Match renderZone so sync caps track the size captions actually draw at.
+      fillPanel:
+        zone.style === "dark-on-light" ||
+        zone.style === "sign" ||
+        zone.style === "caption" ||
+        zone.style === "caption-inverted" ||
+        zone.style === "mocking",
+    }
   );
   if (zoneMinFs > 0 && fs < zoneMinFs) {
     const retry = fitText(
       text,
-      w,
-      h,
+      w * 0.88,
+      h * 0.85,
       zone.maxLines ?? 2,
       style.family,
-      Math.max(zoneMinFs, zoneMaxFs, startSize)
+      Math.max(zoneMinFs, zoneMaxFs, startSize),
+      {
+        fillPanel:
+          zone.style === "dark-on-light" ||
+          zone.style === "sign" ||
+          zone.style === "caption" ||
+          zone.style === "caption-inverted" ||
+          zone.style === "mocking",
+      }
     );
     fs = retry.fs >= zoneMinFs ? retry.fs : zoneMinFs;
   }
@@ -1081,15 +1145,28 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   let w = zone.w * imgW;
   let h = zone.h * imgH;
 
-  // Keep glyphs inside the band — reduces face/body overlap.
-  // Letterbox: extra inset so stroke never bleeds onto the photo / into footer.
-  // White panel text (Drake, etc.): fill the box — small margins only.
-  const isPanelText =
-    zone.style === "dark-on-light" || zone.style === "sign";
-  const padX = Math.max(4, w * 0.04);
+  // White panel text (Drake): fill the box. Sign cardboard: fill most of
+  // the writable white area. Classic captions: dominate their band —
+  // but ALWAYS leave room for Anton stroke so glyphs never clip.
+  const isPanelText = zone.style === "dark-on-light";
+  const isSignText = zone.style === "sign";
+  const hasStroke = style.strokeRatio > 0;
+  const padX = Math.max(
+    hasStroke ? 6 : 4,
+    w * (isSignText ? 0.05 : isPanelText ? 0.04 : 0.035)
+  );
   const padY = Math.max(
-    4,
-    h * (zone.placeInLetterbox ? 0.12 : isPanelText ? 0.04 : 0.08)
+    hasStroke ? 5 : 4,
+    h *
+      (zone.placeInLetterbox
+        ? 0.05
+        : isPanelText
+          ? 0.05
+          : isSignText
+            ? 0.055
+            : zone.y < 0.1
+              ? 0.06
+              : 0.05)
   );
   x += padX;
   y += padY;
@@ -1106,61 +1183,86 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   }
 
   const naturalStart = Math.min(
-    h * (isPanelText ? 0.92 : 0.78),
-    w * (isPanelText ? 0.55 : 0.4)
+    h * (isPanelText ? 0.9 : isSignText ? 0.8 : 0.88),
+    w * (isPanelText ? 0.52 : isSignText ? 0.38 : 0.48)
   );
-  // Keep captions inside the band — stroke needs headroom too.
-  // Panel text should dominate the white box (classic Drake look).
   let zoneMaxFs = Math.floor(
     h *
-      (zone.placeInLetterbox ? 0.62 : isPanelText ? 0.9 : 0.65)
+      (zone.placeInLetterbox
+        ? 0.92
+        : isPanelText
+          ? 0.9
+          : isSignText
+            ? 0.8
+            : 0.9)
   );
   if (typeof zone.maxFontSize === "number") {
-    zoneMaxFs = Math.min(zoneMaxFs, zone.maxFontSize);
+    // Author caps are for ~700px canvases; scale so 1200–1900px memes
+    // don't stay stuck at subtitle-sized type inside tall letterboxes.
+    const scaledMax = Math.round(
+      zone.maxFontSize * Math.max(1, imgH / MAX_FS_REF_HEIGHT)
+    );
+    zoneMaxFs = Math.min(zoneMaxFs, scaledMax);
   }
   const zoneMinFs =
     zone.minFontSize ??
     (zone.style === "doge"
-      ? 28
+      ? 32
       : zone.style === "sign" || zone.style === "dark-on-light"
         ? 36
         : zone.style === "caption" || zone.style === "caption-inverted" || zone.style === "mocking"
           ? zone.placeInLetterbox
-            ? 28
-            : 24
+            ? 36
+            : 34
           : 0);
+  let effectiveSyncCap = syncCapFs;
   let startSize = Math.max(zoneMinFs || 0, Math.min(naturalStart, zoneMaxFs));
-  if (syncCapFs != null) {
-    startSize = Math.min(startSize, syncCapFs);
+  if (effectiveSyncCap != null) {
+    // Keep every synced label at the same fs — short words already look
+    // heavier in Anton, but shrinking them further made "ME" unreadably tiny.
+    startSize = Math.min(startSize, effectiveSyncCap);
   }
 
-  const fitOpts = { fillPanel: isPanelText };
+  // Stroke inset — enough to clear outlines, not so much we look tiny.
+  const strokeInset =
+    style.strokeRatio > 0
+      ? Math.min(12, Math.max(3, startSize * style.strokeRatio * 0.28))
+      : 0;
+  const fitW = Math.max(8, w - strokeInset * 2);
+  const fitH = Math.max(8, h - strokeInset * 2);
+
+  // Fill the caption band (wrap before going subtitle-thin), unless the
+  // format asks for natural-width centered text (avoids edge-hugging).
+  const fitOpts = {
+    fillPanel: zone.fillPanel !== false,
+    minFs: Math.max(24, Math.min(zoneMinFs || 28, Math.floor(fitH * 0.28))),
+  };
   let { fs, lines, lineHeight } = fitText(
     text,
-    w,
-    h,
+    fitW,
+    fitH,
     zone.maxLines ?? 2,
     style.family,
     startSize,
     fitOpts
   );
 
-  // Prefer minFontSize when it still fits; never force a floor that overflows
-  // the zone (that caused cut-off / blackout captions).
+  // Prefer minFontSize when it still fits; never force a floor that overflows.
   if (zoneMinFs > 0 && fs < zoneMinFs) {
     const retry = fitText(
       text,
-      w,
-      h,
+      fitW,
+      fitH,
       zone.maxLines ?? 2,
       style.family,
       Math.max(zoneMinFs, startSize),
       fitOpts
     );
     const fits =
-      retry.lines.length * retry.fs <= h * 0.98 &&
+      retry.lines.length * retry.fs <= fitH * 0.98 &&
       retry.lines.every(
-        (line) => line.length * avgCharWidth(style.family) * retry.fs <= w * 1.05
+        (line) =>
+          line.length * avgCharWidth(style.family) * retry.fs <= fitW * 0.98
       );
     if (fits && retry.fs >= zoneMinFs * 0.85) {
       ({ fs, lines, lineHeight } = retry);
@@ -1168,14 +1270,15 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   }
 
   // Hard cap: glyph block + stroke must stay inside the padded zone.
-  const strokeBudget = style.strokeRatio > 0 ? style.strokeRatio * 0.55 : 0;
-  const maxBlock = h / (1 + strokeBudget);
+  const strokeBudget = style.strokeRatio > 0 ? style.strokeRatio * 0.38 : 0;
+  const maxBlock = fitH / (1 + strokeBudget);
+  const absoluteFloor = Math.max(22, fitOpts.minFs || 22);
   if (lines.length * fs > maxBlock) {
-    const cappedFs = Math.max(16, Math.floor(maxBlock / lines.length));
+    const cappedFs = Math.max(absoluteFloor, Math.floor(maxBlock / lines.length));
     const capped = fitText(
       text,
-      w,
-      h,
+      fitW,
+      fitH,
       zone.maxLines ?? 2,
       style.family,
       cappedFs,
@@ -1186,19 +1289,57 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
     lineHeight = capped.fs;
   }
 
-  if (syncCapFs != null && fs > syncCapFs) {
-    const capped = fitText(
+  // Final width guard — shrink only when ink clearly overflows.
+  {
+    const charW = avgCharWidth(style.family);
+    for (let guard = 0; guard < 40; guard++) {
+      const strokeW =
+        style.strokeRatio > 0
+          ? Math.min(36, Math.max(4, fs * style.strokeRatio * 0.8))
+          : 0;
+      const widest = Math.max(...lines.map((l) => l.length), 1);
+      const inkW = widest * charW * fs + strokeW;
+      const inkH = lines.length * fs + strokeW * 0.65;
+      if (inkW <= w * 1.02 && inkH <= h * 1.02) break;
+      if (fs <= absoluteFloor) break;
+      fs = Math.max(absoluteFloor, fs - 2);
+      const refit = fitText(
+        text,
+        fitW,
+        fitH,
+        zone.maxLines ?? 2,
+        style.family,
+        fs,
+        fitOpts
+      );
+      fs = Math.min(refit.fs, fs);
+      lines = refit.lines;
+      lineHeight = refit.fs;
+    }
+  }
+
+  if (effectiveSyncCap != null) {
+    // Force equal size across the sync group, then optically ease short
+    // punch labels ("ME") — Anton + heavy stroke makes 2–3 letters read
+    // much larger than a multi-line sibling at the same fs.
+    let lockedFs = effectiveSyncCap;
+    const compactChars = text.replace(/\s+/g, "").length;
+    if (compactChars <= 3) lockedFs = Math.round(effectiveSyncCap * 0.72);
+    else if (compactChars <= 8) lockedFs = Math.round(effectiveSyncCap * 0.88);
+    else if (compactChars <= 14) lockedFs = Math.round(effectiveSyncCap * 0.95);
+
+    const locked = fitText(
       text,
-      w,
-      h,
+      fitW,
+      fitH,
       zone.maxLines ?? 2,
       style.family,
-      syncCapFs,
-      fitOpts
+      lockedFs,
+      { ...fitOpts, fillPanel: true }
     );
-    fs = Math.min(capped.fs, syncCapFs);
-    lines = capped.lines;
-    lineHeight = capped.fs;
+    fs = lockedFs;
+    lines = locked.lines?.length ? locked.lines : [text];
+    lineHeight = lockedFs;
   }
 
   const align = zone.align || "center";
@@ -1239,9 +1380,31 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   lines = laid.lines;
   lineHeight = laid.lineHeight;
   tx = laid.tx;
-  const blockTop = laid.blockTop;
-  const firstBaseline = laid.firstBaseline;
+  let blockTop = laid.blockTop;
+  let firstBaseline = laid.firstBaseline;
   const strokeWidthFinal = laid.strokeWidth;
+
+  // Keep full glyph box (ascenders + stroke) inside the zone — and never
+  // past the canvas edge (Anton stroke undershoot is easy to miss).
+  {
+    const totalH = lines.length * lineHeight;
+    const zoneTop = zone.y * imgH;
+    const zoneBot = (zone.y + zone.h) * imgH;
+    const strokePad = Math.max(strokeWidthFinal * 0.7, fs * 0.14);
+    const inkTop = blockTop - strokePad;
+    const minTop = Math.max(4, zoneTop + 3);
+    if (inkTop < minTop) {
+      blockTop += minTop - inkTop;
+      firstBaseline = blockTop + fs * BASELINE_FROM_TOP;
+    }
+    if (blockTop + totalH + strokePad > zoneBot - 3) {
+      blockTop = Math.max(
+        minTop,
+        zoneBot - 3 - totalH - strokePad
+      );
+      firstBaseline = blockTop + fs * BASELINE_FROM_TOP;
+    }
+  }
 
   const textEls = lines
     .map((line, i) => {
@@ -1262,9 +1425,9 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
     .join("\n");
 
   let fragment = textEls;
-  // Clip letterbox captions so stroke never bleeds onto the photo or footer.
-  if (zone.placeInLetterbox && fragment) {
-    const clipId = `lb-${zone.key}-${Math.round(zone.x * 1000)}`;
+  // Always clip to the zone so a bad fit can never spill onto the canvas edge.
+  {
+    const clipId = `z-${zone.key}-${Math.round(zone.x * 1000)}-${Math.round(zone.y * 1000)}`;
     const cx = zone.x * imgW;
     const cy = zone.y * imgH;
     const cw = zone.w * imgW;
@@ -1729,11 +1892,7 @@ let cachedLogo = null;
 async function loadLogoBuffer(targetWidth) {
   // We resize on every call so different formats can use different
   // widths; sharp's resize is fast enough that caching is unnecessary.
-  const logoPath = path.join(
-    process.cwd(),
-    "public",
-    "legends-logo-white.png"
-  );
+  const logoPath = path.join(PUBLIC_DIR, "legends-logo-white.png");
   return sharp(logoPath).resize(targetWidth).png().toBuffer();
 }
 
@@ -1755,7 +1914,15 @@ export const GALLERY_ON_PHOTO_CAPTIONS = new Set([
 // gallery art without baking captions into the edit base.
 export const GALLERY_RENDER_SOURCES = {
   "/gallery/boromir-backup.png":
-    "/templates-meme/one-does-not-simply-gallery.png",
+    "/templates-meme/one-does-not-simply.jpg",
+  "/gallery/boromir-fire-drill.png":
+    "/templates-meme/one-does-not-simply.jpg",
+  "/gallery/boromir-email-meetings.png":
+    "/templates-meme/one-does-not-simply.jpg",
+  "/gallery/boromir-bell.png":
+    "/templates-meme/one-does-not-simply.jpg",
+  "/gallery/boromir-sub-day.png":
+    "/templates-meme/one-does-not-simply.jpg",
   "/gallery/disaster-girl-admin.png":
     "/templates-meme/disaster-girl.jpg",
   "/gallery/grumpy-cat-plans.png":
@@ -1792,7 +1959,8 @@ function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null, onPhot
   }
   if (!letterbox) {
     const padX = zone.w * 0.04;
-    const padY = zone.h * (onPhoto ? 0.65 : 0.35);
+    // Keep on-photo erase tight — large padY was wiping whole AI frames (Stonks).
+    const padY = zone.h * (onPhoto ? 0.18 : 0.35);
     const x = Math.max(0, (zone.x - padX) * W);
     const y = Math.max(0, (zone.y - padY) * H);
     const w = Math.min(W - x, (zone.w + padX * 2) * W);
@@ -1861,7 +2029,7 @@ async function galleryUsesLetterboxBands(imageBuf) {
   return topMean < 25 && midMean > 55;
 }
 
-/** Pixel-scan black letterbox bars so erase stays off the photo. */
+/** Pixel-scan black letterbox / pillarbox so zones map onto the photo. */
 export async function detectLetterboxBandBounds(imageBuf) {
   const { data, info } = await sharp(imageBuf)
     .raw()
@@ -1876,6 +2044,14 @@ export async function detectLetterboxBandBounds(imageBuf) {
       sum += data[(y * W + x) * info.channels];
     }
     return sum / W;
+  }
+
+  function colMean(x) {
+    let sum = 0;
+    for (let y = 0; y < H; y++) {
+      sum += data[(y * W + x) * info.channels];
+    }
+    return sum / H;
   }
 
   let topEnd = 0;
@@ -1894,10 +2070,29 @@ export async function detectLetterboxBandBounds(imageBuf) {
     }
   }
 
-  const pad = Math.max(8, Math.round(H * 0.012));
+  let leftEnd = 0;
+  for (let x = 0; x < W; x++) {
+    if (colMean(x) > DARK) {
+      leftEnd = x;
+      break;
+    }
+  }
+
+  let rightStart = W;
+  for (let x = W - 1; x >= 0; x--) {
+    if (colMean(x) > DARK) {
+      rightStart = x + 1;
+      break;
+    }
+  }
+
+  const padY = Math.max(8, Math.round(H * 0.012));
+  const padX = Math.max(6, Math.round(W * 0.012));
   return {
-    topEndFrac: Math.min(0.28, (topEnd + pad) / H),
-    bottomStartFrac: Math.max(0.7, (bottomStart - pad) / H),
+    topEndFrac: Math.min(0.28, (topEnd + padY) / H),
+    bottomStartFrac: Math.max(0.7, (bottomStart - padY) / H),
+    leftEndFrac: Math.min(0.28, (leftEnd + padX) / W),
+    rightStartFrac: Math.max(0.72, (rightStart - padX) / W),
   };
 }
 
@@ -2138,7 +2333,10 @@ async function eraseGalleryLetterboxBands(baseBuf, size) {
 function mapFormatZonesToContent(format, letterboxBounds) {
   const topFrac = letterboxBounds?.topEndFrac ?? 0;
   const bottomFrac = letterboxBounds?.bottomStartFrac ?? 1;
-  const span = Math.max(0.01, bottomFrac - topFrac);
+  const leftFrac = letterboxBounds?.leftEndFrac ?? 0;
+  const rightFrac = letterboxBounds?.rightStartFrac ?? 1;
+  const spanY = Math.max(0.01, bottomFrac - topFrac);
+  const spanX = Math.max(0.01, rightFrac - leftFrac);
   const zones = format.zones || [];
   // Ignore bogus "letterbox" from dark photo pixels unless a zone opted in
   // OR both bars look like real pad bands (top + bottom).
@@ -2147,39 +2345,59 @@ function mapFormatZonesToContent(format, letterboxBounds) {
   // Full-bleed templates (Drake, etc.) only get a bottom footer bar —
   // still remap zones into the shrunk photo or captions sit too low /
   // look tiny inside the white panels.
-  const footerOnlyPad = topFrac < 0.05 && bottomFrac <= 0.96 && span < 0.98;
-  const mapContent = wantsLetterbox || realPadBars || footerOnlyPad;
+  const footerOnlyPad = topFrac < 0.05 && bottomFrac <= 0.96 && spanY < 0.98;
+  const mapContentY = wantsLetterbox || realPadBars || footerOnlyPad;
+  // Portrait templates get black side pads when squared — remap X too so
+  // captions don't hug the photo's left/right edge.
+  const realSidePads = leftFrac >= 0.04 && rightFrac <= 0.96;
+  const mapContentX = realSidePads;
 
   return {
     ...format,
     zones: zones.map((zone) => {
       const place = zone.placeInLetterbox;
+      let next = { ...zone };
       if (place === "top" && topFrac > 0.04) {
-        return {
-          ...zone,
+        next = {
+          ...next,
           placeInLetterbox: "top",
-          y: 0.01,
-          h: Math.max(0.1, topFrac - 0.018),
+          // Use nearly the full letterbox so type can fill the band.
+          y: 0.012,
+          h: Math.max(0.11, topFrac - 0.018),
         };
-      }
-      if (place === "bottom" && bottomFrac < 0.96) {
+      } else if (place === "bottom" && bottomFrac < 0.96) {
         const footerFrac = FOOTER_BAND_MIN_FRAC;
-        const gap = 0.012;
+        const gap = 0.01;
         const usableBottom = 1 - footerFrac - gap;
-        const h = Math.max(0.1, usableBottom - bottomFrac);
-        return {
-          ...zone,
+        const h = Math.max(0.11, usableBottom - bottomFrac);
+        next = {
+          ...next,
           placeInLetterbox: "bottom",
-          y: bottomFrac + 0.004,
+          y: bottomFrac + 0.005,
           h,
         };
+      } else if (mapContentY) {
+        next = {
+          ...next,
+          y: topFrac + zone.y * spanY,
+          h: zone.h * spanY,
+        };
       }
-      if (!mapContent) return { ...zone };
-      return {
-        ...zone,
-        y: topFrac + zone.y * span,
-        h: zone.h * span,
-      };
+      if (mapContentX && !place) {
+        next = {
+          ...next,
+          x: leftFrac + zone.x * spanX,
+          w: zone.w * spanX,
+        };
+      } else if (mapContentX && place) {
+        // Letterbox captions still span the photo width, not the side bars.
+        next = {
+          ...next,
+          x: leftFrac + (zone.x ?? 0) * spanX,
+          w: (zone.w ?? 1) * spanX,
+        };
+      }
+      return next;
     }),
   };
 }
@@ -2188,11 +2406,7 @@ export async function renderMeme(format, captions, options = {}) {
   await ensureFontsInstalled();
 
   const cleanBase = options.cleanBase || format.renderFile || format.file;
-  const templatePath = path.join(
-    process.cwd(),
-    "public",
-    cleanBase.replace(/^\//, "")
-  );
+  const templatePath = path.join(PUBLIC_DIR, cleanBase.replace(/^\//, ""));
 
   const meta = await sharp(templatePath).metadata();
   const contentSize =
@@ -2211,7 +2425,18 @@ export async function renderMeme(format, captions, options = {}) {
   // Do NOT auto-smudge source art here — corner blur eats captions / panel art.
   // Logo removal for legacy AI gallery PNGs is a one-off scrub script.
 
-  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
+  // Square canvas first, then guarantee caption letterbox bands.
+  // Never wipe AI gallery art in-place when we have no clean blank —
+  // erase/smudge against captioned PNGs blacks out cards (Stonks, Wojak…).
+  const hasCleanNonGalleryBase =
+    typeof cleanBase === "string" &&
+    !cleanBase.includes("/gallery/") &&
+    (cleanBase.includes("/templates-meme/") || cleanBase.startsWith("/"));
+  const preserveBaked =
+    options.preserveBakedCaptions === true ||
+    (cleanBase.includes("/gallery/") && !hasCleanNonGalleryBase && !options.forceGalleryErase);
+
+  if (cleanBase.includes("/gallery/") && !preserveBaked) {
     let bounds = await detectLetterboxBandBounds(baseBuf);
     const usesLetterbox = await galleryUsesLetterboxBands(baseBuf);
     baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, contentSize, {
@@ -2221,14 +2446,13 @@ export async function renderMeme(format, captions, options = {}) {
     });
   }
 
-  // Square canvas first, then guarantee caption letterbox bands.
-  baseBuf = await padPngToSquare(baseBuf);
+  baseBuf = await padPngToSquare(baseBuf, format);
   baseBuf = await ensureCaptionLetterboxBands(baseBuf, format, captions);
   let paddedMeta = await sharp(baseBuf).metadata();
   let renderSize = { width: paddedMeta.width, height: paddedMeta.height };
   let letterboxBounds = await detectLetterboxBandBounds(baseBuf);
 
-  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
+  if (cleanBase.includes("/gallery/") && !preserveBaked) {
     baseBuf = await eraseGalleryLetterboxBands(baseBuf, renderSize);
     // After erase, re-fit letterbox once more so bands stay clean black.
     baseBuf = await ensureCaptionLetterboxBands(baseBuf, format, captions);
@@ -2243,7 +2467,7 @@ export async function renderMeme(format, captions, options = {}) {
 
   if (
     cleanBase.includes("/gallery/") &&
-    !options.preserveBakedCaptions &&
+    !preserveBaked &&
     renderFormat.zones?.some((z) => z.maskTight)
   ) {
     baseBuf = await smudgeCaptionZones(

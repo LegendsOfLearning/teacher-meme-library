@@ -39,12 +39,20 @@ export function markLocalUpvote(memeId) {
   }
 }
 
+export function clearLocalUpvote(memeId) {
+  try {
+    localStorage.removeItem(`${UPVOTED_PREFIX}${memeId}`);
+  } catch {
+    // ignore
+  }
+}
+
 /** Fire-and-forget engagement event for gallery + community memes. */
 export function trackEngagement(memeId, event, extra = {}) {
   if (!memeId || String(memeId).startsWith("gallery-")) return;
   if (!/^[a-z0-9_-]{1,40}$/i.test(memeId)) return;
   const body = { memeId, event, ...extra };
-  if (event === "upvote") {
+  if (event === "upvote" || event === "unupvote") {
     body.voterId = getVoterId();
   }
   return fetch("/api/engagement", {

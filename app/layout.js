@@ -34,6 +34,14 @@ export const metadata = {
   },
 };
 
+/* Prevent iOS from zooming out into phantom horizontal overflow space */
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  minimumScale: 1,
+  viewportFit: "cover",
+};
+
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "GTM-WCMKBMHT";
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID?.trim();
 

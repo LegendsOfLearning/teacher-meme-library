@@ -7,6 +7,20 @@ const nextConfig = {
   // interactive. Allowing common local origins fixes that without exposing
   // anything beyond the local machine.
   allowedDevOrigins: ["localhost", "127.0.0.1", "0.0.0.0"],
+
+  // Keep serverless bundles under Vercel's size limit. Gallery/memes are
+  // served as static assets; API routes only need templates + fonts.
+  outputFileTracingExcludes: {
+    "*": [
+      "./scripts/**",
+      "./docs/**",
+      "./tmp-smoke/**",
+      "./public/memes/**",
+      "./data/memes/**",
+      "./.git/**",
+      "./new feedback vadim.txt",
+    ],
+  },
 };
 
 export default nextConfig;
