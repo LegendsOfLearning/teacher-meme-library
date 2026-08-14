@@ -7,6 +7,7 @@
 
 import path from "node:path";
 import os from "node:os";
+import { fileURLToPath } from "node:url";
 import {
   existsSync,
   mkdirSync,
@@ -14,6 +15,9 @@ import {
   writeFileSync,
   statSync,
 } from "node:fs";
+
+const LIB_DIR = path.dirname(fileURLToPath(import.meta.url));
+const PUBLIC_FONTS_DIR = path.join(LIB_DIR, "..", "..", "public", "fonts");
 
 export const BUNDLED_FONTS = [
   "Anton-Regular.ttf",
@@ -80,7 +84,7 @@ function configureFontconfig(fontDir, antonPath) {
 }
 
 function installFontsSync() {
-  const srcDir = path.join(process.cwd(), "public", "fonts");
+  const srcDir = PUBLIC_FONTS_DIR;
   const dstDir = fontsDestDir();
 
   try {

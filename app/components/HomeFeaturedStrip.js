@@ -24,6 +24,7 @@ function CompactCard({ item, onShare, onToast }) {
           loading="lazy"
         />
       </Link>
+      <p className="home-rail-card-title">{item.formatName}</p>
       <MemeCardActions
         item={item}
         onShare={onShare}

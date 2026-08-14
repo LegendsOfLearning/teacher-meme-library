@@ -5,17 +5,19 @@ import {
   formatStatCount,
   hasLocalUpvote,
   markLocalUpvote,
+  clearLocalUpvote,
   trackEngagement,
 } from "../lib/engagement-client";
 
 /**
  * Card/share engagement UI.
  * - inline (default on cards): muted "12 · 5 uses" — no extra chrome
- * - share: same counts + text upvote (for detail pages)
+ * - share: same counts + like toggle (for detail pages)
  */
 export default function MemeStatsBar({
   item,
   variant = "inline",
+  force = false,
   onToast,
   onUpvoteChange,
 }) {
@@ -36,22 +38,32 @@ export default function MemeStatsBar({
     setUpvoted(hasLocalUpvote(item.id));
   }, [item?.id]);
 
-  const onUpvote = useCallback(async () => {
-    if (!item?.id || upvoted || busy) return;
+  const onToggleUpvote = useCallback(async () => {
+    if (!item?.id || busy) return;
+    const next = !upvoted;
     setBusy(true);
-    setUpvoted(true);
-    setUpvotes((n) => n + 1);
-    markLocalUpvote(item.id);
-    onUpvoteChange?.(true);
+    setUpvoted(next);
+    setUpvotes((n) => Math.max(0, n + (next ? 1 : -1)));
+    if (next) markLocalUpvote(item.id);
+    else clearLocalUpvote(item.id);
+    onUpvoteChange?.(next);
     try {
-      const res = await trackEngagement(item.id, "upvote");
+      const res = await trackEngagement(item.id, next ? "upvote" : "unupvote");
       if (!res) return;
       const data = await res.json().catch(() => null);
       if (data?.upvotes != null) setUpvotes(Number(data.upvotes) || 0);
       if (data?.views != null) setViews(Number(data.views) || 0);
       if (data?.uses != null) setUses(Number(data.uses) || 0);
-      if (data?.ok === false && data?.error === "rate_limited") {
-        onToast?.("Too many votes — try again in a minute");
+      if (data?.ok === false) {
+        // Roll back optimistic UI when server rejects.
+        setUpvoted(!next);
+        setUpvotes((n) => Math.max(0, n + (next ? -1 : 1)));
+        if (next) clearLocalUpvote(item.id);
+        else markLocalUpvote(item.id);
+        onUpvoteChange?.(!next);
+        if (data.error === "rate_limited") {
+          onToast?.("Too many votes — try again in a minute");
+        }
       }
     } finally {
       setBusy(false);
@@ -61,11 +73,11 @@ export default function MemeStatsBar({
   if (!item?.id) return null;
 
   if (variant === "inline") {
-    // Quiet proof line — skip when everything is still zero.
-    if (!views && !uses && !upvotes) return null;
+    // Quiet proof line. `force` keeps 0-count rows visible (variant strip).
+    if (!force && !views && !uses && !upvotes) return null;
     return (
       <p className="meme-stats-inline" aria-label="Meme engagement">
-        <span title="Views">{formatStatCount(views)}</span>
+        <span title="Likes">{formatStatCount(upvotes)} likes</span>
         <span className="meme-stat-sep" aria-hidden>
           ·
         </span>
@@ -91,12 +103,13 @@ export default function MemeStatsBar({
         type="button"
         className={`meme-upvote-btn${upvoted ? " is-upvoted" : ""}`}
         aria-pressed={upvoted}
-        aria-label={upvoted ? "Upvoted" : "Upvote"}
-        title={upvoted ? "You upvoted this" : "Upvote"}
-        disabled={upvoted || busy}
-        onClick={onUpvote}
+        aria-label={upvoted ? "Remove like" : "Like this meme"}
+        title={upvoted ? "Remove like" : "Like"}
+        disabled={busy}
+        onClick={onToggleUpvote}
       >
         <span aria-hidden>👍</span>
+        <span>{upvoted ? "Liked" : "Like"}</span>
         <span className="meme-upvote-count">{formatStatCount(upvotes)}</span>
       </button>
     </div>
@@ -118,19 +131,27 @@ export function MemeUpvoteButton({ item, compact = false, onToast }) {
     setUpvoted(hasLocalUpvote(item.id));
   }, [item?.id]);
 
-  const onUpvote = useCallback(async () => {
-    if (!item?.id || upvoted || busy) return;
+  const onToggleUpvote = useCallback(async () => {
+    if (!item?.id || busy) return;
+    const next = !upvoted;
     setBusy(true);
-    setUpvoted(true);
-    setUpvotes((n) => n + 1);
-    markLocalUpvote(item.id);
+    setUpvoted(next);
+    setUpvotes((n) => Math.max(0, n + (next ? 1 : -1)));
+    if (next) markLocalUpvote(item.id);
+    else clearLocalUpvote(item.id);
     try {
-      const res = await trackEngagement(item.id, "upvote");
+      const res = await trackEngagement(item.id, next ? "upvote" : "unupvote");
       if (!res) return;
       const data = await res.json().catch(() => null);
       if (data?.upvotes != null) setUpvotes(Number(data.upvotes) || 0);
-      if (data?.ok === false && data?.error === "rate_limited") {
-        onToast?.("Too many votes — try again in a minute");
+      if (data?.ok === false) {
+        setUpvoted(!next);
+        setUpvotes((n) => Math.max(0, n + (next ? -1 : 1)));
+        if (next) clearLocalUpvote(item.id);
+        else markLocalUpvote(item.id);
+        if (data.error === "rate_limited") {
+          onToast?.("Too many votes — try again in a minute");
+        }
       }
     } finally {
       setBusy(false);
@@ -144,15 +165,22 @@ export function MemeUpvoteButton({ item, compact = false, onToast }) {
       type="button"
       className={`meme-icon-btn meme-upvote-icon${upvoted ? " is-upvoted" : ""}`}
       aria-pressed={upvoted}
-      aria-label={upvoted ? `Upvoted, ${upvotes}` : `Upvote, ${upvotes}`}
-      title={upvoted ? "You upvoted this" : "Upvote"}
-      disabled={upvoted || busy}
-      onClick={onUpvote}
+      aria-label={
+        upvoted
+          ? `Remove like, ${formatStatCount(upvotes)}`
+          : `Like this meme, ${formatStatCount(upvotes)} likes`
+      }
+      title={upvoted ? "Remove like" : "Like"}
+      disabled={busy}
+      onClick={onToggleUpvote}
     >
-      <span className="meme-upvote-icon-count">{formatStatCount(upvotes)}</span>
+      <span className="meme-upvote-icon-label">
+        {upvoted ? "Liked" : "Like"}
+      </span>
       <span className="meme-upvote-icon-emoji" aria-hidden>
         👍
       </span>
+      <span className="meme-upvote-icon-count">{formatStatCount(upvotes)}</span>
     </button>
   );
 }

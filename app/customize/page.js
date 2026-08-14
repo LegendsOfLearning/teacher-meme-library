@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getFormatById, maxCharsForZone } from "../lib/meme-formats";
 import { fetchAndDownloadSquare } from "../lib/download-square";
-import { getGalleryItemById } from "../lib/gallery";
+import {
+  getGalleryItemById,
+  getGalleryVariantsForFormat,
+  galleryImg,
+} from "../lib/gallery";
 import SharePanel from "../components/SharePanel";
 import MemeQuickActions from "../components/MemeQuickActions";
 import LolSignupCta from "../components/LolSignupCta";
 import LolNavBrand from "../components/LolNavBrand";
+import MemeStatsBar from "../components/MemeStatsBar";
 import { LOL_FOOTER_LINE } from "../lib/lol-copy";
 import { trackEvent } from "../lib/analytics";
 import MemeViewTracker from "../components/MemeViewTracker";
+import { Suspense } from "react";
 
 // ─── Inline icon set ─────────────────────────────────────────────────────
 function Icon({ name }) {
@@ -59,11 +65,33 @@ function Icon({ name }) {
 // the gallery homepage so they can pick one.
 
 export default function CustomizePage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <nav className="nav">
+            <LolNavBrand />
+          </nav>
+          <div className="loading-wrapper">
+            <div className="loading-spinner" />
+            <div className="loading-text">Loading template…</div>
+          </div>
+        </>
+      }
+    >
+      <CustomizePageInner />
+    </Suspense>
+  );
+}
+
+function CustomizePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Source gallery item + matching format definition.
   const [item, setItem] = useState(null);
   const [format, setFormat] = useState(null);
+  const [engagementById, setEngagementById] = useState({});
 
   // Edit form state.
   const [editValues, setEditValues] = useState({});
@@ -86,45 +114,68 @@ export default function CustomizePage() {
     setTimeout(() => setToast(""), 2400);
   }, []);
 
-  // Bootstrap from ?id= on mount. Sync to gallery item + format.
+  const loadGalleryItem = useCallback(
+    (galleryItem, { pushUrl = false } = {}) => {
+      if (
+        !galleryItem ||
+        !galleryItem.remixFormatId ||
+        !galleryItem.captions ||
+        galleryItem.customizable === false
+      ) {
+        return false;
+      }
+      const fmt = getFormatById(galleryItem.remixFormatId);
+      if (!fmt) return false;
+      setItem(galleryItem);
+      setFormat(fmt);
+      setEditValues({ ...galleryItem.captions });
+      setEditing(true);
+      setError("");
+      setMeme({
+        id: `gallery-${galleryItem.id}`,
+        formatId: fmt.id,
+        formatName: fmt.name,
+        captions: galleryItem.captions,
+        pngUrl: galleryImg(galleryItem.file),
+        sharePath: `/gallery/${galleryItem.id}`,
+        _fromGallery: true,
+      });
+      if (pushUrl) {
+        router.replace(`/customize?id=${encodeURIComponent(galleryItem.id)}`, {
+          scroll: false,
+        });
+      }
+      return true;
+    },
+    [router]
+  );
+
+  // Bootstrap / sync from ?id= (supports back/forward + variant clicks).
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    const id = searchParams.get("id");
     if (!id) {
       router.replace("/");
       return;
     }
+    if (item?.id === id && format) return;
     const galleryItem = getGalleryItemById(id);
-    if (
-      !galleryItem ||
-      !galleryItem.remixFormatId ||
-      !galleryItem.captions ||
-      galleryItem.customizable === false
-    ) {
+    if (!loadGalleryItem(galleryItem)) {
       router.replace("/");
-      return;
     }
-    const fmt = getFormatById(galleryItem.remixFormatId);
-    if (!fmt) {
-      router.replace("/");
-      return;
-    }
-    setItem(galleryItem);
-    setFormat(fmt);
-    setEditValues({ ...galleryItem.captions });
-    // Seed the preview pane with the curated PNG so the user sees the
-    // exact meme they clicked "Customize" on before any edits land.
-    setMeme({
-      id: `gallery-${galleryItem.id}`,
-      formatId: fmt.id,
-      formatName: fmt.name,
-      captions: galleryItem.captions,
-      pngUrl: galleryItem.file,
-      sharePath: `/gallery/${galleryItem.id}`,
-      _fromGallery: true,
-    });
-  }, [router]);
+  }, [searchParams, router, loadGalleryItem, item?.id, format]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/engagement")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.stats) setEngagementById(data.stats);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [safetyError, setSafetyError] = useState("");
 
@@ -187,7 +238,15 @@ export default function CustomizePage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Edit failed");
+      if (!res.ok) {
+        if (data.code === "moderation_unavailable") {
+          throw new Error(
+            data.error ||
+              "Our safety check hiccuped for a second — nothing wrong with your captions. Tap Save & Render again and it should go through."
+          );
+        }
+        throw new Error(data.error || "Edit failed");
+      }
       setMeme(data);
       setEditing(false);
       trackEvent("meme_created", {
@@ -236,12 +295,38 @@ export default function CustomizePage() {
 
   const shareTextLine = useMemo(() => {
     if (!meme) return "";
+    if (item?.captionPreview) return item.captionPreview;
     return (
       Object.values(meme.captions || {})
         .filter((v) => typeof v === "string" && v.trim())
         .join(" / ") || meme.formatName
     );
-  }, [meme]);
+  }, [meme, item]);
+
+  const siblingVariants = useMemo(() => {
+    if (!item?.remixFormatId) return [];
+    return getGalleryVariantsForFormat(item.remixFormatId, {
+      excludeId: item.id,
+    }).map((variant) => ({
+      ...variant,
+      ...(engagementById[variant.id] || {}),
+    }));
+  }, [item, engagementById]);
+
+  const selectVariant = useCallback(
+    (variant) => {
+      if (!variant || variant.id === item?.id) return;
+      loadGalleryItem(variant, { pushUrl: true });
+      requestAnimationFrame(() => {
+        memeAnchorRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    },
+    [item?.id, loadGalleryItem]
+  );
 
   // Loading splash while we resolve the gallery item / format on mount.
   if (!item || !format || !meme) {
@@ -275,7 +360,9 @@ export default function CustomizePage() {
       </section>
 
       <main className="container customize-page">
-        {error && <div className="error-message">{error}</div>}
+        {error && !editing ? (
+          <div className="error-message">{error}</div>
+        ) : null}
 
         {loading && (
           <div className="loading-wrapper">
@@ -334,6 +421,7 @@ export default function CustomizePage() {
                     onChange={setEditValues}
                     onSave={saveEdit}
                     safetyError={safetyError}
+                    saveError={error}
                     loading={loading}
                   />
                 </div>
@@ -384,6 +472,38 @@ export default function CustomizePage() {
                 <LolSignupCta />
               </>
             )}
+
+            {siblingVariants.length > 0 ? (
+              <section className="customize-variants" aria-label="More captions">
+                <div className="customize-variants-header">
+                  <h2 className="customize-variants-heading">
+                    More {format.name} captions
+                  </h2>
+                  <p className="customize-variants-sub">
+                    Tap a caption to edit it above. Scroll sideways for more.
+                  </p>
+                </div>
+                <div className="customize-variants-rail">
+                  {siblingVariants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      className="customize-variant-card"
+                      onClick={() => selectVariant(variant)}
+                    >
+                      <img
+                        src={galleryImg(variant.file)}
+                        alt={variant.captionPreview || format.name}
+                        loading="lazy"
+                      />
+                      <div className="customize-variant-meta">
+                        <MemeStatsBar item={variant} variant="inline" force />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
         )}
       </main>
@@ -395,14 +515,35 @@ export default function CustomizePage() {
   );
 }
 
-function EditPanel({ format, values, onChange, onSave, safetyError, loading }) {
+function EditPanel({
+  format,
+  values,
+  onChange,
+  onSave,
+  safetyError,
+  saveError,
+  loading,
+}) {
   if (!format) return null;
+  const retryHint =
+    saveError &&
+    /try again|tap save|hiccuped/i.test(saveError);
   return (
     <div className="edit-panel">
       <div className="edit-header">Edit captions</div>
       {safetyError ? (
         <p className="edit-safety-warn" role="alert">
           {safetyError}
+        </p>
+      ) : null}
+      {saveError && !safetyError ? (
+        <p
+          className={
+            retryHint ? "edit-safety-retry" : "edit-safety-warn"
+          }
+          role="alert"
+        >
+          {saveError}
         </p>
       ) : null}
       {format.zones.filter((z) => !z.decorative).map((z) => {
@@ -431,7 +572,11 @@ function EditPanel({ format, values, onChange, onSave, safetyError, loading }) {
           onClick={onSave}
           disabled={loading || Boolean(safetyError)}
         >
-          {loading ? "Rendering…" : "Save & Render"}
+          {loading
+            ? "Rendering…"
+            : retryHint
+              ? "Try again — Save & Render"
+              : "Save & Render"}
         </button>
       </div>
       <p className="edit-hint">

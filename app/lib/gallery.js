@@ -44,6 +44,66 @@ export const galleryItems = [
     situations: ["classroom-management", "monday-chaos"],
   },
   {
+    id: "v01b",
+    file: "/gallery/boromir-fire-drill.png",
+    cleanBase: "/templates-meme/one-does-not-simply-blank.jpg",
+    formatName: "One Does Not Simply",
+    captionPreview:
+      "ONE DOES NOT SIMPLY MAKE IT TO FRIDAY WITHOUT A FIRE DRILL",
+    remixFormatId: "one-does-not-simply",
+    captions: {
+      top: "One does not simply",
+      bottom: "Make it to Friday without a fire drill",
+    },
+    searchKeywords: ["boromir", "friday", "fire drill"],
+    situations: ["monday-chaos", "classroom-management"],
+  },
+  {
+    id: "v01c",
+    file: "/gallery/boromir-email-meetings.png",
+    cleanBase: "/templates-meme/one-does-not-simply-blank.jpg",
+    formatName: "One Does Not Simply",
+    captionPreview:
+      "ONE DOES NOT SIMPLY CHECK EMAIL WITHOUT FINDING THREE NEW MEETINGS",
+    remixFormatId: "one-does-not-simply",
+    captions: {
+      top: "One does not simply",
+      bottom: "Check email without finding three new meetings",
+    },
+    searchKeywords: ["boromir", "email", "meetings"],
+    situations: ["admin-observation", "monday-chaos"],
+  },
+  {
+    id: "v01d",
+    file: "/gallery/boromir-bell.png",
+    cleanBase: "/templates-meme/one-does-not-simply-blank.jpg",
+    formatName: "One Does Not Simply",
+    captionPreview:
+      "ONE DOES NOT SIMPLY FINISH THE LESSON BEFORE THE BELL RINGS",
+    remixFormatId: "one-does-not-simply",
+    captions: {
+      top: "One does not simply",
+      bottom: "Finish the lesson before the bell rings",
+    },
+    searchKeywords: ["boromir", "bell", "lesson"],
+    situations: ["last-period-energy", "lesson-planning"],
+  },
+  {
+    id: "v01e",
+    file: "/gallery/boromir-sub-day.png",
+    cleanBase: "/templates-meme/one-does-not-simply-blank.jpg",
+    formatName: "One Does Not Simply",
+    captionPreview:
+      "ONE DOES NOT SIMPLY GET THROUGH A SUB DAY WITHOUT A NOTE HOME",
+    remixFormatId: "one-does-not-simply",
+    captions: {
+      top: "One does not simply",
+      bottom: "Get through a sub day without a note home",
+    },
+    searchKeywords: ["boromir", "sub", "note home"],
+    situations: ["classroom-management", "lesson-planning"],
+  },
+  {
     id: "v02",
     file: "/gallery/drake-engaging.png",
     formatName: "Drake Yes / No",
@@ -395,23 +455,6 @@ export const galleryItems = [
     situations: ["students-not-reading"],
   },
 
-  // ── They Don't Know ──────────────────────────────────────────────
-  {
-    id: "g24",
-    file: "/gallery/they-dont-know-tired.png",
-    formatName: "They Don't Know",
-    captionPreview: "THEY DON'T KNOW / I'M JUST TIRED, NOT MAD",
-    remixFormatId: "they-dont-know",
-    captions: {
-      top: "They don't know",
-      bottom: "I'm just tired, not mad",
-    },
-    // AI-baked thought bubble can't be cleanly masked — see soyjak
-    // note below for the same trade-off.
-    customizable: false,
-    situations: ["last-period-energy", "monday-chaos"],
-  },
-
   // ── Stonks ───────────────────────────────────────────────────────
   {
     id: "g25",
@@ -461,7 +504,7 @@ export const galleryItems = [
   // baked speech bubble. For default captions the bubble matches
   // the top caption, so gallery looks great. But customizing would
   // leave a stale bubble next to a new caption, so customize is
-  // disabled (same trade-off as they-dont-know).
+  // disabled (same trade-off as other AI-only cards).
   {
     id: "g28",
     file: "/gallery/wojak-chad-summer.png",
@@ -700,16 +743,7 @@ export const galleryItems = [
     situations: ["classroom-management", "monday-chaos"],
   },
 
-  // ── Sad Pablo Waiting ────────────────────────────────────────────
-  {
-    id: "g44",
-    file: "/gallery/sad-pablo-turn-in-work.png",
-    formatName: "Sad Pablo Waiting",
-    captionPreview: "WAITING FOR THAT ONE KID TO TURN IN ANY WORK",
-    remixFormatId: "sad-pablo",
-    captions: { top: "Waiting for that one kid to turn in any work" },
-    situations: ["grading-pile", "students-not-reading"],
-  },
+  // Sad Pablo removed — controversial for a K-12 classroom tool.
 
   // ── Spider-Man Pointing ──────────────────────────────────────────
   {
@@ -1198,6 +1232,70 @@ export const galleryItems = [
     searchKeywords: ["test", "review"],
     situations: ["lesson-planning", "students-not-reading"],
   },
+  {
+    id: "g81",
+    file: "/gallery/woman-yelling-stay-on-top.png",
+    formatName: "Woman Yelling at Cat",
+    captionPreview:
+      "TEACHERS TRYING TO STAY ON TOP OF EVERYTHING / GRADE, PLAN, EMAIL, PD, IEPs / STUDENTS EXCITED ABOUT LEARNING",
+    remixFormatId: "woman-yelling-at-cat",
+    captions: {
+      woman:
+        "You need to grade, plan lessons, email parents, attend PD, and write IEPs!",
+      cat: "Me just trying to get my students excited about learning",
+    },
+    featured: true,
+    searchKeywords: ["overwhelm", "iep", "pd", "grading"],
+    situations: ["grading-pile", "lesson-planning", "admin-observation"],
+  },
+  {
+    id: "g82",
+    file: "/gallery/this-is-fine-classroom-keys.png",
+    formatName: "This Is Fine",
+    captionPreview:
+      "ME SAYING I'M READY FOR BACK TO SCHOOL / DON'T KNOW WHERE MY CLASSROOM KEYS ARE",
+    remixFormatId: "this-is-fine",
+    captions: {
+      top: "Me saying \"I'm ready for back to school\"",
+      bottom: "While I still don't know where I put my classroom keys.",
+    },
+    featured: true,
+    searchKeywords: ["back to school", "keys", "ready"],
+    situations: ["monday-chaos", "lesson-planning"],
+  },
+  {
+    id: "g83",
+    file: "/gallery/success-kid-perfect-game.png",
+    formatName: "Success Kid",
+    captionPreview:
+      "PLANNED AN AMAZING LESSON (3 HOURS) / FOUND THE PERFECT GAME IN 3 MINUTES",
+    remixFormatId: "success-kid",
+    captions: {
+      top: "Planned an amazing lesson that took 3 hours to make",
+      bottom: "Found the perfect game that hits the standard in 3 minutes",
+    },
+    featured: true,
+    searchKeywords: ["lesson", "game", "standard", "planning"],
+    situations: ["lesson-planning", "grading-pile"],
+  },
+  {
+    id: "g84",
+    file: "/gallery/oprah-resource-works.png",
+    formatName: "Oprah You Get",
+    captionPreview:
+      "TEACHERS WHEN THEY FIND A RESOURCE THAT WORKS / YOU GET ENGAGED STUDENTS / EVERYONE WINS",
+    remixFormatId: "oprah-you-get",
+    captions: {
+      header: "Teachers when they find a resource that actually works",
+      leftTop: "You get engaged students!",
+      rightTop: "You get less prep time!",
+      leftBottom: "You get real results!",
+      everyone: "Everyone wins!",
+    },
+    featured: true,
+    searchKeywords: ["oprah", "resource", "engaged", "prep"],
+    situations: ["lesson-planning", "differentiation"],
+  },
 ];
 
 // Map source AI-generated filename → final gallery file name.
@@ -1229,7 +1327,6 @@ export const gallerySourceMap = {
   "meme-buff-doge-cheems-school-year.png": "buff-doge-cheems-school-year.png",
   "meme-y-u-no-syllabus.png": "y-u-no-syllabus.png",
   "meme-galaxy-brain-syllabus.png": "galaxy-brain-syllabus.png",
-  "meme-they-dont-know-tired.png": "they-dont-know-tired.png",
   "meme-stonks-laminator.png": "stonks-laminator.png",
   "meme-first-world-copier.png": "first-world-copier.png",
   "meme-trade-offer-planning.png": "trade-offer-planning.png",
@@ -1260,9 +1357,49 @@ export function getGalleryItemByFile(file) {
   return galleryItems.find((g) => g.file === clean) || null;
 }
 
+/** All curated variants that remix the same blank template. */
+export function getGalleryVariantsForFormat(formatId, { excludeId } = {}) {
+  if (!formatId) return [];
+  return galleryItems.filter(
+    (g) =>
+      g.remixFormatId === formatId &&
+      g.captions &&
+      g.customizable !== false &&
+      g.id !== excludeId
+  );
+}
+
+/**
+ * Collapse a flat item list into template groups (one cover + variants).
+ * Featured items win as covers; otherwise the newest caption is the cover
+ * so freshly added memes show up immediately in the grid.
+ */
+export function groupGalleryItemsByTemplate(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const key = item.remixFormatId || `solo:${item.id}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        key,
+        formatId: item.remixFormatId || null,
+        formatName: item.formatName || "Meme",
+        cover: item,
+        variants: [],
+      };
+      groups.set(key, group);
+    }
+    group.variants.push(item);
+    if (item.featured || !group.cover.featured) {
+      group.cover = item;
+    }
+  }
+  return [...groups.values()];
+}
+
 // Bump whenever gallery PNGs are regenerated so browsers fetch the new
 // pixels instead of reusing a stale cached copy (filenames don't change).
-export const GALLERY_ASSET_VERSION = "20260724-no-logo";
+export const GALLERY_ASSET_VERSION = "20260812-harold3";
 
 /** Append a cache-busting version to a gallery/static image path. */
 export function galleryImg(file) {

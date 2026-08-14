@@ -51,3 +51,8 @@ assets/
 *.xlsx
 check-*.png
 new19maymeeting*.txt
+.env*
+tmp-qa/
+exports/
+"new feedback vadim.txt"
+new feedback vadim.txt

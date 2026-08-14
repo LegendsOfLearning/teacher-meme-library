@@ -11,6 +11,7 @@
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { customAlphabet } from "nanoid";
 import { list, put } from "@vercel/blob";
 
@@ -19,8 +20,9 @@ const nanoid = customAlphabet(
   10
 );
 
-const PUBLIC_MEMES_DIR = path.join(process.cwd(), "public", "memes");
-const DATA_MEMES_DIR = path.join(process.cwd(), "data", "memes");
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const PUBLIC_MEMES_DIR = path.join(ROOT, "public", "memes");
+const DATA_MEMES_DIR = path.join(ROOT, "data", "memes");
 
 function blobEnabled() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
@@ -80,6 +82,7 @@ async function saveMemeBlob({ id, pngBuffer, format, captions, meta }) {
   await put(`memes/${id}.json`, JSON.stringify(record), {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: "application/json",
   });
   return record;
@@ -211,6 +214,7 @@ async function incrementMemeViewsBlob(id) {
   await put(`memes/${id}.json`, JSON.stringify(record), {
     access: "public",
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: "application/json",
   });
   return record.views;
