@@ -51,3 +51,7 @@ assets/
 *.xlsx
 check-*.png
 new19maymeeting*.txt
+
+# box-only evals
+data/evals.db*
+data/evals/

@@ -6,7 +6,14 @@ const nextConfig = {
   // React client bundle from hydrating — the page renders but nothing is
   // interactive. Allowing common local origins fixes that without exposing
   // anything beyond the local machine.
-  allowedDevOrigins: ["localhost", "127.0.0.1", "0.0.0.0"],
+  allowedDevOrigins: [
+    "localhost",
+    "127.0.0.1",
+    "0.0.0.0",
+    "admin.tail35e0ce.ts.net",
+  ],
+  // Native module used by the box-only admin/evals backend.
+  serverExternalPackages: ["better-sqlite3"],
 };
 
 export default nextConfig;
