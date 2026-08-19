@@ -14,7 +14,11 @@ import { runRoutedGeneration } from "../../agentic/pipeline.js";
 import { getFormat } from "../../agentic/template-render.js";
 import { newMemeId, saveMeme } from "./storage.js";
 
-const DEFAULT_LADDER = ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5"];
+// Cost-optimal per eval runs 8-13: cheap generator, escalate to Opus only on
+// rejection — always gated by a fixed Opus critic (same-tier critics are
+// lenient; judge data runs 10-12).
+const DEFAULT_LADDER = ["claude-haiku-4-5", "claude-opus-5"];
+const DEFAULT_CRITIC = "claude-opus-5";
 
 export function agenticEnabled() {
   return process.env.AGENTIC_GENERATE === "true";
@@ -80,6 +84,7 @@ export async function agenticGenerateMeme({ situation, tone, formatId }) {
     {
       promptSetId: prompts.promptSetId,
       prompts,
+      criticModel: process.env.AGENTIC_CRITIC_MODEL || DEFAULT_CRITIC,
       maxRenders: 4,
       maxCriticRounds: 2,
       maxUsd: Number(process.env.RUNTIME_MAX_USD_PER_MEME || 1.0),

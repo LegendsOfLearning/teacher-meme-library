@@ -64,7 +64,9 @@ const ipSafeOnly = process.argv.includes("--ip-safe");
 
 const config = {
   orchestratorModel,
-  criticModel: orchestratorModel,
+  // --critic-model lets a cheap generator be gated by a strong critic —
+  // the judge data shows same-model critics are lenient for weak models.
+  criticModel: arg("critic-model", orchestratorModel),
   modelLadder: modelLadder.length ? modelLadder : undefined,
   maxRenders: Number(arg("max-renders", "6")),
   maxCriticRounds: 2,

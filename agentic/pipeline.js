@@ -311,7 +311,9 @@ export async function runRoutedGeneration(brief, config = {}, ladder) {
     const result = await runAgenticGeneration(brief, {
       ...config,
       orchestratorModel: model,
-      criticModel: model,
+      // A fixed strong critic gates every tier — same-tier critics are
+      // lenient for weak models (proven by judge data, runs 10-12).
+      criticModel: config.criticModel || model,
     });
     allLedger.push(...result.ledger);
     allTrace.push(...result.trace);
