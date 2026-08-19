@@ -18,6 +18,10 @@ import {
 import { templateCatalog, renderTemplate } from "./template-render.js";
 import { assertBudget, recordSpend } from "./budget.js";
 
+// Bumped whenever the pipeline's behavior changes; stamped into every
+// generation's provenance so results are traceable to the code that made them.
+export const PIPELINE_VERSION = "2.0.0";
+
 const TOOLS = [
   {
     name: "render_meme",
@@ -243,6 +247,13 @@ Begin.`;
         ledger,
         trace,
         costUsd: totalUsd(),
+        provenance: {
+          pipelineVersion: PIPELINE_VERSION,
+          engine: "agentic",
+          promptSetId: cfg.promptSetId ?? null,
+          orchestratorModel: cfg.orchestratorModel,
+          criticModel: cfg.criticModel,
+        },
       };
       if (verdict.approve) {
         recordRuntimeSpend();
@@ -271,5 +282,51 @@ Begin.`;
     trace,
     costUsd: totalUsd(),
     approved: false,
+    provenance: {
+      pipelineVersion: PIPELINE_VERSION,
+      engine: "agentic",
+      promptSetId: cfg.promptSetId ?? null,
+      orchestratorModel: cfg.orchestratorModel,
+      criticModel: cfg.criticModel,
+    },
+  };
+}
+
+/**
+ * Cost router: run the generation on the cheapest model first and escalate
+ * up the ladder only when the adversarial critic refuses to approve.
+ * @param {string[]} ladder model ids, cheapest first,
+ *   e.g. ["claude-haiku-4-5", "claude-sonnet-5", "claude-opus-5"]
+ * @returns the winning tier's result plus {ledger, trace, costUsd} aggregated
+ *   across ALL attempted tiers and provenance.escalations.
+ */
+export async function runRoutedGeneration(brief, config = {}, ladder) {
+  const models = ladder?.length ? ladder : ["claude-opus-5"];
+  const allLedger = [];
+  const allTrace = [];
+  let last = null;
+  for (let i = 0; i < models.length; i += 1) {
+    const model = models[i];
+    allTrace.push({ step: "router_attempt", tier: i + 1, model });
+    const result = await runAgenticGeneration(brief, {
+      ...config,
+      orchestratorModel: model,
+      criticModel: model,
+    });
+    allLedger.push(...result.ledger);
+    allTrace.push(...result.trace);
+    last = result;
+    if (result.approved) break;
+  }
+  return {
+    ...last,
+    ledger: allLedger,
+    trace: allTrace,
+    costUsd: allLedger.reduce((s, e) => s + e.usd, 0),
+    provenance: {
+      ...last.provenance,
+      router: models,
+      escalations: allTrace.filter((t) => t.step === "router_attempt").length - 1,
+    },
   };
 }

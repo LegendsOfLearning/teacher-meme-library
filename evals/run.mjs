@@ -24,7 +24,7 @@ if (fs.existsSync(envFile)) {
   }
 }
 
-const { runAgenticGeneration } = await import("../agentic/pipeline.js");
+const { runAgenticGeneration, runRoutedGeneration } = await import("../agentic/pipeline.js");
 const { canonicalPrompts, sampledPrompts } = await import("./prompts.mjs");
 const db = await import("../agentic/db.js");
 const promptStore = await import("../agentic/prompt-store.js");
@@ -44,8 +44,17 @@ const runAll = process.argv.includes("--all");
 const limit = Number(arg("limit", "0")) || 0;
 const concurrency = Number(arg("concurrency", "3")) || 3;
 const orchestratorModel = arg("model", "claude-opus-5");
+// --models "claude-haiku-4-5,claude-sonnet-5,claude-opus-5" = escalation
+// router: cheapest first, escalate only when the critic won't approve.
+const modelLadder = arg("models", "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-const promptSetId = Number(arg("prompt-set", String(promptStore.seedPromptSet())));
+// Default: the ACTIVE prompt set (clearly marked in prompt-cli / admin).
+const promptSetId = Number(
+  arg("prompt-set", String(promptStore.getActivePromptSet().id))
+);
 const promptSet = promptStore.getPromptSet(promptSetId);
 if (!promptSet) {
   console.error(`prompt set ${promptSetId} not found`);
@@ -56,6 +65,7 @@ const ipSafeOnly = process.argv.includes("--ip-safe");
 const config = {
   orchestratorModel,
   criticModel: orchestratorModel,
+  modelLadder: modelLadder.length ? modelLadder : undefined,
   maxRenders: Number(arg("max-renders", "6")),
   maxCriticRounds: 2,
   maxUsd: Number(arg("max-usd", "2.0")),
@@ -103,14 +113,14 @@ async function runOne(p) {
     return;
   }
   try {
-    const result = await runAgenticGeneration(
-      {
-        situation: p.situation,
-        tone: p.tone,
-        captionIdea: p.captionIdea,
-      },
-      config
-    );
+    const brief = {
+      situation: p.situation,
+      tone: p.tone,
+      captionIdea: p.captionIdea,
+    };
+    const result = modelLadder.length
+      ? await runRoutedGeneration(brief, config, modelLadder)
+      : await runAgenticGeneration(brief, config);
     const promptDir = path.join(runDir, p.id);
     fs.mkdirSync(promptDir, { recursive: true });
     let imagePath = null;

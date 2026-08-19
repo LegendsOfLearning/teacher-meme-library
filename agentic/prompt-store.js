@@ -1,6 +1,8 @@
 // Versioned prompt-sets. The orchestrator/critic system prompts are data,
 // not code: the optimizer agent proposes new versions here, eval runs pin
 // the version they used, and the grid compares them over time.
+import fs from "fs";
+import path from "path";
 import { getDb } from "./db.js";
 
 export const SEED_ORCHESTRATOR_SYSTEM = `You are the meme director for a school-safe teacher meme generator (K-8 brand, Legends of Learning). You work ONLY with the real, existing meme templates in the catalog — you never invent imagery; you pick a format and write captions for its zones.
@@ -16,7 +18,8 @@ Iterate: render, inspect, improve captions or switch formats, render again. When
 export const SEED_CRITIC_SYSTEM = `You are an adversarial reviewer for a K-8 education brand. Your default is REJECT. You are judging a caption-on-real-template meme. Approve only if (a) captions sit cleanly in their zones — nothing overflowing, clipped, cramped, or too small to read, and no avoidable letterboxing/black bars, (b) spelling and grammar are correct, (c) it is school-safe, and (d) the captions genuinely follow this format's canonical joke structure and the joke lands for teachers. Respond with JSON only: {"approve": boolean, "issues": ["..."]}.`;
 
 function ensureTable() {
-  getDb().exec(`
+  const d = getDb();
+  d.exec(`
     CREATE TABLE IF NOT EXISTS prompt_sets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       label TEXT NOT NULL,
@@ -28,6 +31,45 @@ function ensureTable() {
       created_at TEXT NOT NULL
     );
   `);
+  const cols = d.prepare("PRAGMA table_info(prompt_sets)").all();
+  if (!cols.some((c) => c.name === "is_active")) {
+    d.exec("ALTER TABLE prompt_sets ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0");
+  }
+}
+
+/** The ACTIVE set — the one production and default eval runs use. */
+export function getActivePromptSet() {
+  ensureTable();
+  const row = getDb()
+    .prepare("SELECT * FROM prompt_sets WHERE is_active = 1 LIMIT 1")
+    .get();
+  return row || getPromptSet(seedPromptSet());
+}
+
+/** Promote a set to ACTIVE and write the committed frontend snapshot. */
+export function promoteActive(id) {
+  ensureTable();
+  const set = getPromptSet(id);
+  if (!set) throw new Error(`prompt set ${id} not found`);
+  const d = getDb();
+  d.prepare("UPDATE prompt_sets SET is_active = 0 WHERE is_active = 1").run();
+  d.prepare("UPDATE prompt_sets SET is_active = 1 WHERE id = ?").run(id);
+  const snapshot = {
+    _comment:
+      "ACTIVE prompt-set snapshot, written by `node agentic/prompt-cli.mjs --promote <id>`. Used by the Vercel frontend; the box DB (prompt_sets) is the source of truth. Do not hand-edit.",
+    promptSetId: set.id,
+    label: set.label,
+    source: set.source,
+    parentId: set.parent_id,
+    promotedAt: new Date().toISOString(),
+    orchestrator_system: set.orchestrator_system,
+    critic_system: set.critic_system,
+  };
+  fs.writeFileSync(
+    path.join(process.cwd(), "agentic", "active-prompts.json"),
+    JSON.stringify(snapshot, null, 2)
+  );
+  return snapshot;
 }
 
 export function seedPromptSet() {
@@ -57,7 +99,7 @@ export function listPromptSets() {
   ensureTable();
   return getDb()
     .prepare(
-      "SELECT id, label, parent_id, source, rationale, created_at, length(orchestrator_system) AS orch_len, length(critic_system) AS critic_len FROM prompt_sets ORDER BY id DESC"
+      "SELECT id, label, parent_id, source, rationale, created_at, is_active, length(orchestrator_system) AS orch_len, length(critic_system) AS critic_len FROM prompt_sets ORDER BY id DESC"
     )
     .all();
 }

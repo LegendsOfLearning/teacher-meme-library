@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { findBlockedTerm } from "../../lib/blocklist";
 import { describeBlock, moderateText } from "../../lib/moderation";
 import { generateMeme } from "../../lib/workflow";
+import { agenticEnabled, agenticGenerateMeme } from "../../lib/agentic-generate";
 import { getSituationById, getToneById } from "../../lib/content";
 import { getFormatById } from "../../lib/meme-formats";
 
@@ -68,6 +69,25 @@ export async function POST(request) {
           },
           { status: 400 }
         );
+      }
+    }
+
+    // AGENTIC_GENERATE=true routes generation through the agentic pipeline
+    // (cost-routed model ladder + adversarial critic, ACTIVE prompt-set
+    // snapshot). Off by default; the classic workflow remains the fallback
+    // on any agentic failure so users always get a meme.
+    if (agenticEnabled()) {
+      try {
+        const record = await agenticGenerateMeme({ situation, tone, formatId });
+        return NextResponse.json(record);
+      } catch (e) {
+        if (e.code === "RUNTIME_BUDGET_EXHAUSTED") {
+          return NextResponse.json(
+            { error: "Meme generation is taking a breather — try again soon." },
+            { status: 429 }
+          );
+        }
+        console.error("Agentic generation failed; falling back to classic:", e);
       }
     }
 

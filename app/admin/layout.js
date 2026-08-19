@@ -14,6 +14,7 @@ export default function AdminLayout({ children }) {
         <strong>Meme Evals Admin</strong>
         <Link href="/admin">Runs</Link>
         <Link href="/admin/grid">Comparison Grid</Link>
+        <Link href="/admin/prompts">Prompt Sets</Link>
       </nav>
       {children}
     </div>

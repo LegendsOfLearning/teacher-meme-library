@@ -745,6 +745,13 @@ export async function generateMeme({
       galleryId: galleryItem?.id || null,
       galleryFile: galleryItem?.file || null,
       cleanBase: galleryItem?.cleanBase || null,
+      // Version provenance: classic (non-agentic) engine. Records stay
+      // cached permanently; provenance says what produced each meme.
+      provenance: {
+        engine: "classic",
+        workflowVersion: "1.1",
+        captionModel: process.env.OPENAI_MODEL || null,
+      },
     },
   });
   trace.push({ step: 9, name: "save", id });
