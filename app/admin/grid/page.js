@@ -80,6 +80,11 @@ export default async function GridPage({ searchParams }) {
                           <span style={{ fontSize: 12, color: c.approved ? "#080" : "#c60" }}>
                             {c.approved ? "✓" : "✗"} ${(c.cost_usd || 0).toFixed(3)} ·{" "}
                             {c.renders}r
+                            {c.judge_score != null && (
+                              <strong style={{ marginLeft: 6, color: c.judge_score >= 7 ? "#080" : c.judge_score >= 5 ? "#c60" : "#c00" }}>
+                                J{c.judge_score}
+                              </strong>
+                            )}
                           </span>
                         </div>
                       ) : (

@@ -117,7 +117,7 @@ export function gridData(runIds) {
   return d
     .prepare(
       `SELECT run_id, prompt_id, status, approved, image_path, renders,
-              cost_usd, duration_ms
+              cost_usd, duration_ms, judge_score
        FROM generations WHERE run_id IN (${placeholders})`
     )
     .all(...runIds);
