@@ -83,7 +83,10 @@ for (const runId of runIds) {
     const res = await anthropic.messages.create({
       model: JUDGE_MODEL,
       max_tokens: 800,
-      system: JUDGE_SYSTEM,
+      // Byte-stable prefix across every judged meme — cache it.
+      system: [
+        { type: "text", text: JUDGE_SYSTEM, cache_control: { type: "ephemeral" } },
+      ],
       messages: [
         {
           role: "user",

@@ -15,11 +15,19 @@ export const PRICES = {
   },
 };
 
+// Prompt-cache multipliers (Anthropic): a 5-minute cache write costs 1.25x
+// the base input rate, a cache read 0.1x. `input_tokens` excludes both, so
+// ignoring them would under-report the true cost of every cached call.
+const CACHE_WRITE_MULTIPLIER = 1.25;
+const CACHE_READ_MULTIPLIER = 0.1;
+
 export function anthropicCallCost(model, usage) {
   const p = PRICES.anthropic[model];
   if (!p || !usage) return 0;
   return (
     ((usage.input_tokens || 0) * p.input +
+      (usage.cache_creation_input_tokens || 0) * p.input * CACHE_WRITE_MULTIPLIER +
+      (usage.cache_read_input_tokens || 0) * p.input * CACHE_READ_MULTIPLIER +
       (usage.output_tokens || 0) * p.output) /
     1_000_000
   );

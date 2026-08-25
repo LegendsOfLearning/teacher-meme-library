@@ -24,7 +24,8 @@ if (fs.existsSync(envFile)) {
   }
 }
 
-const { runAgenticGeneration, runRoutedGeneration } = await import("../agentic/pipeline.js");
+const { runAgenticGeneration, runRoutedGeneration, runCheapGeneration } =
+  await import("../agentic/pipeline.js");
 const { canonicalPrompts, sampledPrompts } = await import("./prompts.mjs");
 const db = await import("../agentic/db.js");
 const promptStore = await import("../agentic/prompt-store.js");
@@ -61,16 +62,28 @@ if (!promptSet) {
   process.exit(1);
 }
 const ipSafeOnly = process.argv.includes("--ip-safe");
+// --engine cheap: deterministic lint replaces the vision loop; the writer is
+// text-only and one critic call is the whole vision spend.
+const engine = arg("engine", "agentic");
+if (!["agentic", "cheap"].includes(engine)) {
+  console.error(`--engine must be "agentic" or "cheap" (got "${engine}")`);
+  process.exit(1);
+}
 
 const config = {
+  engine,
   orchestratorModel,
+  // The cheap engine's writer is the model flag; its critic is the vision gate.
+  writerModel: engine === "cheap" ? arg("model", "claude-haiku-4-5") : orchestratorModel,
   // --critic-model lets a cheap generator be gated by a strong critic —
   // the judge data shows same-model critics are lenient for weak models.
   criticModel: arg("critic-model", orchestratorModel),
   modelLadder: modelLadder.length ? modelLadder : undefined,
   maxRenders: Number(arg("max-renders", "6")),
   maxCriticRounds: 2,
-  maxUsd: Number(arg("max-usd", "2.0")),
+  maxWriterRounds: Number(arg("max-writer-rounds", "3")),
+  maxVisionChecks: Number(arg("max-vision-checks", "2")),
+  maxUsd: Number(arg("max-usd", engine === "cheap" ? "0.5" : "2.0")),
   ipSafeOnly,
   promptSetId,
   prompts: {
@@ -88,7 +101,7 @@ if (limit) prompts = prompts.slice(0, limit);
 // at the per-run cap. Rendering is local templates ($0); spend is Claude tokens.
 const caps = budget.getCaps();
 const perRunCap = Number(arg("max-run-usd", String(caps.per_run_cap_usd)));
-const estPerMeme = 0.2;
+const estPerMeme = engine === "cheap" ? 0.05 : 0.2;
 budget.assertBudget(Math.min(prompts.length * estPerMeme, perRunCap), "evals/run.mjs", "eval");
 let capped = false;
 
@@ -97,7 +110,9 @@ const runId = db.createRun(label, { ...configForRecord, promptCount: prompts.len
 const runDir = path.join(db.IMAGES_DIR, String(runId));
 fs.mkdirSync(runDir, { recursive: true });
 console.log(
-  `run ${runId} "${label}" — ${prompts.length} prompts, model=${orchestratorModel}, concurrency=${concurrency}`
+  `run ${runId} "${label}" — ${prompts.length} prompts, engine=${engine}, model=${
+    engine === "cheap" ? `${config.writerModel} (writer) + ${config.criticModel} (critic)` : orchestratorModel
+  }, concurrency=${concurrency}`
 );
 
 let done = 0;
@@ -105,6 +120,10 @@ let totalCost = 0;
 // Batch-level variety: formats already used twice in this run go on the
 // avoid list for subsequent briefs (concurrency makes this best-effort).
 const formatUsage = new Map();
+// Token/cache accounting, split by role, so cost per meme is explainable and
+// prompt-cache effectiveness is measured rather than assumed.
+const newBucket = () => ({ calls: 0, input: 0, output: 0, cacheWrite: 0, cacheRead: 0, usd: 0 });
+const tokenTotals = { writer: newBucket(), critic: newBucket(), other: newBucket() };
 
 async function runOne(p) {
   const t0 = Date.now();
@@ -127,9 +146,12 @@ async function runOne(p) {
       .filter(([, n]) => n >= 2)
       .map(([f]) => f);
     const cfgOne = { ...config, avoidFormats };
-    const result = modelLadder.length
-      ? await runRoutedGeneration(brief, cfgOne, modelLadder)
-      : await runAgenticGeneration(brief, cfgOne);
+    const result =
+      engine === "cheap"
+        ? await runCheapGeneration(brief, cfgOne)
+        : modelLadder.length
+          ? await runRoutedGeneration(brief, cfgOne, modelLadder)
+          : await runAgenticGeneration(brief, cfgOne);
     if (result.formatId) {
       formatUsage.set(result.formatId, (formatUsage.get(result.formatId) || 0) + 1);
     }
@@ -156,9 +178,32 @@ async function runOne(p) {
       durationMs: Date.now() - t0,
     });
     totalCost += result.costUsd;
+    for (const e of result.ledger || []) {
+      const u = e.usage || {};
+      const bucket = e.step.startsWith("writer")
+        ? tokenTotals.writer
+        : e.step.startsWith("critic")
+          ? tokenTotals.critic
+          : tokenTotals.other;
+      bucket.calls += 1;
+      bucket.input += u.input_tokens || 0;
+      bucket.output += u.output_tokens || 0;
+      bucket.cacheWrite += u.cache_creation_input_tokens || 0;
+      bucket.cacheRead += u.cache_read_input_tokens || 0;
+      bucket.usd += e.usd || 0;
+    }
+    const lintFails = (result.trace || []).filter(
+      (t) => t.step === "lint" && t.ok === false
+    ).length;
+    const writerCalls = (result.ledger || []).filter((e) => e.step.startsWith("writer")).length;
+    const criticCalls = (result.ledger || []).filter((e) => e.step.startsWith("critic")).length;
     done += 1;
     console.log(
-      `  [${done}/${prompts.length}] ${p.id} ${result.approved ? "APPROVED" : "unapproved"} $${result.costUsd.toFixed(3)} (${result.candidates.length} renders)`
+      `  [${done}/${prompts.length}] ${p.id} ${result.approved ? "APPROVED" : "unapproved"} $${result.costUsd.toFixed(3)} (${result.candidates.length} renders${
+        engine === "cheap"
+          ? `, writer x${writerCalls}, critic x${criticCalls}, lint rejections ${lintFails}`
+          : ""
+      })`
     );
   } catch (e) {
     db.saveGeneration({
@@ -182,6 +227,21 @@ await Promise.all(
 
 db.finishRun(runId, capped ? "capped" : "done");
 console.log(`run ${runId} ${capped ? "CAPPED" : "complete"} — total $${totalCost.toFixed(2)}`);
+
+// Cost breakdown by role + measured prompt-cache effect.
+{
+  const nDone = Math.max(done, 1);
+  for (const [role, b] of Object.entries(tokenTotals)) {
+    if (!b.calls) continue;
+    const cacheable = b.input + b.cacheWrite + b.cacheRead;
+    console.log(
+      `  ${role}: ${b.calls} calls, in ${b.input} / cache-write ${b.cacheWrite} / cache-read ${b.cacheRead} (${
+        cacheable ? ((b.cacheRead / cacheable) * 100).toFixed(0) : 0
+      }% of input served from cache), out ${b.output}, $${b.usd.toFixed(3)} ($${(b.usd / nDone).toFixed(4)}/meme)`
+    );
+  }
+  console.log(`  average cost/meme: $${(totalCost / nDone).toFixed(4)}`);
+}
 
 // Batch diversity report: repetition is a brand defect even when every
 // individual meme is clean, so it is measured per run.

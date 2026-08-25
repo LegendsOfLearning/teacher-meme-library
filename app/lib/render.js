@@ -833,6 +833,10 @@ const CAPTION_STROKE_RATIO = 0.1;
 // Leading between wrapped caption lines. 1.0 (none) made row strokes collide.
 const CAPTION_LEADING = 1.12;
 
+// Absolute smallest font fitText will ever choose. A caption that lands here
+// is text the renderer could not fit any other way.
+export const FIT_MIN_FS = 16;
+
 // Choose font size + line layout. Tries every `k` in [2..maxLines],
 // picks the largest font, then among sizes within 85% of that best,
 // prefers fewer lines (avoids tiny 2-line wraps and amateurish pyramids).
@@ -849,7 +853,7 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
   const charPerFs = avgCharWidth(family) * (fillPanel ? 0.9 : 1);
   const cap = Math.max(14, Math.floor(startSize));
   const charCount = words.join(" ").length;
-  const MIN_FS = 16;
+  const MIN_FS = FIT_MIN_FS;
   // Shrink on one line first, but wrap before captions go subtitle-thin
   // in tall letterbox / edge bands (was flooring all the way to 20px).
   const SINGLE_LINE_FLOOR = Math.max(
@@ -1014,7 +1018,13 @@ export function getRenderSize(format) {
   };
 }
 
-function measureZoneFs(zone, rawText, imgW, imgH) {
+/**
+ * The renderer's own fit decision for one zone, exposed so non-rendering
+ * callers (the deterministic render lint) can ask "how will this caption
+ * actually lay out?" without re-implementing fitText's heuristics.
+ * Returns null for an empty caption.
+ */
+export function measureZoneFit(zone, rawText, imgW, imgH) {
   if (rawText == null || String(rawText).trim() === "") return null;
   const style = resolveZoneStyle(zone);
   const text = style.transform(normalizeCaptionText(String(rawText).trim()));
@@ -1032,26 +1042,38 @@ function measureZoneFs(zone, rawText, imgW, imgH) {
           ? 52
           : 0);
   const startSize = Math.max(zoneMinFs || 0, Math.min(naturalStart, zoneMaxFs));
-  let { fs } = fitText(
-    text,
-    w,
-    h,
-    zone.maxLines ?? 2,
-    style.family,
-    startSize
-  );
-  if (zoneMinFs > 0 && fs < zoneMinFs) {
+  const maxLines = zone.maxLines ?? 2;
+  let fit = fitText(text, w, h, maxLines, style.family, startSize);
+  if (zoneMinFs > 0 && fit.fs < zoneMinFs) {
     const retry = fitText(
       text,
       w,
       h,
-      zone.maxLines ?? 2,
+      maxLines,
       style.family,
       Math.max(zoneMinFs, zoneMaxFs, startSize)
     );
-    fs = retry.fs >= zoneMinFs ? retry.fs : zoneMinFs;
+    fit = retry.fs >= zoneMinFs ? retry : { ...retry, fs: zoneMinFs };
   }
-  return fs;
+  return {
+    fs: fit.fs,
+    lines: fit.lines,
+    lineHeight: fit.lineHeight,
+    text,
+    boxW: w,
+    boxH: h,
+    maxLines,
+    family: style.family,
+    charWidth: avgCharWidth(style.family),
+    lineLeading: CAPTION_LEADING,
+    minFontSize: zoneMinFs,
+    maxFontSize: zoneMaxFs,
+    absoluteFloorFs: FIT_MIN_FS,
+  };
+}
+
+function measureZoneFs(zone, rawText, imgW, imgH) {
+  return measureZoneFit(zone, rawText, imgW, imgH)?.fs ?? null;
 }
 
 function computeSyncSizeCaps(format, captions, imgW, imgH) {
