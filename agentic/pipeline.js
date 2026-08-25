@@ -370,7 +370,7 @@ export async function runCheapGeneration(brief, config = {}) {
     cfg.prompts?.writer_system || SEED_WRITER_SYSTEM
   }\n\nFORMAT CATALOG (real memes — you must use one of these):\n${templateCatalog(
     { ipSafe: cfg.ipSafeOnly }
-  )}\n\nGEOMETRY (already measured in code, not up for debate): these formats cannot fill the square canvas and always render with solid side pillars, so the linter rejects them on sight — never pick them: ${PILLARBOX_FORMAT_IDS.join(", ")}.`;
+  )}\n\nGEOMETRY (already measured in code, not up for debate): the renderer is full-bleed, so art always fills the square frame. These formats are the exception — they are vertical multi-panel stacks whose top and bottom panels get cropped away by the square crop, taking their captions with them. Never pick them: ${PILLARBOX_FORMAT_IDS.join(", ")}.`;
   const criticSystem = cfg.prompts?.critic_system || SEED_CRITIC_SYSTEM;
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

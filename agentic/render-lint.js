@@ -24,19 +24,26 @@ const CANON_BLANK_ZONES = {
   "anakin-padme": ["p3"],
 };
 
-// Formats whose art the renderer cannot fit into the square canvas without
-// solid side pillars (or, for stonks, whose gallery source composites to a
-// black frame). Measured, not guessed: render every format with its own
-// exampleCaptions and read leftFrac/rightFrac out of lintRender. Re-measure
-// when templates change. Aspect ratio alone does NOT predict this — formats
-// that letterbox their captions get cover-fitted instead.
+// Formats the orchestrator must not pick, because the square canvas costs them
+// their structure. As of the full-bleed renderer (2026-08-25) NO format pillar-
+// bars any more — art is cover-cropped to the edges instead of contain-padded —
+// so this list is no longer about black bars. What survives it is the other
+// failure the square frame can cause: a vertical multi-panel stack loses the
+// top and bottom of its art to the crop, and the caption zones anchored to
+// those panels get clamped to slivers.
+//
+// Measured, not guessed: render every format with its own exampleCaptions,
+// compare each zone's mapped box against its declared box (planFullBleedRender
+// in app/lib/render.js exposes both), and list the formats that keep under 50%
+// of a zone. Re-measure when templates or zone geometry change.
+//   two-buttons     — 0.66 aspect; the crop takes 40% of the height, the button
+//                     panel is cut off at the top and the "person" label at the
+//                     bottom is clamped to nothing (keeps 27% of its box).
+//   expanding-brain — 0.71 aspect; brains 1 and 4 are cropped away, and their
+//                     captions keep 46% / 39% of their boxes.
 export const PILLARBOX_FORMAT_IDS = [
-  "grumpy-cat",
-  "hide-the-pain-harold",
   "two-buttons",
   "expanding-brain",
-  "waiting-skeleton",
-  "stonks",
 ];
 
 function zoneIsOptional(format, zone) {
@@ -128,7 +135,10 @@ export async function lintRender({ png, format, captions = {} }) {
   const notes = [];
   const metrics = { zones: {} };
 
-  // --- 1. Side pillar bars (never intentional; top/bottom bands are by design)
+  // --- 1. Side pillar bars. The renderer is full-bleed and pads nothing, so
+  // this is now a regression guard rather than a filter: it should never fire.
+  // If it does, geometry broke in app/lib/render.js — do not fix it by
+  // rewriting captions.
   if (png) {
     const bars = await sideBarFractions(png);
     metrics.leftFrac = Number(bars.leftFrac.toFixed(4));
@@ -140,20 +150,18 @@ export async function lintRender({ png, format, captions = {} }) {
     ]) {
       if (frac >= SIDE_BAR_BLOCKING_FRAC) {
         blocking.push(
-          `Renderer padded the ${side} edge with a solid bar covering ${(frac * 100).toFixed(0)}% of the canvas width. This template's art cannot fill a square frame — pick a different format (square art, or a multi-panel grid/stack).`
+          `Renderer left a solid bar on the ${side} edge covering ${(frac * 100).toFixed(0)}% of the canvas width. The renderer is full-bleed and should never pad a side — this is a geometry regression in app/lib/render.js, not something a caption rewrite can fix.`
         );
       } else if (frac > 0.01) {
         notes.push(`minor ${side} pillar bar: ${(frac * 100).toFixed(1)}% of width`);
       }
     }
 
-    // Top/bottom bands are measured but NEVER blocking. A band is by design
-    // when the format puts a caption in it (placeInLetterbox) or when it is
-    // the brand footer strip; the rest is renderer padding of wide art, which
-    // affects 20 of the 43 catalog formats. Blocking on it would delete most
-    // of the catalog and take the batch-variety requirement with it, and no
-    // caption rewrite can fix it — it is a renderer/template job. Recorded as
-    // a note so the size of the problem stays visible in every trace.
+    // Top/bottom bands are measured but NEVER blocking. Under the full-bleed
+    // renderer every remaining band is deliberate: a caption letterbox the
+    // format asked for (placeInLetterbox) or the brand footer strip. Anything
+    // else showing up here means the renderer padded, which is a geometry bug,
+    // so it stays recorded in the trace rather than aimed at the writer.
     metrics.topFrac = Number(bars.topFrac.toFixed(4));
     metrics.bottomFrac = Number(bars.bottomFrac.toFixed(4));
     const topPad = hasLetterboxCaption(format, captions, "top") ? 0 : bars.topFrac;
@@ -166,9 +174,9 @@ export async function lintRender({ png, format, captions = {} }) {
     ]) {
       if (frac >= SIDE_BAR_BLOCKING_FRAC) {
         notes.push(
-          `renderer padding on the ${edge} edge: an empty black band over ${(frac * 100).toFixed(
+          `unexpected black band on the ${edge} edge over ${(frac * 100).toFixed(
             0
-          )}% of canvas height, with no caption in it (wide template art in a square frame)`
+          )}% of canvas height with no caption in it — the full-bleed renderer should not have produced this`
         );
       }
     }
@@ -222,9 +230,14 @@ export async function lintRender({ png, format, captions = {} }) {
       );
       continue;
     }
-    if (fit.fs <= fit.absoluteFloorFs) {
+    // Readability floor (reviewer feedback 2026-08-25: copy kept shrinking to
+    // fit): below 3% of canvas height a caption is mush at thumbnail size.
+    const readableMinFs = Math.max(fit.absoluteFloorFs, imgH * 0.03);
+    if (fit.fs <= readableMinFs) {
       blocking.push(
-        `Zone "${zone.key}" only fits at the minimum font size (${fit.fs}px) — it will be unreadable at thumbnail size. Cut it to roughly ${Math.max(
+        `Zone "${zone.key}" only fits at ${fit.fs}px, below the readable floor (${Math.round(
+          readableMinFs
+        )}px) — it will be unreadable at thumbnail size. Cut it to roughly ${Math.max(
           10,
           Math.round(String(raw).trim().length * 0.6)
         )} characters.`

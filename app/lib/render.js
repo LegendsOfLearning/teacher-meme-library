@@ -589,74 +589,183 @@ const FOOTER_BAND_MIN_FRAC = 0.085;
 const CAPTION_LETTERBOX_FRAC = 0.145;
 
 /**
- * Shrink photo content so top/bottom caption letterboxes always exist when
- * the format asks for placeInLetterbox. Prevents on-photo bleed and footer
- * clipping when the source is already square / full-bleed.
+ * The deliberate horizontal bands on the square canvas, as canvas fractions.
  *
- * Extracts the photo band and re-covers the middle so we never double-
- * letterbox (which left pillarbox gaps + ghost caption strokes).
+ * Full-bleed is the default (Shaun, 2026-08-25: "utilizing every possible
+ * pixel"), so the ONLY black the renderer ever creates is a band it was
+ * asked for:
+ *   top    — a format that puts a caption in a top letterbox band
+ *   bottom — the same for a bottom band
+ *   footer — the brand CTA strip, always present unless includeFooter: false
+ * Everything between contentTop and contentBottom is art, edge to edge.
+ * Side pillars are never produced; art is cover-cropped, never padded.
  */
-async function ensureCaptionLetterboxBands(baseBuf, format, captions = {}) {
-  const meta = await sharp(baseBuf).metadata();
-  const W = meta.width;
-  const H = meta.height;
-  const zones = format.zones || [];
-  const needsTop = zones.some(
-    (z) =>
-      z.placeInLetterbox === "top" &&
-      captions?.[z.key] != null &&
-      String(captions[z.key]).trim()
-  );
-  const needsBottom = zones.some(
-    (z) =>
-      z.placeInLetterbox === "bottom" &&
-      captions?.[z.key] != null &&
-      String(captions[z.key]).trim()
-  );
-  const topNeed = needsTop ? CAPTION_LETTERBOX_FRAC : 0;
-  const bottomNeed =
-    (needsBottom ? CAPTION_LETTERBOX_FRAC : 0) + FOOTER_BAND_MIN_FRAC;
+export function computeBandPlan(
+  format,
+  captions = {},
+  { includeFooter = true, side = 1200 } = {}
+) {
+  const zones = format?.zones || [];
+  const wants = (edge) =>
+    zones.some(
+      (z) =>
+        z.placeInLetterbox === edge &&
+        captions?.[z.key] != null &&
+        String(captions[z.key]).trim() !== ""
+    );
+  // Derive the footer fraction from the footer's own metrics so the reserved
+  // strip and the painted strip are the same pixels (no seam, no gap).
+  const footerFrac = includeFooter
+    ? footerBandMetrics(side, side).bandHeight / side
+    : 0;
+  const topFrac = wants("top") ? CAPTION_LETTERBOX_FRAC : 0;
+  const bottomCaptionFrac = wants("bottom") ? CAPTION_LETTERBOX_FRAC : 0;
+  return {
+    topFrac,
+    bottomCaptionFrac,
+    footerFrac,
+    contentTop: topFrac,
+    contentBottom: 1 - bottomCaptionFrac - footerFrac,
+    cropPosition: format?.cropPosition || "centre",
+  };
+}
 
-  const bounds = await detectLetterboxBandBounds(baseBuf);
-  const topHave = bounds?.topEndFrac ?? 0;
-  const bottomHave = bounds ? 1 - bounds.bottomStartFrac : 0;
-  if (topHave + 0.005 >= topNeed && bottomHave + 0.005 >= bottomNeed) {
-    return baseBuf;
+/** First/last image row that is not a solid near-black letterbox bar. */
+async function detectBlackBandRows(imageBuf) {
+  const { data, info } = await sharp(imageBuf)
+    .flatten({ background: { r: 0, g: 0, b: 0 } })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+  const DARK = 24; // near-pure black only — dark photo pixels are not a bar
+  const BAND_RATIO = 0.92;
+  const isBandRow = (y) => {
+    let dark = 0;
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * channels;
+      if (data[i] < DARK && data[i + 1] < DARK && data[i + 2] < DARK) dark += 1;
+    }
+    return dark / width >= BAND_RATIO;
+  };
+  // Take the LONGEST run of non-band rows, not the first/last one. Curated
+  // gallery cards print their footer line inside the bottom black bar, and a
+  // scan that just walks in from the edges stops at that text and hands back a
+  // "photo" that still carries half the bar (which then lands in the canvas).
+  let best = { top: 0, bottom: 0 };
+  let runStart = null;
+  for (let y = 0; y <= height; y += 1) {
+    const band = y === height ? true : isBandRow(y);
+    if (!band && runStart === null) runStart = y;
+    if (band && runStart !== null) {
+      if (y - runStart > best.bottom - best.top) best = { top: runStart, bottom: y };
+      runStart = null;
+    }
+  }
+  return { top: best.top, bottom: best.bottom, width, height };
+}
+
+/**
+ * The region of the source file that actually holds the art.
+ *
+ * Curated gallery PNGs ship as squares with the real art letterboxed inside
+ * black bars (a 1536×1024 image saved as 1536×1536). Zone fractions are
+ * authored against the ART, not the file, and full-bleed means those baked
+ * bars must be cropped away rather than scaled into the canvas as dead black.
+ *
+ * Self-validating: the trim is only taken when it moves the source closer to
+ * the aspect ratio the format declares, so a plain template with a genuinely
+ * dark top edge is left alone.
+ */
+async function resolveSourceArtRect(imageBuf, format) {
+  const { top, bottom, width, height } = await detectBlackBandRows(imageBuf);
+  const full = { left: 0, top: 0, width, height };
+  const runH = bottom - top;
+  // Guard: a mostly-black source (a broken mask) must not be "trimmed" to a sliver.
+  if (runH < height * 0.4 || runH > height * 0.985) return full;
+  if (!format?.width || !format?.height) return full;
+  const want = format.width / format.height;
+
+  // Art whose own bottom edge is near-black (a night scene, a dark coat) ends
+  // the run early. The format declares the art's aspect ratio, so snap the
+  // rect to the height that ratio implies, anchored at the first art row.
+  let artTop = top;
+  let artH = runH;
+  const idealH = Math.round(width / want);
+  if (idealH >= artH && idealH <= height) {
+    artTop = Math.min(top, height - idealH);
+    artH = idealH;
   }
 
-  const srcTop = Math.round(H * topHave);
-  const srcBottom = Math.round(H * (bounds?.bottomStartFrac ?? 1));
-  const srcH = Math.max(32, srcBottom - srcTop);
-  const photo = await sharp(baseBuf)
-    .extract({ left: 0, top: srcTop, width: W, height: srcH })
-    .png()
-    .toBuffer();
+  const fileFit = Math.abs(width / height - want);
+  const artFit = Math.abs(width / artH - want);
+  return artFit < fileFit
+    ? { left: 0, top: artTop, width, height: artH }
+    : full;
+}
 
-  const contentTop = Math.round(H * topNeed);
-  const contentH = Math.max(32, Math.round(H * (1 - topNeed - bottomNeed)));
-  const fitted = await sharp(photo)
-    .resize(W, contentH, {
+/**
+ * Build the square canvas: art cover-cropped edge to edge into the content
+ * rect, deliberate bands (and nothing else) left black.
+ *
+ * Returns the canvas plus `artRect` — where the WHOLE source art landed in
+ * canvas fractions, including the parts cropped off the edges. Zone fractions
+ * are art-space, so every zone is mapped through this rect.
+ */
+async function composeFullBleedSquare(srcBuf, srcRect, side, plan) {
+  const contentTopPx = Math.round(side * plan.contentTop);
+  const contentBottomPx = Math.round(side * plan.contentBottom);
+  const contentH = Math.max(16, contentBottomPx - contentTopPx);
+
+  // A format may pin the crop to one edge when centred cropping would eat a
+  // load-bearing piece of the art (this-is-fine's speech bubble sits at the
+  // right edge). Horizontal crops only; vertical stacks are banned outright.
+  const cropPosition = plan.cropPosition || "centre";
+
+  const art = await sharp(srcBuf)
+    .extract(srcRect)
+    .resize(side, contentH, {
       fit: "cover",
-      position: "centre",
+      position: cropPosition,
       kernel: "lanczos3",
     })
     .png()
     .toBuffer();
 
-  return sharp({
-    create: {
-      width: W,
-      height: H,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 1 },
+  const buf =
+    contentTopPx === 0 && contentH === side
+      ? art
+      : await sharp({
+          create: {
+            width: side,
+            height: side,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 1 },
+          },
+        })
+          .composite([{ input: art, top: contentTopPx, left: 0 }])
+          .png({ compressionLevel: 9, quality: 92 })
+          .toBuffer();
+
+  // sharp's "cover" scales by max(w/inW, h/inH), then crops at `position`.
+  const scale = Math.max(side / srcRect.width, contentH / srcRect.height);
+  const artW = srcRect.width * scale;
+  const artH = srcRect.height * scale;
+  const artX =
+    cropPosition === "west" ? 0 : cropPosition === "east" ? side - artW : (side - artW) / 2;
+  return {
+    buf,
+    artRect: {
+      x: artX / side,
+      y: (contentTopPx + (contentH - artH) / 2) / side,
+      w: artW / side,
+      h: artH / side,
     },
-  })
-    .composite([{ input: fitted, top: contentTop, left: 0 }])
-    .png({ compressionLevel: 9, quality: 92 })
-    .toBuffer();
+  };
 }
 
-/** Pad PNG to 1:1 with black letterbox bars and room for the footer. */
+/** Pad PNG to 1:1 with black letterbox bars and room for the footer.
+ *  Legacy: template build scripts only. renderMeme is full-bleed and never pads. */
 export async function padPngToSquare(pngBuf) {
   const meta = await sharp(pngBuf).metadata();
   const side = Math.max(meta.width, meta.height);
@@ -1789,12 +1898,6 @@ async function loadLogoBuffer(targetWidth) {
  *                           render as empty strings.
  * @returns {Promise<Buffer>} PNG buffer.
  */
-// Gallery thumbnails whose captions sit ON the photo (not on black
-// letterbox bars). Letterbox detection would erase the wrong regions.
-export const GALLERY_ON_PHOTO_CAPTIONS = new Set([
-  "/gallery/boromir-backup.png",
-]);
-
 // Gallery thumbnail → caption-free template for edits. Keeps curated
 // gallery art without baking captions into the edit base.
 export const GALLERY_RENDER_SOURCES = {
@@ -1812,14 +1915,6 @@ export const GALLERY_RENDER_SOURCES = {
 
 function isGalleryPath(filePath) {
   return typeof filePath === "string" && filePath.includes("/gallery/");
-}
-
-function defaultZoneMaskFill(zone) {
-  if (zone.maskFill) return zone.maskFill;
-  if (zone.style === "sign" || zone.style === "dark-on-light") {
-    return "#ffffff";
-  }
-  return "#000000";
 }
 
 /** Erase rect for baked gallery captions (letterbox bars vs on-photo zones). */
@@ -1874,35 +1969,6 @@ function zoneEraseRect(zone, W, H, { letterbox = true, bandBounds = null, onPhot
     w: zone.w * W,
     h: zone.h * H,
   };
-}
-
-/** True when the gallery PNG uses black letterbox caption bars. */
-async function galleryUsesLetterboxBands(imageBuf) {
-  const { data, info } = await sharp(imageBuf)
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const W = info.width;
-  const H = info.height;
-  const bandRows = Math.max(12, Math.round(H * 0.08));
-  const midRow = Math.round(H * 0.5);
-
-  function rowMean(y) {
-    let sum = 0;
-    for (let x = 0; x < W; x++) {
-      sum += data[(y * W + x) * info.channels];
-    }
-    return sum / W;
-  }
-
-  let topSum = 0;
-  let midSum = 0;
-  for (let y = 0; y < bandRows; y++) topSum += rowMean(y);
-  for (let y = midRow - Math.floor(bandRows / 2); y < midRow + Math.ceil(bandRows / 2); y++) {
-    midSum += rowMean(y);
-  }
-  const topMean = topSum / bandRows;
-  const midMean = midSum / bandRows;
-  return topMean < 25 && midMean > 55;
 }
 
 /** Pixel-scan black letterbox bars so erase stays off the photo. */
@@ -2131,106 +2197,140 @@ function resolveRenderSource(format, sourceFile) {
   return format.renderFile || format.file;
 }
 
-async function eraseBakedCaptionsFromBase(baseBuf, format, size, opts = {}) {
-  const W = size.width;
-  const H = size.height;
-  const parts = [];
-  for (const zone of format.zones) {
+/**
+ * Blur out the captions baked into a curated gallery PNG, in ART space.
+ *
+ * The old path filled these zones with solid black rectangles, which is the
+ * opposite of full-bleed: it wrote new dead-black slabs onto the photo (and
+ * on stonks, whose bottom zone is 34% tall, it blacked out the lower third of
+ * the image and then blurred what was left). A destructive downscale + blur
+ * removes the glyph structure while keeping photographic pixels everywhere;
+ * each of these formats declares maskTight, so the new caption draws its own
+ * plate over whatever smear is left.
+ */
+async function smudgeBakedGalleryCaptions(baseBuf, format, srcRect) {
+  let out = baseBuf;
+  const meta = await sharp(baseBuf).metadata();
+  for (const zone of format.zones || []) {
     if (zone.decorative) continue;
-    const rect = zoneEraseRect(zone, W, H, opts);
-    const fill = defaultZoneMaskFill(zone);
-    parts.push(
-      `<rect x="${rect.x.toFixed(2)}" y="${rect.y.toFixed(2)}" width="${rect.w.toFixed(2)}" height="${rect.h.toFixed(2)}" fill="${fill}"/>`
-    );
+    const padX = zone.w * 0.03;
+    const padY = zone.h * 0.22;
+    const rect = {
+      x: srcRect.left + (zone.x - padX) * srcRect.width,
+      y: srcRect.top + (zone.y - padY) * srcRect.height,
+      w: (zone.w + padX * 2) * srcRect.width,
+      h: (zone.h + padY * 2) * srcRect.height,
+    };
+    out = await blurOutRect(out, rect, meta.width, meta.height);
   }
-  if (!parts.length) return baseBuf;
-  const svg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join("")}</svg>`
-  );
-  return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
+  return out;
 }
 
-/** Wipe AI-baked caption strips from gallery PNG letterbox bars. */
-async function eraseGalleryLetterboxBands(baseBuf, size) {
-  const W = size.width;
-  const H = size.height;
-  const bounds = await detectLetterboxBandBounds(baseBuf);
-  const parts = [];
-  if (bounds?.topEndFrac) {
-    const topH = Math.round(H * bounds.topEndFrac);
-    if (topH > 0) {
-      parts.push(
-        `<rect x="0" y="0" width="${W}" height="${topH}" fill="#000000"/>`
-      );
-    }
-  }
-  if (bounds?.bottomStartFrac) {
-    const y = Math.round(H * bounds.bottomStartFrac);
-    const h = H - y;
-    if (h > 0) {
-      parts.push(`<rect x="0" y="${y}" width="${W}" height="${h}" fill="#000000"/>`);
-    }
-  }
-  if (!parts.length) return baseBuf;
-  const svg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${parts.join("")}</svg>`
-  );
-  return sharp(baseBuf).composite([{ input: svg, top: 0, left: 0 }]).toBuffer();
+/** Destroy text structure inside one rect, then blur the mosaic smooth. */
+async function blurOutRect(buf, rect, imgW, imgH) {
+  const left = Math.round(Math.max(0, rect.x));
+  const top = Math.round(Math.max(0, rect.y));
+  const width = Math.round(Math.min(imgW - left, rect.w));
+  const height = Math.round(Math.min(imgH - top, rect.h));
+  if (width < 8 || height < 8) return buf;
+  // Meme glyphs are huge and high-contrast: a gentle mosaic leaves ghost text
+  // that is still readable next to the new caption. Crush to ~4 blocks across
+  // the short side, then blur wider than a block so nothing legible survives.
+  const short = Math.min(width, height);
+  const factor = Math.max(16, Math.round(short / 4));
+  const patch = await sharp(buf)
+    .extract({ left, top, width, height })
+    .resize(
+      Math.max(1, Math.round(width / factor)),
+      Math.max(1, Math.round(height / factor)),
+      { kernel: sharp.kernel.cubic }
+    )
+    .resize(width, height, { kernel: sharp.kernel.cubic })
+    .blur(Math.max(6, Math.round(short * 0.12)))
+    .toBuffer();
+  return sharp(buf).composite([{ input: patch, top, left }]).toBuffer();
 }
 
-/** Map template zone fractions onto the photo area inside letterbox bars. */
-function mapFormatZonesToContent(format, letterboxBounds) {
-  const topFrac = letterboxBounds?.topEndFrac ?? 0;
-  const bottomFrac = letterboxBounds?.bottomStartFrac ?? 1;
-  const span = Math.max(0.01, bottomFrac - topFrac);
-  const zones = format.zones || [];
-  // Ignore bogus "letterbox" from dark photo pixels unless a zone opted in
-  // OR both bars look like real pad bands (top + bottom).
-  const wantsLetterbox = zones.some((z) => z.placeInLetterbox);
-  const realPadBars = topFrac >= 0.05 && bottomFrac <= 0.95;
-  // Full-bleed templates (Drake, etc.) only get a bottom footer bar —
-  // still remap zones into the shrunk photo or captions sit too low /
-  // look tiny inside the white panels.
-  const footerOnlyPad = topFrac < 0.05 && bottomFrac <= 0.96 && span < 0.98;
-  const mapContent = wantsLetterbox || realPadBars || footerOnlyPad;
+// A caption that spans the frame (classic top/bottom impact text) belongs to
+// the FRAME, not to any feature in the art: when a cover crop slides the art
+// up or sideways, the band must stay pinned to the visible edge or it gets
+// clamped to a sliver and the caption shrinks to nothing. Anything narrower
+// marks something in the picture — a panel, a face, a white box — and has to
+// travel with the art instead. Decorative masks always cover art.
+const FRAME_CAPTION_MIN_W = 0.85;
 
+function isFrameCaption(zone) {
+  return !zone.decorative && (zone.w ?? 0) >= FRAME_CAPTION_MIN_W;
+}
+
+/**
+ * Zone fractions are authored in ART space. Map them onto the square canvas.
+ *
+ * Cover-cropping moves and scales the art, so a zone that marks a face, a
+ * panel or a white box has to travel with it — mapping through `artRect` is
+ * what keeps Drake's text in Drake's boxes after the crop. Zones that spill
+ * past the canvas (a panel whose art was cropped away) are clamped back to
+ * the visible content rect.
+ *
+ * Frame captions and letterbox captions skip that: they are laid out against
+ * the content rect itself, keeping their full-canvas x/w.
+ */
+function mapFormatZonesToContent(format, plan, artRect) {
+  const bandGap = 0.006;
+  const span = Math.max(0.05, plan.contentBottom - plan.contentTop);
   return {
     ...format,
-    zones: zones.map((zone) => {
-      const place = zone.placeInLetterbox;
-      if (place === "top" && topFrac > 0.04) {
+    zones: (format.zones || []).map((zone) => {
+      if (zone.placeInLetterbox === "top" && plan.topFrac > 0) {
         return {
           ...zone,
-          placeInLetterbox: "top",
-          y: 0.01,
-          h: Math.max(0.1, topFrac - 0.018),
+          y: bandGap,
+          h: Math.max(0.06, plan.topFrac - bandGap * 2),
         };
       }
-      if (place === "bottom" && bottomFrac < 0.96) {
-        const footerFrac = FOOTER_BAND_MIN_FRAC;
-        const gap = 0.012;
-        const usableBottom = 1 - footerFrac - gap;
-        const h = Math.max(0.1, usableBottom - bottomFrac);
+      if (zone.placeInLetterbox === "bottom" && plan.bottomCaptionFrac > 0) {
+        const y = plan.contentBottom + bandGap;
         return {
           ...zone,
-          placeInLetterbox: "bottom",
-          y: bottomFrac + 0.004,
-          h,
+          y,
+          h: Math.max(0.06, 1 - plan.footerFrac - bandGap - y),
         };
       }
-      if (!mapContent) return { ...zone };
+      if (isFrameCaption(zone)) {
+        return {
+          ...zone,
+          y: plan.contentTop + zone.y * span,
+          h: zone.h * span,
+        };
+      }
+      const left = Math.max(0, artRect.x + zone.x * artRect.w);
+      const right = Math.min(1, artRect.x + (zone.x + zone.w) * artRect.w);
+      const top = Math.max(plan.contentTop, artRect.y + zone.y * artRect.h);
+      const bottom = Math.min(
+        plan.contentBottom,
+        artRect.y + (zone.y + zone.h) * artRect.h
+      );
       return {
         ...zone,
-        y: topFrac + zone.y * span,
-        h: zone.h * span,
+        x: left,
+        y: top,
+        w: Math.max(0.02, right - left),
+        h: Math.max(0.02, bottom - top),
       };
     }),
   };
 }
 
-export async function renderMeme(format, captions, options = {}) {
-  await ensureFontsInstalled();
-
+/**
+ * Everything geometric about a render: the full-bleed square base, where the
+ * art landed, and the zones mapped onto the canvas.
+ *
+ * Exported because the deterministic harness needs to ask "did this format's
+ * caption zones survive the cover crop?" without re-deriving the math — a
+ * zone whose mapped box is far smaller than its declared box is a zone whose
+ * art was cropped out from under it.
+ */
+export async function planFullBleedRender(format, captions = {}, options = {}) {
   const cleanBase = options.cleanBase || format.renderFile || format.file;
   const templatePath = path.join(
     process.cwd(),
@@ -2244,58 +2344,63 @@ export async function renderMeme(format, captions, options = {}) {
       ? { width: meta.width, height: meta.height }
       : getRenderSize(format);
 
+  // "fill" at the source's own aspect ratio is a straight upscale — never a
+  // pad. Flatten first so transparent template pixels read as the black they
+  // will composite to, which keeps band detection honest.
   let baseBuf = await sharp(templatePath)
+    .flatten({ background: { r: 0, g: 0, b: 0 } })
     .resize(contentSize.width, contentSize.height, {
-      fit: "contain",
-      background: { r: 0, g: 0, b: 0, alpha: 1 },
+      fit: "fill",
       kernel: "lanczos3",
     })
+    .png()
     .toBuffer();
 
   // Do NOT auto-smudge source art here — corner blur eats captions / panel art.
   // Logo removal for legacy AI gallery PNGs is a one-off scrub script.
 
-  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
-    let bounds = await detectLetterboxBandBounds(baseBuf);
-    const usesLetterbox = await galleryUsesLetterboxBands(baseBuf);
-    baseBuf = await eraseBakedCaptionsFromBase(baseBuf, format, contentSize, {
-      letterbox: usesLetterbox,
-      bandBounds: bounds,
-      onPhoto: !usesLetterbox,
-    });
+  const srcRect = await resolveSourceArtRect(baseBuf, format);
+
+  if (isGalleryPath(cleanBase) && !options.preserveBakedCaptions) {
+    baseBuf = await smudgeBakedGalleryCaptions(baseBuf, format, srcRect);
   }
 
-  // Square canvas first, then guarantee caption letterbox bands.
-  baseBuf = await padPngToSquare(baseBuf);
-  baseBuf = await ensureCaptionLetterboxBands(baseBuf, format, captions);
-  let paddedMeta = await sharp(baseBuf).metadata();
-  let renderSize = { width: paddedMeta.width, height: paddedMeta.height };
-  let letterboxBounds = await detectLetterboxBandBounds(baseBuf);
+  // Full-bleed square: art covers every pixel that is not a deliberate band.
+  const side = Math.max(contentSize.width, contentSize.height);
+  const bandPlan = computeBandPlan(format, captions, {
+    includeFooter: options.includeFooter !== false,
+    side,
+  });
+  const composedBase = await composeFullBleedSquare(
+    baseBuf,
+    srcRect,
+    side,
+    bandPlan
+  );
+  return {
+    baseBuf: composedBase.buf,
+    artRect: composedBase.artRect,
+    bandPlan,
+    renderSize: { width: side, height: side },
+    // Bands are planned, not pixel-detected: the canvas has no black left to
+    // find except the bands we deliberately reserved.
+    letterboxBounds: {
+      topEndFrac: bandPlan.contentTop,
+      bottomStartFrac: bandPlan.contentBottom,
+    },
+    renderFormat: mapFormatZonesToContent(
+      format,
+      bandPlan,
+      composedBase.artRect
+    ),
+  };
+}
 
-  if (cleanBase.includes("/gallery/") && !options.preserveBakedCaptions) {
-    baseBuf = await eraseGalleryLetterboxBands(baseBuf, renderSize);
-    // After erase, re-fit letterbox once more so bands stay clean black.
-    baseBuf = await ensureCaptionLetterboxBands(baseBuf, format, captions);
-    paddedMeta = await sharp(baseBuf).metadata();
-    renderSize = { width: paddedMeta.width, height: paddedMeta.height };
-    letterboxBounds = await detectLetterboxBandBounds(baseBuf);
-  } else {
-    letterboxBounds = await detectLetterboxBandBounds(baseBuf);
-  }
+export async function renderMeme(format, captions, options = {}) {
+  await ensureFontsInstalled();
 
-  const renderFormat = mapFormatZonesToContent(format, letterboxBounds);
-
-  if (
-    cleanBase.includes("/gallery/") &&
-    !options.preserveBakedCaptions &&
-    renderFormat.zones?.some((z) => z.maskTight)
-  ) {
-    baseBuf = await smudgeCaptionZones(
-      baseBuf,
-      renderFormat.zones,
-      renderSize
-    );
-  }
+  let { baseBuf, renderSize, letterboxBounds, renderFormat } =
+    await planFullBleedRender(format, captions, options);
 
   // Product decision: no LoL logo on teacher-shared images (customize + gallery).
   // Pass options.includeWatermark = true only for internal branded exports.
