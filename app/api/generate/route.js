@@ -78,7 +78,14 @@ export async function POST(request) {
     // on any agentic failure so users always get a meme.
     if (agenticEnabled()) {
       try {
-        const record = await agenticGenerateMeme({ situation, tone, formatId });
+        const record = await agenticGenerateMeme({
+          situation,
+          tone,
+          formatId,
+          excludeFormatIds: Array.isArray(excludeFormatIds)
+            ? excludeFormatIds
+            : [],
+        });
         return NextResponse.json(record);
       } catch (e) {
         if (e.code === "RUNTIME_BUDGET_EXHAUSTED") {

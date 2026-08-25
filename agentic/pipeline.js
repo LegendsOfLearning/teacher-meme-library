@@ -20,7 +20,7 @@ import { assertBudget, recordSpend } from "./budget.js";
 
 // Bumped whenever the pipeline's behavior changes; stamped into every
 // generation's provenance so results are traceable to the code that made them.
-export const PIPELINE_VERSION = "2.0.0";
+export const PIPELINE_VERSION = "2.1.0";
 
 const TOOLS = [
   {
@@ -89,6 +89,7 @@ export async function runAgenticGeneration(brief, config = {}) {
     maxCriticRounds: 2,
     maxUsd: 2.0,
     ipSafeOnly: false,
+    avoidFormats: [],
     ...config,
   };
   if (cfg.budgetCategory === "runtime") {
@@ -115,7 +116,11 @@ export async function runAgenticGeneration(brief, config = {}) {
 - Tone: ${brief.tone}
 - Caption/joke direction: ${brief.captionIdea || "invent the funniest school-safe take"}
 ${brief.formatHint ? `- Required format: ${brief.formatHint}` : "- Format: pick the catalog format whose joke structure best fits."}
-Begin.`;
+${
+  cfg.avoidFormats?.length && !brief.formatHint
+    ? `- Variety constraint: recent memes in this batch already used these formats — do NOT use them unless no other format can carry the joke: ${cfg.avoidFormats.join(", ")}.\n`
+    : ""
+}Begin.`;
 
   const messages = [{ role: "user", content: briefText }];
   let finalized = null;

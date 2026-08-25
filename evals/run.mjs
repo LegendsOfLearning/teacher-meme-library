@@ -102,6 +102,9 @@ console.log(
 
 let done = 0;
 let totalCost = 0;
+// Batch-level variety: formats already used twice in this run go on the
+// avoid list for subsequent briefs (concurrency makes this best-effort).
+const formatUsage = new Map();
 
 async function runOne(p) {
   const t0 = Date.now();
@@ -120,9 +123,16 @@ async function runOne(p) {
       tone: p.tone,
       captionIdea: p.captionIdea,
     };
+    const avoidFormats = [...formatUsage.entries()]
+      .filter(([, n]) => n >= 2)
+      .map(([f]) => f);
+    const cfgOne = { ...config, avoidFormats };
     const result = modelLadder.length
-      ? await runRoutedGeneration(brief, config, modelLadder)
-      : await runAgenticGeneration(brief, config);
+      ? await runRoutedGeneration(brief, cfgOne, modelLadder)
+      : await runAgenticGeneration(brief, cfgOne);
+    if (result.formatId) {
+      formatUsage.set(result.formatId, (formatUsage.get(result.formatId) || 0) + 1);
+    }
     const promptDir = path.join(runDir, p.id);
     fs.mkdirSync(promptDir, { recursive: true });
     let imagePath = null;
@@ -172,3 +182,12 @@ await Promise.all(
 
 db.finishRun(runId, capped ? "capped" : "done");
 console.log(`run ${runId} ${capped ? "CAPPED" : "complete"} — total $${totalCost.toFixed(2)}`);
+
+// Batch diversity report: repetition is a brand defect even when every
+// individual meme is clean, so it is measured per run.
+const dist = [...formatUsage.entries()].sort((a, b) => b[1] - a[1]);
+const nFinal = dist.reduce((s, [, n]) => s + n, 0);
+if (nFinal) {
+  console.log(`format diversity: ${dist.length} distinct formats over ${nFinal} memes; top share ${(dist[0][1] / nFinal * 100).toFixed(0)}% (${dist[0][0]})`);
+  console.log(`  distribution: ${dist.map(([f, n]) => `${f}=${n}`).join(" ")}`);
+}

@@ -61,7 +61,7 @@ async function recordRuntimeSpend(counter, usd) {
  * Generate a meme agentically and persist it with full version provenance.
  * Throws {code: "RUNTIME_BUDGET_EXHAUSTED"} when the monthly cap is reached.
  */
-export async function agenticGenerateMeme({ situation, tone, formatId }) {
+export async function agenticGenerateMeme({ situation, tone, formatId, excludeFormatIds }) {
   const prompts = activePrompts();
   const capUsd = Number(process.env.RUNTIME_MONTHLY_CAP_USD || 100);
   const counter = await monthlyRuntimeSpend();
@@ -84,6 +84,7 @@ export async function agenticGenerateMeme({ situation, tone, formatId }) {
     {
       promptSetId: prompts.promptSetId,
       prompts,
+      avoidFormats: Array.isArray(excludeFormatIds) ? excludeFormatIds : [],
       criticModel: process.env.AGENTIC_CRITIC_MODEL || DEFAULT_CRITIC,
       maxRenders: 4,
       maxCriticRounds: 2,
