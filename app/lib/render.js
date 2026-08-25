@@ -827,6 +827,12 @@ function balancedSplit(words, k) {
 // not become a solid black slab.
 const MAX_LINE_FS_RATIO = 0.92;
 
+// Classic meme text: outline ≈ 1/10 of the font size (imgflip is ~1/15);
+// the old 0.38 rendered slab-thick outlines that swallowed neighboring rows.
+const CAPTION_STROKE_RATIO = 0.1;
+// Leading between wrapped caption lines. 1.0 (none) made row strokes collide.
+const CAPTION_LEADING = 1.12;
+
 // Choose font size + line layout. Tries every `k` in [2..maxLines],
 // picks the largest font, then among sizes within 85% of that best,
 // prefers fewer lines (avoids tiny 2-line wraps and amateurish pyramids).
@@ -880,7 +886,7 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
     const split = balancedSplit(words, k);
     if (!split) continue;
 
-    const lineSlot = maxHeight / k;
+    const lineSlot = maxHeight / k / CAPTION_LEADING;
     const widthFs = maxWidth / (split.maxChars * charPerFs);
     const heightFs = lineSlot * lineFsRatio;
     let fs = Math.floor(Math.min(widthFs, heightFs, cap));
@@ -897,7 +903,7 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
     let lines = wrapText(text, maxWidth, fs, family);
     while (fs > MIN_FS) {
       lines = wrapText(text, maxWidth, fs, family);
-      const tallOk = lines.length * fs <= maxHeight + 1;
+      const tallOk = lines.length * fs * CAPTION_LEADING <= maxHeight + 1;
       const lineOk = lines.length <= maxLines;
       const widest = Math.max(...lines.map((l) => l.length), 1);
       const wideOk = widest * charPerFs * fs <= maxWidth * 1.04;
@@ -905,7 +911,11 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
       fs -= 1;
     }
     lines = wrapText(text, maxWidth, fs, family);
-    return { fs, lines, lineHeight: fs };
+    return {
+      fs,
+      lines,
+      lineHeight: lines.length > 1 ? Math.round(fs * CAPTION_LEADING) : fs,
+    };
   }
 
   // Prefer the largest readable size; among near-best sizes, fewer lines.
@@ -914,7 +924,14 @@ function fitText(text, maxWidth, maxHeight, maxLines, family, startSize, opts = 
   const nearBest = candidates.filter((c) => c.fs >= bestFs * nearRatio);
   nearBest.sort((a, b) => a.k - b.k || b.fs - a.fs);
   const chosen = nearBest[0];
-  return { fs: chosen.fs, lines: chosen.lines, lineHeight: chosen.fs };
+  return {
+    fs: chosen.fs,
+    lines: chosen.lines,
+    lineHeight:
+      chosen.lines.length > 1
+        ? Math.round(chosen.fs * CAPTION_LEADING)
+        : chosen.fs,
+  };
 }
 
 function resolveZoneStyle(zone) {
@@ -926,7 +943,7 @@ function resolveZoneStyle(zone) {
         transform: toMockingCase,
         fill: "#ffffff",
         stroke: "#000000",
-        strokeRatio: 0.38,
+        strokeRatio: CAPTION_STROKE_RATIO,
       };
     case "sign":
       return {
@@ -962,7 +979,7 @@ function resolveZoneStyle(zone) {
         transform: (s) => s.toUpperCase(),
         fill: "#000000",
         stroke: "#ffffff",
-        strokeRatio: 0.38,
+        strokeRatio: CAPTION_STROKE_RATIO,
       };
     case "caption":
     default:
@@ -972,7 +989,7 @@ function resolveZoneStyle(zone) {
         transform: (s) => s.toUpperCase(),
         fill: "#ffffff",
         stroke: "#000000",
-        strokeRatio: 0.38,
+        strokeRatio: CAPTION_STROKE_RATIO,
       };
   }
 }
@@ -1183,7 +1200,7 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
     );
     fs = Math.min(capped.fs, cappedFs);
     lines = capped.lines;
-    lineHeight = capped.fs;
+    lineHeight = capped.lineHeight;
   }
 
   if (syncCapFs != null && fs > syncCapFs) {
@@ -1243,23 +1260,28 @@ function renderZone(zone, rawText, imgW, imgH, watermark, syncCapFs, coverBaked,
   const firstBaseline = laid.firstBaseline;
   const strokeWidthFinal = laid.strokeWidth;
 
-  const textEls = lines
-    .map((line, i) => {
-      const ly = firstBaseline + i * lineHeight;
-      const strokeAttrs =
-        strokeWidthFinal > 0
-          ? ` stroke="${style.stroke}" stroke-width="${strokeWidthFinal.toFixed(
-              2
-            )}" stroke-linejoin="round" paint-order="stroke fill"`
-          : "";
-      const weightAttr = style.weight ? ` font-weight="${style.weight}"` : "";
-      return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
-        2
-      )}" font-family="${style.family}" font-size="${fs.toFixed(
-        2
-      )}" fill="${style.fill}"${weightAttr}${strokeAttrs} text-anchor="${anchor}">${escXml(line)}</text>`;
-    })
-    .join("\n");
+  const mkText = (line, i, paintAttrs) => {
+    const ly = firstBaseline + i * lineHeight;
+    const weightAttr = style.weight ? ` font-weight="${style.weight}"` : "";
+    return `<text x="${tx.toFixed(2)}" y="${ly.toFixed(
+      2
+    )}" font-family="${style.family}" font-size="${fs.toFixed(
+      2
+    )}"${weightAttr}${paintAttrs} text-anchor="${anchor}">${escXml(line)}</text>`;
+  };
+  // A line's stroke must never paint over a neighboring line's fill —
+  // paint-order only sorts stroke/fill within ONE element, so multi-line
+  // blocks need all strokes drawn first, then all fills on top.
+  const strokePassAttrs =
+    strokeWidthFinal > 0
+      ? ` fill="none" stroke="${style.stroke}" stroke-width="${strokeWidthFinal.toFixed(
+          2
+        )}" stroke-linejoin="round"`
+      : null;
+  const textEls = [
+    ...(strokePassAttrs ? lines.map((l, i) => mkText(l, i, strokePassAttrs)) : []),
+    ...lines.map((l, i) => mkText(l, i, ` fill="${style.fill}"`)),
+  ].join("\n");
 
   let fragment = textEls;
   // Clip letterbox captions so stroke never bleeds onto the photo or footer.
