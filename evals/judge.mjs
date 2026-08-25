@@ -77,7 +77,9 @@ for (const runId of runIds) {
     try {
       trace = JSON.parse(g.trace_json || "[]");
     } catch {}
-    const finalize = trace.find((t) => t.step === "finalize");
+    // Router traces accumulate across escalation tiers; the final image comes
+    // from the LAST finalize, so the first one belongs to a rejected tier.
+    const finalize = trace.filter((t) => t.step === "finalize").pop();
     const res = await anthropic.messages.create({
       model: JUDGE_MODEL,
       max_tokens: 800,
