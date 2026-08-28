@@ -13,7 +13,8 @@
 import { normalizeOpenAIKey } from "./moderation-policy.js";
 
 const DEFAULT_MODEL = "gpt-4.1";
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
+const OPENAI_URL =
+  process.env.OPENAI_BASE_URL || "https://api.openai.com/v1/chat/completions";
 
 export function llmConfigured() {
   return Boolean(normalizeOpenAIKey());
@@ -30,14 +31,23 @@ async function callOpenAI({ system, user, jsonMode, temperature, maxTokens }) {
   const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
   const body = {
     model,
-    temperature: temperature ?? 0.9,
-    max_tokens: maxTokens ?? 600,
+    // claude-* models on the Anthropic compat endpoint reject temperature.
+    ...(OPENAI_URL.includes("api.openai.com")
+      ? { temperature: temperature ?? 0.9 }
+      : {}),
+    // claude-* reasoning tokens count against max_tokens on the compat
+    // endpoint, so give non-OpenAI backends generous headroom.
+    max_tokens: OPENAI_URL.includes("api.openai.com")
+      ? maxTokens ?? 600
+      : Math.max(maxTokens ?? 0, 4000),
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
     ],
   };
-  if (jsonMode) {
+  // Anthropic's OpenAI-compat endpoint only accepts json_schema, not
+  // json_object; callJSON already parses/validates, so omit it there.
+  if (jsonMode && OPENAI_URL.includes("api.openai.com")) {
     body.response_format = { type: "json_object" };
   }
 
@@ -70,7 +80,10 @@ export async function callJSON({ system, user, temperature, maxTokens }) {
     maxTokens,
   });
   try {
-    return JSON.parse(raw);
+    // Tolerate markdown fences / prose around the JSON object.
+    const cleaned = raw.replace(/^```(?:json)?\s*|\s*```$/g, "");
+    const match = cleaned.match(/[{[][\s\S]*[}\]]/);
+    return JSON.parse(match ? match[0] : cleaned);
   } catch (e) {
     const err = new Error(`Could not parse LLM JSON: ${raw.slice(0, 200)}`);
     err.code = "LLM_BAD_JSON";

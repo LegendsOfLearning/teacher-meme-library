@@ -3,9 +3,13 @@
   "private": true,
   "version": "1.1.0",
   "description": "Teacher Meme Generator — 20 real meme formats, multi-step agentic captioning, school-safe by design. By Legends of Learning.",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.118.0",
     "@vercel/blob": "^2.4.0",
+    "better-sqlite3": "^13.0.3",
     "nanoid": "^5.0.0",
     "next": "latest",
     "react": "latest",
@@ -20,6 +24,8 @@
     "smoke:render": "node scripts/smoke-render.mjs",
     "fonts:install": "node scripts/install-fonts.mjs",
     "postinstall": "node scripts/install-fonts.mjs",
+    "evals": "node evals/run.mjs",
+    "optimize": "node agentic/optimize.mjs",
     "audit:safety": "node scripts/audit-safety.mjs",
     "test:blocklist": "node scripts/test-blocklist.mjs"
   }

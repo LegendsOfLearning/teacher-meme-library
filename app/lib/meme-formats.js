@@ -296,6 +296,9 @@ export const memeFormats = [
     file: `${FILE_BASE}/this-is-fine.jpg`,
     width: 580,
     height: 282,
+    // The canonical "THIS IS FINE." bubble sits at the right edge; a centred
+    // cover-crop clips it. Keep the right edge, crop from the left instead.
+    cropPosition: "east",
     description:
       "Cartoon dog in a burning room calmly drinking coffee. Use it for low-key catastrophic teacher moments.",
     jokeStructure:
